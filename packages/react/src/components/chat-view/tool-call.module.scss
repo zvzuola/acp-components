@@ -1,0 +1,110 @@
+.acp-tool-call {
+  border: 1px solid var(--acp-color-border);
+  border-radius: var(--acp-radius-md);
+  margin: 8px 0;
+  overflow: hidden;
+  font-size: 13px;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--acp-color-bg-tertiary);
+    cursor: pointer;
+    border: none;
+    width: 100%;
+    text-align: left;
+    color: var(--acp-color-text-primary);
+    font-size: 13px;
+
+    &:hover {
+      background: var(--acp-color-bg-hover);
+    }
+  }
+
+  &__status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+
+    &--pending {
+      background: var(--acp-color-text-muted);
+    }
+    &--in_progress {
+      background: var(--acp-color-warning);
+      animation: acp-pulse 1.5s infinite;
+    }
+    &--completed {
+      background: var(--acp-color-success);
+    }
+    &--failed {
+      background: var(--acp-color-error);
+    }
+  }
+
+  &__name {
+    flex: 1;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__chevron {
+    color: var(--acp-color-text-muted);
+    font-size: 10px;
+    transition: transform 0.2s;
+
+    &--open {
+      transform: rotate(90deg);
+    }
+  }
+
+  &__body {
+    padding: 10px 12px;
+    border-top: 1px solid var(--acp-color-border);
+    background: var(--acp-color-bg-primary);
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  &__diff {
+    font-family: var(--acp-font-mono);
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  &__diff-add {
+    color: var(--acp-color-success);
+  }
+
+  &__diff-remove {
+    color: var(--acp-color-error);
+  }
+
+  &__terminal {
+    background: var(--acp-color-code-bg);
+    color: var(--acp-color-code-text);
+    padding: 10px;
+    border-radius: var(--acp-radius-sm);
+    font-family: var(--acp-font-mono);
+    font-size: 12px;
+    white-space: pre-wrap;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+}
+
+@keyframes acp-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}

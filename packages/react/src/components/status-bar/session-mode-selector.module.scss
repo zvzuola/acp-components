@@ -1,0 +1,28 @@
+.acp-session-mode-selector {
+  display: flex;
+  gap: 2px;
+  background: var(--acp-color-bg-secondary);
+  border-radius: var(--acp-radius-sm);
+  padding: 2px;
+
+  &__btn {
+    padding: 4px 12px;
+    border: none;
+    border-radius: var(--acp-radius-sm);
+    background: transparent;
+    color: var(--acp-color-text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+
+    &:hover {
+      color: var(--acp-color-text-primary);
+    }
+
+    &--active {
+      background: var(--acp-color-accent);
+      color: white;
+    }
+  }
+}

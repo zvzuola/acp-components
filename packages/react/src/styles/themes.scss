@@ -1,0 +1,93 @@
+// Theme CSS custom properties
+:root,
+[data-acp-theme='dark'] {
+  --acp-color-bg-primary: #1a1a2e;
+  --acp-color-bg-secondary: #16213e;
+  --acp-color-bg-tertiary: #0f3460;
+  --acp-color-bg-hover: #1e3a6e;
+  --acp-color-text-primary: #e4e6eb;
+  --acp-color-text-secondary: #9ca3af;
+  --acp-color-text-muted: #6b7280;
+  --acp-color-border: #374151;
+  --acp-color-border-light: #2d3348;
+  --acp-color-accent: #6366f1;
+  --acp-color-accent-hover: #818cf8;
+  --acp-color-user-bubble: #2563eb;
+  --acp-color-agent-bubble: #2d3348;
+  --acp-color-success: #10b981;
+  --acp-color-warning: #f59e0b;
+  --acp-color-error: #ef4444;
+  --acp-color-code-bg: #0d1117;
+  --acp-color-code-text: #c9d1d9;
+  --acp-color-input-bg: #1e293b;
+  --acp-radius-sm: 4px;
+  --acp-radius-md: 8px;
+  --acp-radius-lg: 12px;
+  --acp-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --acp-font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  --acp-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --acp-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --acp-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
+}
+
+[data-acp-theme='light'] {
+  --acp-color-bg-primary: #ffffff;
+  --acp-color-bg-secondary: #f3f4f6;
+  --acp-color-bg-tertiary: #e5e7eb;
+  --acp-color-bg-hover: #d1d5db;
+  --acp-color-text-primary: #111827;
+  --acp-color-text-secondary: #4b5563;
+  --acp-color-text-muted: #9ca3af;
+  --acp-color-border: #d1d5db;
+  --acp-color-border-light: #e5e7eb;
+  --acp-color-accent: #4f46e5;
+  --acp-color-accent-hover: #6366f1;
+  --acp-color-user-bubble: #3b82f6;
+  --acp-color-agent-bubble: #f3f4f6;
+  --acp-color-success: #059669;
+  --acp-color-warning: #d97706;
+  --acp-color-error: #dc2626;
+  --acp-color-code-bg: #f8f9fa;
+  --acp-color-code-text: #1f2937;
+  --acp-color-input-bg: #ffffff;
+  color-scheme: light;
+}
+
+// Reset & base
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+// Scrollbar
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--acp-color-text-muted);
+  border-radius: 3px;
+
+  &:hover {
+    background: var(--acp-color-text-secondary);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

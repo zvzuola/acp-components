@@ -1,0 +1,129 @@
+.acp-session-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 8px;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+    margin-bottom: 8px;
+  }
+
+  &__title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--acp-color-text-secondary);
+  }
+
+  &__new-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: var(--acp-radius-sm);
+    background: var(--acp-color-accent);
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--acp-color-accent-hover);
+    }
+  }
+
+  &__items {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+.acp-session-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: var(--acp-radius-sm);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--acp-color-text-primary);
+  text-align: left;
+  width: 100%;
+  font-size: 13px;
+  gap: 8px;
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--acp-color-bg-hover);
+
+    .acp-session-item__delete {
+      opacity: 1;
+    }
+  }
+
+  &--active {
+    background: var(--acp-color-bg-tertiary);
+  }
+
+  &__icon {
+    flex-shrink: 0;
+    font-size: 14px;
+  }
+
+  &__content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__title {
+    font-size: 13px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__meta {
+    font-size: 11px;
+    color: var(--acp-color-text-muted);
+    margin-top: 2px;
+  }
+
+  &__delete {
+    opacity: 0;
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: var(--acp-color-text-muted);
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 2px;
+    font-size: 12px;
+
+    &:hover {
+      color: var(--acp-color-error);
+      background: transparent;
+    }
+  }
+}
+
+.acp-agent-info {
+  padding: 8px 12px;
+  border-top: 1px solid var(--acp-color-border);
+  font-size: 12px;
+  color: var(--acp-color-text-secondary);
+
+  &__name {
+    font-weight: 600;
+    color: var(--acp-color-text-primary);
+  }
+}

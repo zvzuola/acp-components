@@ -1,0 +1,39 @@
+.acp-connection-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: var(--acp-color-text-secondary);
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+
+    &--connected {
+      background: var(--acp-color-success);
+    }
+    &--connecting {
+      background: var(--acp-color-warning);
+      animation: acp-pulse 1.5s infinite;
+    }
+    &--disconnected {
+      background: var(--acp-color-text-muted);
+    }
+    &--error {
+      background: var(--acp-color-error);
+    }
+  }
+}
+
+@keyframes acp-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}

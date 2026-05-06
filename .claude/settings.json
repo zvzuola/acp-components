@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:agentclientprotocol.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(pnpm install *)",
+      "Bash(pnpm --filter @acp-components/core exec tsc --noEmit)",
+      "Bash(pnpm --filter @acp-components/react exec tsc --noEmit)",
+      "Bash(pnpm --filter @acp-components/core build)",
+      "Bash(pnpm --filter @acp-components/react build)",
+      "Bash(pnpm --filter @acp-components/demo exec tsc --noEmit)",
+      "Bash(pnpm build *)",
+      "Bash(pnpm run *)"
+    ]
+  }
+}

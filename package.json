@@ -1,0 +1,20 @@
+{
+  "name": "acp-components",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @acp-components/demo dev",
+    "dev:server": "pnpm --filter @acp-components/server dev",
+    "dev:all": "pnpm run dev:server & pnpm run dev",
+    "dev:tauri": "pnpm --filter @acp-components/tauri tauri dev",
+    "build:tauri": "pnpm --filter @acp-components/tauri tauri build",
+    "build": "pnpm --filter @acp-components/core build && pnpm --filter @acp-components/react build",
+    "build:core": "pnpm --filter @acp-components/core build",
+    "build:react": "pnpm --filter @acp-components/react build",
+    "test": "pnpm --filter @acp-components/core test && pnpm --filter @acp-components/react test",
+    "lint": "eslint packages/*/src --ext .ts,.tsx"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
