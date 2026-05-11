@@ -17,6 +17,11 @@ import {
   type LoadSessionResponse,
   type SetSessionModeRequest,
   type CancelNotification,
+  type ReadTextFileRequest,
+  type ReadTextFileResponse,
+  type WriteTextFileRequest,
+  type WriteTextFileResponse,
+  type ClientCapabilities,
 } from '@agentclientprotocol/sdk';
 import { StdioTransport, HttpTransport, WebSocketTransport } from '../transport';
 import type { AcpTransport } from '../transport';
@@ -24,6 +29,8 @@ import type { ConnectionStatus, Implementation, TransportConfig } from '../types
 
 export type SessionUpdateHandler = (update: SessionNotification) => void;
 export type PermissionHandler = (request: RequestPermissionRequest) => Promise<RequestPermissionResponse>;
+export type FileReadHandler = (request: ReadTextFileRequest) => Promise<ReadTextFileResponse>;
+export type FileWriteHandler = (request: WriteTextFileRequest) => Promise<WriteTextFileResponse>;
 
 function createTransport(config: TransportConfig): AcpTransport {
   switch (config.type) {
@@ -49,6 +56,8 @@ export class AcpClient {
 
   private sessionUpdateHandlers = new Set<SessionUpdateHandler>();
   private permissionHandler: PermissionHandler | null = null;
+  private fileReadHandler: FileReadHandler | null = null;
+  private fileWriteHandler: FileWriteHandler | null = null;
   private statusHandlers = new Set<(status: ConnectionStatus) => void>();
 
   get status(): ConnectionStatus {
@@ -82,6 +91,14 @@ export class AcpClient {
     this.permissionHandler = handler;
   }
 
+  setFileReadHandler(handler: FileReadHandler): void {
+    this.fileReadHandler = handler;
+  }
+
+  setFileWriteHandler(handler: FileWriteHandler): void {
+    this.fileWriteHandler = handler;
+  }
+
   async connect(config: TransportConfig): Promise<void> {
     this.transport = createTransport(config);
     this.setStatus('connecting');
@@ -101,6 +118,18 @@ export class AcpClient {
           outcome: { outcome: 'selected', optionId: params.options[0]?.optionId ?? '' },
         });
       },
+      readTextFile: (params: ReadTextFileRequest) => {
+        if (this.fileReadHandler) {
+          return this.fileReadHandler(params);
+        }
+        return Promise.reject(new Error('readTextFile not supported'));
+      },
+      writeTextFile: (params: WriteTextFileRequest) => {
+        if (this.fileWriteHandler) {
+          return this.fileWriteHandler(params);
+        }
+        return Promise.reject(new Error('writeTextFile not supported'));
+      },
     };
 
     this.connection = new ClientSideConnection(
@@ -117,12 +146,13 @@ export class AcpClient {
     });
   }
 
-  async initialize(clientInfo?: Implementation): Promise<InitializeResponse> {
+  async initialize(clientInfo?: Implementation, clientCapabilities?: ClientCapabilities): Promise<InitializeResponse> {
     if (!this.connection) throw new Error('Not connected');
 
     const req: InitializeRequest = {
       protocolVersion: 1,
       clientInfo: clientInfo ?? null,
+      clientCapabilities: clientCapabilities ?? undefined,
     };
 
     const res = await this.connection.initialize(req);

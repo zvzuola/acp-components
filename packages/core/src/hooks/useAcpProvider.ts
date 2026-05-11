@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { AcpClient } from '../client/AcpClient';
+import type { FileReadHandler, FileWriteHandler } from '../client/AcpClient';
 import { useAcpStore } from '../store/acpStore';
 import { useSessionStore } from '../store/sessionStore';
 import type { TransportConfig, Implementation, ToolCallState, PermissionRequest } from '../types';
-import type { RequestPermissionResponse } from '@agentclientprotocol/sdk';
+import type { RequestPermissionResponse, ClientCapabilities } from '@agentclientprotocol/sdk';
 
 let globalClient: AcpClient | null = null;
 
@@ -14,9 +15,12 @@ export function getAcpClient(): AcpClient | null {
 interface UseAcpProviderOptions {
   transport: TransportConfig;
   clientInfo?: Implementation;
+  clientCapabilities?: ClientCapabilities;
+  onFileRead?: FileReadHandler;
+  onFileWrite?: FileWriteHandler;
 }
 
-export function useAcpProvider({ transport, clientInfo }: UseAcpProviderOptions) {
+export function useAcpProvider({ transport, clientInfo, clientCapabilities, onFileRead, onFileWrite }: UseAcpProviderOptions) {
   const clientRef = useRef<AcpClient>(globalClient ?? new AcpClient());
   const [ready, setReady] = useState(false);
 
@@ -103,9 +107,29 @@ export function useAcpProvider({ transport, clientInfo }: UseAcpProviderOptions)
       });
     });
 
+    if (onFileRead) {
+      client.setFileReadHandler(onFileRead);
+    }
+    if (onFileWrite) {
+      client.setFileWriteHandler(onFileWrite);
+    }
+
+    const caps: ClientCapabilities = {
+      ...clientCapabilities,
+      fs: {
+        ...clientCapabilities?.fs,
+        ...(onFileRead ? { readTextFile: true } : {}),
+        ...(onFileWrite ? { writeTextFile: true } : {}),
+      },
+    };
+    const hasFsCaps = caps.fs?.readTextFile || caps.fs?.writeTextFile;
+    const mergedCaps: ClientCapabilities | undefined = hasFsCaps || caps.terminal || caps.auth
+      ? caps
+      : undefined;
+
     client.connect(transport).then(() => {
       console.log('ACP connected');
-      return client.initialize(clientInfo);
+      return client.initialize(clientInfo, mergedCaps);
     }).then(() => {
       const caps = client.capabilities;
       useAcpStore.getState().setAgentInfo(client.agentInfo);
