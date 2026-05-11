@@ -1,15 +1,15 @@
 import React from 'react';
-import { useSessions, useConnectionStatus } from '@acp-components/core';
+import { useSessions, useConnectionStatus, useAcpStore } from '@acp-components/core';
 import type { SessionId } from '@agentclientprotocol/sdk';
 import styles from './session-list.module.scss';
 
 export function SessionList() {
   const { sessions, activeSessionId, setActiveSession, selectSession, createSession, closeSession } = useSessions();
   const { agentName } = useConnectionStatus();
+  const projectCwd = useAcpStore((s) => s.projectCwd);
 
   const handleNewSession = async () => {
-    const cwd = '';
-    const id = await createSession(cwd);
+    const id = await createSession(projectCwd);
     setActiveSession(id);
   };
 

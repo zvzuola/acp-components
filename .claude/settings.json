@@ -11,7 +11,8 @@
       "Bash(pnpm --filter @acp-components/react build)",
       "Bash(pnpm --filter @acp-components/demo exec tsc --noEmit)",
       "Bash(pnpm build *)",
-      "Bash(pnpm run *)"
+      "Bash(pnpm run *)",
+      "Bash(npx tsc *)"
     ]
   }
 }

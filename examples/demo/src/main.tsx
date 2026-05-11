@@ -1,10 +1,12 @@
+import { useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import { AcpProvider } from '@acp-components/react';
 import { Workbench } from '@acp-components/react';
+import { ProjectOpener } from '@acp-components/react';
 import { SessionList } from '@acp-components/react';
 import { ChatView } from '@acp-components/react';
 import { PermissionDialog } from '@acp-components/react';
-import { useAcpStore } from '@acp-components/core';
+import { useAcpStore, useSessions } from '@acp-components/core';
 
 // In web environments, stdio transport is unavailable (can't spawn child processes).
 // Use WebSocket transport connected to the acp-server backend, which bridges
@@ -15,9 +17,43 @@ import { useAcpStore } from '@acp-components/core';
 // For local Electron/Tauri/desktop where stdio works, switch back to:
 //   transport: { type: 'stdio', command: 'opencode', args: ['acp'] }
 
-function App() {
+function AppInner() {
   const activeSessionId = useAcpStore((s) => s.activeSessionId);
+  const projectCwd = useAcpStore((s) => s.projectCwd);
+  const { refreshSessions } = useSessions();
+  const prevCwd = useRef(projectCwd);
 
+  useEffect(() => {
+    if (prevCwd.current !== projectCwd) {
+      prevCwd.current = projectCwd;
+      refreshSessions(projectCwd);
+    }
+  }, [projectCwd, refreshSessions]);
+
+  const handleBrowse = async () => {
+    // In a browser, we can't get the real filesystem path from showDirectoryPicker.
+    // Desktop environments (Tauri/Electron) should use their native dialog APIs instead.
+    const path = window.prompt('Enter project directory path:', projectCwd || '/path/to/project');
+    return path?.trim() || null;
+  };
+
+  return (
+    <>
+      <Workbench
+        sidebar={
+          <>
+            <ProjectOpener onBrowse={handleBrowse} />
+            <SessionList />
+          </>
+        }
+        main={<ChatView sessionId={activeSessionId} />}
+      />
+      <PermissionDialog sessionId={activeSessionId} />
+    </>
+  );
+}
+
+function App() {
   return (
     <AcpProvider
       transport={{
@@ -26,11 +62,7 @@ function App() {
       }}
       theme="dark"
     >
-      <Workbench
-        sidebar={<SessionList />}
-        main={<ChatView sessionId={activeSessionId} />}
-      />
-      <PermissionDialog sessionId={activeSessionId} />
+      <AppInner />
     </AcpProvider>
   );
 }

@@ -8,6 +8,7 @@ interface AcpStoreState {
   capabilities: Record<string, unknown> | null;
   sessions: Map<SessionId, SessionMeta>;
   activeSessionId: SessionId | null;
+  projectCwd: string;
 
   setConnectionStatus: (status: ConnectionStatus) => void;
   setAgentInfo: (info: Implementation | null) => void;
@@ -17,6 +18,7 @@ interface AcpStoreState {
   removeSession: (id: SessionId) => void;
   updateSession: (id: SessionId, update: Partial<SessionMeta>) => void;
   setActiveSession: (id: SessionId | null) => void;
+  setProjectCwd: (cwd: string) => void;
 }
 
 export const useAcpStore = create<AcpStoreState>((set) => ({
@@ -25,6 +27,7 @@ export const useAcpStore = create<AcpStoreState>((set) => ({
   capabilities: null,
   sessions: new Map(),
   activeSessionId: null,
+  projectCwd: '',
 
   setConnectionStatus: (status) => set({ connectionStatus: status }),
   setAgentInfo: (info) => set({ agentInfo: info }),
@@ -65,4 +68,5 @@ export const useAcpStore = create<AcpStoreState>((set) => ({
     }),
 
   setActiveSession: (id) => set({ activeSessionId: id }),
+  setProjectCwd: (cwd) => set({ projectCwd: cwd }),
 }));

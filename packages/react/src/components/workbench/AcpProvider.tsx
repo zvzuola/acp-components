@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { AcpContext, useAcpProvider } from '@acp-components/core';
+import { AcpContext, useAcpProvider, useAcpStore } from '@acp-components/core';
 import type { TransportConfig, Implementation, FileReadHandler, FileWriteHandler } from '@acp-components/core';
 import type { ClientCapabilities } from '@agentclientprotocol/sdk';
 import styles from './loading.module.scss';
@@ -12,16 +12,26 @@ export interface AcpProviderProps {
   children: React.ReactNode;
   onFileRead?: FileReadHandler;
   onFileWrite?: FileWriteHandler;
+  defaultCwd?: string;
 }
 
-export function AcpProvider({ transport, clientInfo, clientCapabilities, theme = 'dark', children, onFileRead, onFileWrite }: AcpProviderProps) {
+export function AcpProvider({ transport, clientInfo, clientCapabilities, theme = 'dark', children, onFileRead, onFileWrite, defaultCwd = '' }: AcpProviderProps) {
   const { client, ready } = useAcpProvider({ transport, clientInfo, clientCapabilities, onFileRead, onFileWrite });
+  const projectCwd = useAcpStore((s) => s.projectCwd);
 
   const contextValue = useMemo(() => ({
     client,
     config: transport,
     clientInfo,
-  }), [client, transport, clientInfo]);
+    projectCwd,
+  }), [client, transport, clientInfo, projectCwd]);
+
+  // Sync defaultCwd to store once on mount
+  React.useEffect(() => {
+    if (defaultCwd) {
+      useAcpStore.getState().setProjectCwd(defaultCwd);
+    }
+  }, [defaultCwd]);
 
   if (!ready) {
     return (

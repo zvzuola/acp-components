@@ -46,9 +46,9 @@ export function ToolCallCard({ toolCall }: ToolCallCardProps) {
                   <div key={i} className={styles.acpToolCallDiff}>
                     <div style={{ fontWeight: 600, marginBottom: 4 }}>{diff.path}</div>
                     {diff.oldText && (
-                      <div className={styles.acpToolCallDiffRemove}>- {diff.oldText.slice(0, 200)}</div>
+                      <div className={styles.acpToolCallDiffRemove}>- {diff.oldText}</div>
                     )}
-                    <div className={styles.acpToolCallDiffAdd}>+ {diff.newText.slice(0, 200)}</div>
+                    <div className={styles.acpToolCallDiffAdd}>+ {diff.newText}</div>
                   </div>
                 );
               case 'terminal':

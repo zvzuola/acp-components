@@ -6,6 +6,7 @@ export interface AcpContextValue {
   client: AcpClient;
   config: TransportConfig;
   clientInfo?: Implementation;
+  projectCwd: string;
 }
 
 export const AcpContext = createContext<AcpContextValue | null>(null);

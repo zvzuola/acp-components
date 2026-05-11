@@ -15,9 +15,10 @@ export function useSessions() {
   const ensureSession = useSessionStore((s) => s.ensureSession);
   const removeSessionData = useSessionStore((s) => s.removeSession);
 
-  const createSession = useCallback(async (cwd: string) => {
-    const res = await client.newSession(cwd);
-    const meta = { id: res.sessionId, cwd };
+  const createSession = useCallback(async (cwd?: string) => {
+    const cwdToUse = cwd ?? useAcpStore.getState().projectCwd;
+    const res = await client.newSession(cwdToUse);
+    const meta = { id: res.sessionId, cwd: cwdToUse };
     addSession(meta);
     ensureSession(res.sessionId);
     if (res.modes) {
@@ -61,8 +62,8 @@ export function useSessions() {
     removeSessionData(sessionId);
   }, [client, removeSession, removeSessionData]);
 
-  const refreshSessions = useCallback(async () => {
-    const res = await client.listSessions();
+  const refreshSessions = useCallback(async (cwd?: string) => {
+    const res = await client.listSessions(undefined, cwd);
     setSessions(res.sessions);
   }, [client, setSessions]);
 

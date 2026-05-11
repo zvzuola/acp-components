@@ -4,6 +4,8 @@ export { AcpProvider } from './components/workbench';
 export type { AcpProviderProps } from './components/workbench/AcpProvider';
 export { Workbench } from './components/workbench';
 export type { WorkbenchProps } from './components/workbench/Workbench';
+export { ProjectOpener } from './components/workbench';
+export type { ProjectOpenerProps } from './components/workbench/ProjectOpener';
 export { SessionList } from './components/session-list';
 export { ChatView, MessageBubble, ChatComposer, ToolCallCard, StreamingIndicator, ModelSelector } from './components/chat-view';
 export type { ChatViewProps } from './components/chat-view/ChatView';
