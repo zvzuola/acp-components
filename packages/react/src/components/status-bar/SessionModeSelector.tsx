@@ -24,18 +24,19 @@ export function SessionModeSelector({ sessionId }: SessionModeSelectorProps) {
   };
 
   return (
-    <div className={styles.acpSessionModeSelector} role="radiogroup" aria-label="Session mode">
-      {availableModes.map((mode) => (
-        <button
-          key={mode.id}
-          className={`${styles.acpSessionModeSelectorBtn}${mode.id === currentModeId ? ` ${styles.acpSessionModeSelectorBtnActive}` : ''}`}
-          onClick={() => handleModeChange(mode.id)}
-          role="radio"
-          aria-checked={mode.id === currentModeId}
-        >
-          {mode.name}
-        </button>
-      ))}
+    <div className={styles.acpSessionModeSelector}>
+      <select
+        className={styles.acpSessionModeSelectorSelect}
+        value={currentModeId ?? ''}
+        onChange={(e) => handleModeChange(e.target.value as SessionModeId)}
+        aria-label="Select session mode"
+      >
+        {availableModes.map((mode) => (
+          <option key={mode.id} value={mode.id}>
+            {mode.name}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

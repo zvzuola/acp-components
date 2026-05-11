@@ -39,6 +39,16 @@
   scroll-behavior: smooth;
 }
 
+.acp-round {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 16px;
+  &:last-child {
+    padding-bottom: 0;
+  }
+}
+
 .acp-message-bubble {
   display: flex;
   gap: 10px;

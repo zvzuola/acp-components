@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { useSession } from '@acp-components/core';
 import type { SessionId } from '@agentclientprotocol/sdk';
+import type { Message } from '@acp-components/core';
 import { MessageBubble } from './MessageBubble';
 import { ChatComposer } from './ChatComposer';
 import { StreamingIndicator } from './StreamingIndicator';
@@ -12,9 +13,41 @@ export interface ChatViewProps {
   sessionId: SessionId | null;
 }
 
+interface Round {
+  userMessage?: Message;
+  agentMessages: Message[];
+}
+
+function groupMessagesIntoRounds(messages: Message[]): Round[] {
+  const rounds: Round[] = [];
+  let currentRound: Round | null = null;
+
+  for (const msg of messages) {
+    if (msg.role === 'user') {
+      if (currentRound) {
+        rounds.push(currentRound);
+      }
+      currentRound = { userMessage: msg, agentMessages: [] };
+    } else {
+      if (!currentRound) {
+        currentRound = { agentMessages: [] };
+      }
+      currentRound.agentMessages.push(msg);
+    }
+  }
+
+  if (currentRound && (currentRound.userMessage || currentRound.agentMessages.length > 0)) {
+    rounds.push(currentRound);
+  }
+
+  return rounds;
+}
+
 export function ChatView({ sessionId }: ChatViewProps) {
   const { messages, isStreaming } = useSession(sessionId);
   const listRef = useRef<HTMLDivElement>(null);
+
+  const rounds = useMemo(() => groupMessagesIntoRounds(messages), [messages]);
 
   useEffect(() => {
     if (listRef.current) {
@@ -42,10 +75,20 @@ export function ChatView({ sessionId }: ChatViewProps) {
         </div>
       </div>
       <div className={styles.acpMessageList} ref={listRef} role="log" aria-live="polite" aria-label="Messages">
-        {messages.map((msg) => (
-          <MessageBubble key={msg.id} message={msg} />
-        ))}
-        {isStreaming && <StreamingIndicator />}
+        {rounds.map((round, i) => {
+          const isLastRound = i === rounds.length - 1;
+          return (
+            <div key={round.userMessage?.id ?? round.agentMessages[0]?.id ?? i} className={styles.acpRound}>
+              {round.userMessage && (
+                <MessageBubble messages={[round.userMessage]} />
+              )}
+              {round.agentMessages.length > 0 && (
+                <MessageBubble messages={round.agentMessages} />
+              )}
+              {isLastRound && isStreaming && <StreamingIndicator />}
+            </div>
+          );
+        })}
       </div>
       <ChatComposer sessionId={sessionId} isStreaming={isStreaming} />
     </div>

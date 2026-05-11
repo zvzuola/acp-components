@@ -5,7 +5,7 @@ import { ToolCallCard } from './ToolCallCard';
 import styles from './chat-view.module.scss';
 
 export interface MessageBubbleProps {
-  message: Message;
+  messages: Message[];
 }
 
 function MarkdownText({ text }: { text: string }) {
@@ -43,8 +43,12 @@ function renderContent(content: Message['content'][number]) {
   }
 }
 
-export function MessageBubble({ message }: MessageBubbleProps) {
-  const isUser = message.role === 'user';
+export function MessageBubble({ messages }: MessageBubbleProps) {
+  const role = messages[0]?.role ?? 'user';
+  const isUser = role === 'user';
+  const stopReason = messages.reduceRight<string | undefined>(
+    (acc, m) => acc ?? m.stopReason, undefined
+  );
 
   return (
     <div className={`${styles.acpMessageBubble} ${isUser ? styles.acpMessageBubbleUser : styles.acpMessageBubbleAgent}`}>
@@ -52,23 +56,27 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         {isUser ? 'U' : 'A'}
       </div>
       <div className={styles.acpMessageBubbleContent}>
-        {message.thought && message.thought.length > 0 && (
-          <details style={{ marginBottom: 8 }}>
-            <summary>Thinking</summary>
-            {message.thought.map((block, i) => (
-              <React.Fragment key={i}>{renderContent(block)}</React.Fragment>
+        {messages.map((msg, i) => (
+          <React.Fragment key={msg.id}>
+            {msg.thought && msg.thought.length > 0 && (
+              <details style={{ marginBottom: 8 }}>
+                <summary>Thinking</summary>
+                {msg.thought.map((block, j) => (
+                  <React.Fragment key={j}>{renderContent(block)}</React.Fragment>
+                ))}
+              </details>
+            )}
+            {msg.toolCalls?.map((tc) => (
+              <ToolCallCard key={tc.toolCallId} toolCall={tc} />
             ))}
-          </details>
-        )}
-        {message.content.map((block, i) => (
-          <React.Fragment key={i}>{renderContent(block)}</React.Fragment>
+            {msg.content.map((block, j) => (
+              <React.Fragment key={j}>{renderContent(block)}</React.Fragment>
+            ))}
+          </React.Fragment>
         ))}
-        {message.toolCalls?.map((tc) => (
-          <ToolCallCard key={tc.toolCallId} toolCall={tc} />
-        ))}
-        {message.stopReason && message.role === 'agent' && (
+        {stopReason && (
           <div style={{ fontSize: 11, color: 'var(--acp-color-text-muted)', marginTop: 4 }}>
-            {message.stopReason}
+            {stopReason}
           </div>
         )}
       </div>

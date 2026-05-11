@@ -1,28 +1,25 @@
 .acp-session-mode-selector {
   display: flex;
-  gap: 2px;
-  background: var(--acp-color-bg-secondary);
-  border-radius: var(--acp-radius-sm);
-  padding: 2px;
+  align-items: center;
 
-  &__btn {
-    padding: 4px 12px;
-    border: none;
+  &__select {
+    padding: 4px 8px;
+    border: 1px solid var(--acp-color-border);
     border-radius: var(--acp-radius-sm);
-    background: transparent;
-    color: var(--acp-color-text-secondary);
+    background: var(--acp-color-bg-primary);
+    color: var(--acp-color-text-primary);
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.15s;
+    outline: none;
+    min-width: 120px;
 
-    &:hover {
-      color: var(--acp-color-text-primary);
+    &:focus {
+      border-color: var(--acp-color-accent);
     }
 
-    &--active {
-      background: var(--acp-color-accent);
-      color: white;
+    &:hover {
+      border-color: var(--acp-color-text-muted);
     }
   }
 }
