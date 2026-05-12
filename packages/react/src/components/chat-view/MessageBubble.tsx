@@ -3,10 +3,12 @@ import { marked } from 'marked';
 import type { Message, MessagePart } from '@acp-components/core';
 import type { ContentBlock } from '@agentclientprotocol/sdk';
 import { ToolCallCard } from './ToolCallCard';
+import { ThoughtView } from './ThoughtView';
 import styles from './chat-view.module.scss';
 
 export interface MessageBubbleProps {
   messages: Message[];
+  isStreaming?: boolean;
 }
 
 function MarkdownText({ text }: { text: string }) {
@@ -44,16 +46,15 @@ function renderContent(content: ContentBlock) {
   }
 }
 
-function renderPart(part: MessagePart, partIndex: number) {
+function renderPart(part: MessagePart, partIndex: number, isStreaming?: boolean) {
   switch (part.type) {
     case 'thought':
       return (
-        <details key={partIndex} style={{ marginBottom: 8 }}>
-          <summary>Thinking</summary>
-          {part.thought.map((block, j) => (
-            <React.Fragment key={j}>{renderContent(block)}</React.Fragment>
-          ))}
-        </details>
+        <ThoughtView
+          key={partIndex}
+          thought={part.thought}
+          isStreaming={!!isStreaming}
+        />
       );
     case 'tool_calls':
       return part.toolCalls.map((tc) => (
@@ -66,12 +67,16 @@ function renderPart(part: MessagePart, partIndex: number) {
   }
 }
 
-export function MessageBubble({ messages }: MessageBubbleProps) {
+export function MessageBubble({ messages, isStreaming = false }: MessageBubbleProps) {
   const role = messages[0]?.role ?? 'user';
   const isUser = role === 'user';
   const stopReason = messages.reduceRight<string | undefined>(
     (acc, m) => acc ?? m.stopReason, undefined
   );
+
+  const lastMsg = messages[messages.length - 1];
+  const lastPart = lastMsg?.parts[lastMsg.parts.length - 1];
+  const thoughtStillStreaming = isStreaming && lastPart?.type === 'thought';
 
   return (
     <div className={`${styles.acpMessageBubble} ${isUser ? styles.acpMessageBubbleUser : styles.acpMessageBubbleAgent}`}>
@@ -81,7 +86,10 @@ export function MessageBubble({ messages }: MessageBubbleProps) {
       <div className={styles.acpMessageBubbleContent}>
         {messages.map((msg) => (
           <React.Fragment key={msg.id}>
-            {msg.parts.map((part, j) => renderPart(part, j))}
+            {msg.parts.map((part, j) => {
+              const isStreamingThought = msg === lastMsg && j === lastMsg.parts.length - 1 && thoughtStillStreaming;
+              return renderPart(part, j, isStreamingThought);
+            })}
           </React.Fragment>
         ))}
         {stopReason && (

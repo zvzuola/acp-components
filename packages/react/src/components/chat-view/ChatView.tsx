@@ -83,7 +83,7 @@ export function ChatView({ sessionId }: ChatViewProps) {
                 <MessageBubble messages={[round.userMessage]} />
               )}
               {round.agentMessages.length > 0 && (
-                <MessageBubble messages={round.agentMessages} />
+                <MessageBubble messages={round.agentMessages} isStreaming={isLastRound && isStreaming} />
               )}
               {isLastRound && isStreaming && <StreamingIndicator />}
             </div>

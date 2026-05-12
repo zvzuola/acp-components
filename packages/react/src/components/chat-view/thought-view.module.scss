@@ -1,0 +1,106 @@
+.acp-thought-view {
+  border: 1px solid var(--acp-color-border);
+  border-left: 3px solid var(--acp-color-warning);
+  border-radius: var(--acp-radius-md);
+  margin: 8px 0;
+  overflow: hidden;
+  font-size: 13px;
+  background: var(--acp-color-bg-primary);
+  transition: border-color 0.2s;
+
+  &--streaming {
+    border-left-color: var(--acp-color-accent);
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: none;
+    cursor: pointer;
+    border: none;
+    width: 100%;
+    text-align: left;
+    color: var(--acp-color-text-secondary);
+    font-size: 13px;
+
+    &:hover {
+      background: var(--acp-color-bg-tertiary);
+    }
+  }
+
+  &__label {
+    font-weight: 500;
+  }
+
+  &__chevron {
+    color: var(--acp-color-text-muted);
+    font-size: 10px;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+
+    &--open {
+      transform: rotate(90deg);
+    }
+  }
+
+  &__spinner {
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--acp-color-border);
+    border-top-color: var(--acp-color-accent);
+    border-radius: 50%;
+    animation: acp-thought-spin 0.8s linear infinite;
+  }
+
+  &__body {
+    padding: 10px 12px;
+    border-top: 1px solid var(--acp-color-border);
+    background: var(--acp-color-bg-secondary);
+    max-height: 400px;
+    overflow-y: auto;
+    color: var(--acp-color-text-secondary);
+    line-height: 1.6;
+    font-size: 13px;
+
+    p {
+      margin-bottom: 6px;
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    pre {
+      background: var(--acp-color-code-bg);
+      color: var(--acp-color-code-text);
+      border-radius: var(--acp-radius-sm);
+      padding: 10px;
+      overflow-x: auto;
+      font-size: 12px;
+      line-height: 1.5;
+      margin: 6px 0;
+    }
+
+    code {
+      font-family: var(--acp-font-mono);
+      font-size: 0.9em;
+    }
+
+    :not(pre) > code {
+      background: var(--acp-color-bg-tertiary);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+  }
+
+  &__empty {
+    color: var(--acp-color-text-muted);
+    font-style: italic;
+  }
+}
+
+@keyframes acp-thought-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
