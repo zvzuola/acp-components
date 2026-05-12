@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Message, ToolCallState, PermissionRequest } from '../types';
-import type { SessionId, ContentBlock, StopReason, SessionMode, SessionModeId, ModelInfo, ModelId, PlanEntry } from '@agentclientprotocol/sdk';
+import type { SessionId, ContentBlock, StopReason, SessionMode, SessionModeId, ModelInfo, ModelId, PlanEntry, UsageUpdate } from '@agentclientprotocol/sdk';
 
 interface SessionData {
   messages: Message[];
@@ -13,6 +13,7 @@ interface SessionData {
   stopReason: StopReason | null;
   pendingPermissions: PermissionRequest[];
   plan: PlanEntry[];
+  usage: UsageUpdate | null;
 }
 
 interface SessionStoreState {
@@ -37,6 +38,7 @@ interface SessionStoreState {
   addPermissionRequest: (sessionId: SessionId, req: PermissionRequest) => void;
   removePermissionRequest: (sessionId: SessionId) => void;
   setPlan: (sessionId: SessionId, entries: PlanEntry[]) => void;
+  setUsage: (sessionId: SessionId, usage: UsageUpdate) => void;
 }
 
 function createSessionData(): SessionData {
@@ -51,6 +53,7 @@ function createSessionData(): SessionData {
     stopReason: null,
     pendingPermissions: [],
     plan: [],
+    usage: null,
   };
 }
 
@@ -347,6 +350,15 @@ export const useSessionStore = create<SessionStoreState>((set) => ({
       if (!data) return s;
       const next = new Map(s.sessions);
       next.set(sessionId, { ...data, plan: entries });
+      return { sessions: next };
+    }),
+
+  setUsage: (sessionId, usage) =>
+    set((s) => {
+      const data = s.sessions.get(sessionId);
+      if (!data) return s;
+      const next = new Map(s.sessions);
+      next.set(sessionId, { ...data, usage });
       return { sessions: next };
     }),
 }));

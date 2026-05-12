@@ -19,8 +19,9 @@ export { DiffView } from './components/diff-view';
 export type { DiffViewProps } from './components/diff-view/DiffView';
 export { PermissionDialog } from './components/permission-dialog';
 export type { PermissionDialogProps } from './components/permission-dialog/PermissionDialog';
-export { ConnectionStatus, SessionModeSelector } from './components/status-bar';
+export { ConnectionStatus, SessionModeSelector, UsageBar } from './components/status-bar';
 export type { SessionModeSelectorProps } from './components/status-bar/SessionModeSelector';
+export type { UsageBarProps } from './components/status-bar/UsageBar';
 export { TerminalView } from './components/terminal-view';
 export type { TerminalViewProps } from './components/terminal-view/TerminalView';
 

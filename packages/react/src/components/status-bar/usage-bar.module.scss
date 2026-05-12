@@ -1,0 +1,48 @@
+.acp-usage-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 12px;
+  font-size: 11px;
+  font-family: var(--acp-font-mono);
+  color: var(--acp-color-text-muted);
+  white-space: nowrap;
+
+  &__wrap {
+    position: relative;
+    width: 80px;
+    height: 4px;
+    background: var(--acp-color-border);
+    border-radius: 2px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  &__fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.3s ease, background 0.3s ease;
+    background: var(--acp-color-text-muted);
+  }
+
+  &__fillLow {
+    background: var(--acp-color-success);
+  }
+
+  &__fillMedium {
+    background: var(--acp-color-warning);
+  }
+
+  &__fillHigh {
+    background: var(--acp-color-error);
+  }
+
+  &__text {
+    flex-shrink: 0;
+  }
+
+  &__cost {
+    flex-shrink: 0;
+    color: var(--acp-color-text-secondary);
+  }
+}

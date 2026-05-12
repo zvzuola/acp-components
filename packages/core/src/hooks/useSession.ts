@@ -22,6 +22,7 @@ export function useSession(sessionId: SessionId | null) {
       stopReason: null,
       pendingPermissions: [],
       plan: [],
+      usage: null,
     };
   }
 
@@ -36,5 +37,6 @@ export function useSession(sessionId: SessionId | null) {
     stopReason: data.stopReason,
     pendingPermissions: data.pendingPermissions,
     plan: data.plan,
+    usage: data.usage,
   };
 }

@@ -8,6 +8,7 @@ import { StreamingIndicator } from './StreamingIndicator';
 import { ModelSelector } from './ModelSelector';
 import { SessionModeSelector } from '../status-bar/SessionModeSelector';
 import { PlanView } from './PlanView';
+import { UsageBar } from '../status-bar/UsageBar';
 import styles from './chat-view.module.scss';
 
 export interface ChatViewProps {
@@ -71,6 +72,7 @@ export function ChatView({ sessionId }: ChatViewProps) {
       <div className={styles.acpChatHeader}>
         <span className={styles.acpChatHeaderTitle}>Chat</span>
         <div className={styles.acpChatHeaderControls}>
+          <UsageBar sessionId={sessionId} />
           <SessionModeSelector sessionId={sessionId} />
           <ModelSelector sessionId={sessionId} />
         </div>

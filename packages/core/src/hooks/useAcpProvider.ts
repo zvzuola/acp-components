@@ -88,6 +88,9 @@ export function useAcpProvider({ transport, clientInfo, clientCapabilities, onFi
             useAcpStore.getState().updateSession(sessionId, { title: update.title });
           }
           break;
+        case 'usage_update':
+          store.setUsage(sessionId, update);
+          break;
       }
     });
 
