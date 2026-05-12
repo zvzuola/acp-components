@@ -12,7 +12,9 @@
       "Bash(pnpm --filter @acp-components/demo exec tsc --noEmit)",
       "Bash(pnpm build *)",
       "Bash(pnpm run *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(npx --package typescript tsc --emitDeclarationOnly)",
+      "Bash(npx vite *)"
     ]
   }
 }

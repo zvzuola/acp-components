@@ -91,6 +91,9 @@ export function useAcpProvider({ transport, clientInfo, clientCapabilities, onFi
         case 'config_option_update':
           store.setConfigOptions(sessionId, update.configOptions);
           break;
+        case 'available_commands_update':
+          store.setAvailableCommands(sessionId, update.availableCommands);
+          break;
       }
     });
 

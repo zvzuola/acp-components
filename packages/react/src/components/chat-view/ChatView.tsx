@@ -45,7 +45,7 @@ function groupMessagesIntoRounds(messages: Message[]): Round[] {
 }
 
 export function ChatView({ sessionId }: ChatViewProps) {
-  const { messages, isStreaming, plan } = useSession(sessionId);
+  const { messages, isStreaming, plan, availableCommands } = useSession(sessionId);
   const listRef = useRef<HTMLDivElement>(null);
 
   const rounds = useMemo(() => groupMessagesIntoRounds(messages), [messages]);
@@ -92,7 +92,7 @@ export function ChatView({ sessionId }: ChatViewProps) {
         })}
       </div>
       <PlanView entries={plan} isStreaming={isStreaming} />
-      <ChatComposer sessionId={sessionId} isStreaming={isStreaming} />
+      <ChatComposer sessionId={sessionId} isStreaming={isStreaming} availableCommands={availableCommands} />
     </div>
   );
 }

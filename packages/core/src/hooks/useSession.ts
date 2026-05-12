@@ -20,6 +20,7 @@ export function useSession(sessionId: SessionId | null) {
       plan: [],
       usage: null,
       configOptions: [],
+      availableCommands: [],
     };
   }
 
@@ -32,5 +33,6 @@ export function useSession(sessionId: SessionId | null) {
     plan: data.plan,
     usage: data.usage,
     configOptions: data.configOptions,
+    availableCommands: data.availableCommands,
   };
 }

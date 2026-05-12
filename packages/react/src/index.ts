@@ -22,6 +22,8 @@ export { ConnectionStatus, UsageBar } from './components/status-bar';
 export type { UsageBarProps } from './components/status-bar/UsageBar';
 export { SessionConfigPanel } from './components/session-config-panel';
 export type { SessionConfigPanelProps } from './components/session-config-panel/SessionConfigPanel';
+export { CommandPalette } from './components/command-palette';
+export type { CommandPaletteProps } from './components/command-palette/CommandPalette';
 export { TerminalView } from './components/terminal-view';
 export type { TerminalViewProps } from './components/terminal-view/TerminalView';
 
