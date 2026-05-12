@@ -12,6 +12,7 @@
     "@acp-components/core": "workspace:*",
     "@acp-components/react": "workspace:*",
     "@tauri-apps/api": "^2.0.0",
+    "@tauri-apps/plugin-dialog": "^2.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
