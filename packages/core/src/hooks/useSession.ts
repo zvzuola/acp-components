@@ -21,6 +21,7 @@ export function useSession(sessionId: SessionId | null) {
       availableModels: [],
       stopReason: null,
       pendingPermissions: [],
+      plan: [],
     };
   }
 
@@ -34,5 +35,6 @@ export function useSession(sessionId: SessionId | null) {
     availableModels: data.availableModels,
     stopReason: data.stopReason,
     pendingPermissions: data.pendingPermissions,
+    plan: data.plan,
   };
 }

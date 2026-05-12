@@ -7,6 +7,7 @@ import { ChatComposer } from './ChatComposer';
 import { StreamingIndicator } from './StreamingIndicator';
 import { ModelSelector } from './ModelSelector';
 import { SessionModeSelector } from '../status-bar/SessionModeSelector';
+import { PlanView } from './PlanView';
 import styles from './chat-view.module.scss';
 
 export interface ChatViewProps {
@@ -44,7 +45,7 @@ function groupMessagesIntoRounds(messages: Message[]): Round[] {
 }
 
 export function ChatView({ sessionId }: ChatViewProps) {
-  const { messages, isStreaming } = useSession(sessionId);
+  const { messages, isStreaming, plan } = useSession(sessionId);
   const listRef = useRef<HTMLDivElement>(null);
 
   const rounds = useMemo(() => groupMessagesIntoRounds(messages), [messages]);
@@ -90,6 +91,7 @@ export function ChatView({ sessionId }: ChatViewProps) {
           );
         })}
       </div>
+      <PlanView entries={plan} isStreaming={isStreaming} />
       <ChatComposer sessionId={sessionId} isStreaming={isStreaming} />
     </div>
   );

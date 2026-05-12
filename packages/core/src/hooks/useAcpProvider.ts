@@ -80,6 +80,9 @@ export function useAcpProvider({ transport, clientInfo, clientCapabilities, onFi
         case 'current_mode_update':
           store.setCurrentMode(sessionId, update.currentModeId);
           break;
+        case 'plan':
+          store.setPlan(sessionId, update.entries);
+          break;
         case 'session_info_update':
           if (update.title) {
             useAcpStore.getState().updateSession(sessionId, { title: update.title });

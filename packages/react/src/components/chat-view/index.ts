@@ -5,3 +5,4 @@ export { ToolCallCard } from './ToolCallCard';
 export { StreamingIndicator } from './StreamingIndicator';
 export { ModelSelector } from './ModelSelector';
 export { ThoughtView } from './ThoughtView';
+export { PlanView } from './PlanView';
