@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { marked } from 'marked';
-import type { Message } from '@acp-components/core';
+import type { Message, MessagePart } from '@acp-components/core';
+import type { ContentBlock } from '@agentclientprotocol/sdk';
 import { ToolCallCard } from './ToolCallCard';
 import styles from './chat-view.module.scss';
 
@@ -13,7 +14,7 @@ function MarkdownText({ text }: { text: string }) {
   return <div dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-function renderContent(content: Message['content'][number]) {
+function renderContent(content: ContentBlock) {
   switch (content.type) {
     case 'text':
       return <MarkdownText text={(content as { text: string }).text} />;
@@ -43,6 +44,28 @@ function renderContent(content: Message['content'][number]) {
   }
 }
 
+function renderPart(part: MessagePart, partIndex: number) {
+  switch (part.type) {
+    case 'thought':
+      return (
+        <details key={partIndex} style={{ marginBottom: 8 }}>
+          <summary>Thinking</summary>
+          {part.thought.map((block, j) => (
+            <React.Fragment key={j}>{renderContent(block)}</React.Fragment>
+          ))}
+        </details>
+      );
+    case 'tool_calls':
+      return part.toolCalls.map((tc) => (
+        <ToolCallCard key={tc.toolCallId} toolCall={tc} />
+      ));
+    case 'content':
+      return part.content.map((block, j) => (
+        <React.Fragment key={j}>{renderContent(block)}</React.Fragment>
+      ));
+  }
+}
+
 export function MessageBubble({ messages }: MessageBubbleProps) {
   const role = messages[0]?.role ?? 'user';
   const isUser = role === 'user';
@@ -56,22 +79,9 @@ export function MessageBubble({ messages }: MessageBubbleProps) {
         {isUser ? 'U' : 'A'}
       </div>
       <div className={styles.acpMessageBubbleContent}>
-        {messages.map((msg, i) => (
+        {messages.map((msg) => (
           <React.Fragment key={msg.id}>
-            {msg.thought && msg.thought.length > 0 && (
-              <details style={{ marginBottom: 8 }}>
-                <summary>Thinking</summary>
-                {msg.thought.map((block, j) => (
-                  <React.Fragment key={j}>{renderContent(block)}</React.Fragment>
-                ))}
-              </details>
-            )}
-            {msg.toolCalls?.map((tc) => (
-              <ToolCallCard key={tc.toolCallId} toolCall={tc} />
-            ))}
-            {msg.content.map((block, j) => (
-              <React.Fragment key={j}>{renderContent(block)}</React.Fragment>
-            ))}
+            {msg.parts.map((part, j) => renderPart(part, j))}
           </React.Fragment>
         ))}
         {stopReason && (

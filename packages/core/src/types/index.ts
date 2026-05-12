@@ -17,13 +17,16 @@ import type { AcpTransport } from '../transport/types';
 
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
+export type MessagePart =
+  | { type: 'content'; content: ContentBlock[] }
+  | { type: 'thought'; thought: ContentBlock[] }
+  | { type: 'tool_calls'; toolCalls: ToolCallState[] };
+
 export interface Message {
   id: string;
   role: 'user' | 'agent' | 'system';
-  content: ContentBlock[];
-  thought?: ContentBlock[];
+  parts: MessagePart[];
   timestamp: number;
-  toolCalls?: ToolCallState[];
   stopReason?: StopReason;
 }
 

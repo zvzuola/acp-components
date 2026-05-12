@@ -19,6 +19,7 @@ export type {
   ConnectionStatus,
   Session,
   Message,
+  MessagePart,
   ToolCallState,
   AcpClientConfig,
   TransportConfig,

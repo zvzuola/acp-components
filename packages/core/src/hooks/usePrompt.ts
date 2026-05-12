@@ -24,7 +24,7 @@ export function usePrompt(sessionId: SessionId | null) {
     const userMsg: Message = {
       id: generateId('user'),
       role: 'user',
-      content: contentBlocks,
+      parts: [{ type: 'content', content: contentBlocks }],
       timestamp: Date.now(),
     };
     addMessage(sessionId, userMsg);

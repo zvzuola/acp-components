@@ -106,20 +106,34 @@ export const useSessionStore = create<SessionStoreState>((set) => ({
       if (exists) {
         messages = data.messages.map((m) => {
           if (m.id !== messageId) return m;
-          const content = m.content;
-          if (content.length > 0) {
-            const last = content[content.length - 1];
-            if (last.type === 'text' && block.type === 'text') {
-              return { ...m, content: [...content.slice(0, -1), { ...last, text: last.text + block.text }] };
+          const parts = m.parts;
+          const last = parts[parts.length - 1];
+          if (last?.type === 'content') {
+            const blocks = last.content;
+            if (blocks.length > 0) {
+              const lastBlock = blocks[blocks.length - 1];
+              if (lastBlock.type === 'text' && block.type === 'text') {
+                return {
+                  ...m,
+                  parts: [
+                    ...parts.slice(0, -1),
+                    { ...last, content: [...blocks.slice(0, -1), { ...lastBlock, text: lastBlock.text + block.text }] },
+                  ],
+                };
+              }
             }
+            return {
+              ...m,
+              parts: [...parts.slice(0, -1), { ...last, content: [...blocks, block] }],
+            };
           }
-          return { ...m, content: [...content, block] };
+          return { ...m, parts: [...parts, { type: 'content', content: [block] }] };
         });
       } else {
         const newMsg: Message = {
           id: messageId,
           role,
-          content: [block],
+          parts: [{ type: 'content', content: [block] }],
           timestamp: Date.now(),
         };
         messages = [...data.messages, newMsg];
@@ -138,21 +152,34 @@ export const useSessionStore = create<SessionStoreState>((set) => ({
       if (exists) {
         messages = data.messages.map((m) => {
           if (m.id !== messageId) return m;
-          const thought = m.thought ?? [];
-          if (thought.length > 0) {
-            const last = thought[thought.length - 1];
-            if (last.type === 'text' && block.type === 'text') {
-              return { ...m, thought: [...thought.slice(0, -1), { ...last, text: last.text + block.text }] };
+          const parts = m.parts;
+          const last = parts[parts.length - 1];
+          if (last?.type === 'thought') {
+            const blocks = last.thought;
+            if (blocks.length > 0) {
+              const lastBlock = blocks[blocks.length - 1];
+              if (lastBlock.type === 'text' && block.type === 'text') {
+                return {
+                  ...m,
+                  parts: [
+                    ...parts.slice(0, -1),
+                    { ...last, thought: [...blocks.slice(0, -1), { ...lastBlock, text: lastBlock.text + block.text }] },
+                  ],
+                };
+              }
             }
+            return {
+              ...m,
+              parts: [...parts.slice(0, -1), { ...last, thought: [...blocks, block] }],
+            };
           }
-          return { ...m, thought: [...thought, block] };
+          return { ...m, parts: [...parts, { type: 'thought', thought: [block] }] };
         });
       } else {
         const newMsg: Message = {
           id: messageId,
           role,
-          content: [],
-          thought: [block],
+          parts: [{ type: 'thought', thought: [block] }],
           timestamp: Date.now(),
         };
         messages = [...data.messages, newMsg];
@@ -189,17 +216,21 @@ export const useSessionStore = create<SessionStoreState>((set) => ({
       const existing = toolCalls.get(tc.toolCallId);
       toolCalls.set(tc.toolCallId, existing ? { ...existing, ...tc } : tc);
 
-      // Also attach tool call to the latest agent message
       const messages = data.messages.map((m, i, arr) => {
         if (i === arr.length - 1 && m.role === 'agent') {
-          const existingTcs = m.toolCalls ?? [];
-          const idx = existingTcs.findIndex((t) => t.toolCallId === tc.toolCallId);
-          if (idx >= 0) {
-            const updatedTcs = [...existingTcs];
-            updatedTcs[idx] = { ...updatedTcs[idx], ...tc };
-            return { ...m, toolCalls: updatedTcs };
+          const parts = m.parts;
+          const last = parts[parts.length - 1];
+          if (last?.type === 'tool_calls') {
+            const tcs = last.toolCalls;
+            const idx = tcs.findIndex((t) => t.toolCallId === tc.toolCallId);
+            if (idx >= 0) {
+              const updatedTcs = [...tcs];
+              updatedTcs[idx] = { ...updatedTcs[idx], ...tc };
+              return { ...m, parts: [...parts.slice(0, -1), { ...last, toolCalls: updatedTcs }] };
+            }
+            return { ...m, parts: [...parts.slice(0, -1), { ...last, toolCalls: [...tcs, tc] }] };
           }
-          return { ...m, toolCalls: [...existingTcs, tc] };
+          return { ...m, parts: [...parts, { type: 'tool_calls' as const, toolCalls: [tc] }] };
         }
         return m;
       });
@@ -227,11 +258,17 @@ export const useSessionStore = create<SessionStoreState>((set) => ({
 
       // Also update tool call on the attached message
       const messages = data.messages.map((m) => {
-        if (m.toolCalls?.some((t) => t.toolCallId === id)) {
-          return {
-            ...m,
-            toolCalls: m.toolCalls.map((t) => (t.toolCallId === id ? updated : t)),
-          };
+        const tcPartIdx = m.parts.findIndex((p) => p.type === 'tool_calls' && p.toolCalls.some((t) => t.toolCallId === id));
+        if (tcPartIdx >= 0) {
+          const part = m.parts[tcPartIdx];
+          if (part.type === 'tool_calls') {
+            const updatedParts = [...m.parts];
+            updatedParts[tcPartIdx] = {
+              ...part,
+              toolCalls: part.toolCalls.map((t) => (t.toolCallId === id ? updated : t)),
+            };
+            return { ...m, parts: updatedParts };
+          }
         }
         return m;
       });
