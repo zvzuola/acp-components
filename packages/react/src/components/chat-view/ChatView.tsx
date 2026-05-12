@@ -5,10 +5,9 @@ import type { Message } from '@acp-components/core';
 import { MessageBubble } from './MessageBubble';
 import { ChatComposer } from './ChatComposer';
 import { StreamingIndicator } from './StreamingIndicator';
-import { ModelSelector } from './ModelSelector';
-import { SessionModeSelector } from '../status-bar/SessionModeSelector';
 import { PlanView } from './PlanView';
 import { UsageBar } from '../status-bar/UsageBar';
+import { SessionConfigPanel } from '../session-config-panel';
 import styles from './chat-view.module.scss';
 
 export interface ChatViewProps {
@@ -72,9 +71,8 @@ export function ChatView({ sessionId }: ChatViewProps) {
       <div className={styles.acpChatHeader}>
         <span className={styles.acpChatHeaderTitle}>Chat</span>
         <div className={styles.acpChatHeaderControls}>
+          <SessionConfigPanel sessionId={sessionId} />
           <UsageBar sessionId={sessionId} />
-          <SessionModeSelector sessionId={sessionId} />
-          <ModelSelector sessionId={sessionId} />
         </div>
       </div>
       <div className={styles.acpMessageList} ref={listRef} role="log" aria-live="polite" aria-label="Messages">

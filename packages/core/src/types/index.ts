@@ -2,8 +2,6 @@ import type {
   ContentBlock,
   SessionId,
   SessionInfo,
-  SessionMode,
-  SessionModeId,
   StopReason,
   ToolCall,
   ToolCallUpdate,
@@ -36,8 +34,6 @@ export interface ToolCallState extends ToolCall {
 export interface Session extends SessionInfo {
   messages: Message[];
   isStreaming: boolean;
-  currentModeId?: SessionModeId;
-  availableModes?: SessionMode[];
 }
 
 export interface AcpClientConfig {

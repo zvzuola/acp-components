@@ -77,9 +77,6 @@ export function useAcpProvider({ transport, clientInfo, clientCapabilities, onFi
           store.updateToolCall(sessionId, update.toolCallId, updateData);
           break;
         }
-        case 'current_mode_update':
-          store.setCurrentMode(sessionId, update.currentModeId);
-          break;
         case 'plan':
           store.setPlan(sessionId, update.entries);
           break;
@@ -90,6 +87,9 @@ export function useAcpProvider({ transport, clientInfo, clientCapabilities, onFi
           break;
         case 'usage_update':
           store.setUsage(sessionId, update);
+          break;
+        case 'config_option_update':
+          store.setConfigOptions(sessionId, update.configOptions);
           break;
       }
     });

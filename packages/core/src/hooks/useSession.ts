@@ -15,14 +15,11 @@ export function useSession(sessionId: SessionId | null) {
       messages: [],
       isStreaming: false,
       pendingToolCalls: [],
-      currentModeId: null,
-      availableModes: [],
-      currentModelId: null,
-      availableModels: [],
       stopReason: null,
       pendingPermissions: [],
       plan: [],
       usage: null,
+      configOptions: [],
     };
   }
 
@@ -30,13 +27,10 @@ export function useSession(sessionId: SessionId | null) {
     messages: data.messages,
     isStreaming: data.isStreaming,
     pendingToolCalls: Array.from(data.pendingToolCalls.values()),
-    currentModeId: data.currentModeId,
-    availableModes: data.availableModes,
-    currentModelId: data.currentModelId,
-    availableModels: data.availableModels,
     stopReason: data.stopReason,
     pendingPermissions: data.pendingPermissions,
     plan: data.plan,
     usage: data.usage,
+    configOptions: data.configOptions,
   };
 }

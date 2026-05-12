@@ -1,19 +1,16 @@
 import { create } from 'zustand';
 import type { Message, ToolCallState, PermissionRequest } from '../types';
-import type { SessionId, ContentBlock, StopReason, SessionMode, SessionModeId, ModelInfo, ModelId, PlanEntry, UsageUpdate } from '@agentclientprotocol/sdk';
+import type { SessionId, ContentBlock, StopReason, PlanEntry, UsageUpdate, SessionConfigOption } from '@agentclientprotocol/sdk';
 
 interface SessionData {
   messages: Message[];
   isStreaming: boolean;
   pendingToolCalls: Map<string, ToolCallState>;
-  currentModeId: SessionModeId | null;
-  availableModes: SessionMode[];
-  currentModelId: ModelId | null;
-  availableModels: ModelInfo[];
   stopReason: StopReason | null;
   pendingPermissions: PermissionRequest[];
   plan: PlanEntry[];
   usage: UsageUpdate | null;
+  configOptions: SessionConfigOption[];
 }
 
 interface SessionStoreState {
@@ -31,14 +28,11 @@ interface SessionStoreState {
   setStopReason: (sessionId: SessionId, r: StopReason | null) => void;
   upsertToolCall: (sessionId: SessionId, tc: ToolCallState) => void;
   updateToolCall: (sessionId: SessionId, id: string, update: Partial<ToolCallState>) => void;
-  setCurrentMode: (sessionId: SessionId, modeId: SessionModeId | null) => void;
-  setAvailableModes: (sessionId: SessionId, modes: SessionMode[]) => void;
-  setCurrentModel: (sessionId: SessionId, modelId: ModelId | null) => void;
-  setAvailableModels: (sessionId: SessionId, models: ModelInfo[]) => void;
   addPermissionRequest: (sessionId: SessionId, req: PermissionRequest) => void;
   removePermissionRequest: (sessionId: SessionId) => void;
   setPlan: (sessionId: SessionId, entries: PlanEntry[]) => void;
   setUsage: (sessionId: SessionId, usage: UsageUpdate) => void;
+  setConfigOptions: (sessionId: SessionId, configOptions: SessionConfigOption[]) => void;
 }
 
 function createSessionData(): SessionData {
@@ -46,14 +40,11 @@ function createSessionData(): SessionData {
     messages: [],
     isStreaming: false,
     pendingToolCalls: new Map(),
-    currentModeId: null,
-    availableModes: [],
-    currentModelId: null,
-    availableModels: [],
     stopReason: null,
     pendingPermissions: [],
     plan: [],
     usage: null,
+    configOptions: [],
   };
 }
 
@@ -284,42 +275,6 @@ export const useSessionStore = create<SessionStoreState>((set) => ({
       return { sessions: next };
     }),
 
-  setCurrentMode: (sessionId, modeId) =>
-    set((s) => {
-      const data = s.sessions.get(sessionId);
-      if (!data) return s;
-      const next = new Map(s.sessions);
-      next.set(sessionId, { ...data, currentModeId: modeId });
-      return { sessions: next };
-    }),
-
-  setAvailableModes: (sessionId, modes) =>
-    set((s) => {
-      const data = s.sessions.get(sessionId);
-      if (!data) return s;
-      const next = new Map(s.sessions);
-      next.set(sessionId, { ...data, availableModes: modes });
-      return { sessions: next };
-    }),
-
-  setCurrentModel: (sessionId, modelId) =>
-    set((s) => {
-      const data = s.sessions.get(sessionId);
-      if (!data) return s;
-      const next = new Map(s.sessions);
-      next.set(sessionId, { ...data, currentModelId: modelId });
-      return { sessions: next };
-    }),
-
-  setAvailableModels: (sessionId, models) =>
-    set((s) => {
-      const data = s.sessions.get(sessionId);
-      if (!data) return s;
-      const next = new Map(s.sessions);
-      next.set(sessionId, { ...data, availableModels: models });
-      return { sessions: next };
-    }),
-
   addPermissionRequest: (sessionId, req) =>
     set((s) => {
       const data = s.sessions.get(sessionId);
@@ -359,6 +314,15 @@ export const useSessionStore = create<SessionStoreState>((set) => ({
       if (!data) return s;
       const next = new Map(s.sessions);
       next.set(sessionId, { ...data, usage });
+      return { sessions: next };
+    }),
+
+  setConfigOptions: (sessionId, configOptions) =>
+    set((s) => {
+      const data = s.sessions.get(sessionId);
+      if (!data) return s;
+      const next = new Map(s.sessions);
+      next.set(sessionId, { ...data, configOptions });
       return { sessions: next };
     }),
 }));

@@ -15,7 +15,8 @@ import {
   type ListSessionsResponse,
   type LoadSessionRequest,
   type LoadSessionResponse,
-  type SetSessionModeRequest,
+  type SetSessionConfigOptionRequest,
+  type SetSessionConfigOptionResponse,
   type CancelNotification,
   type ReadTextFileRequest,
   type ReadTextFileResponse,
@@ -191,16 +192,16 @@ export class AcpClient {
     return this.connection.loadSession({ sessionId, cwd, mcpServers });
   }
 
-  async setSessionMode(sessionId: string, modeId: string): Promise<void> {
+  async setSessionConfigOption(sessionId: string, configId: string, value: string | boolean): Promise<SetSessionConfigOptionResponse> {
     if (!this.connection) throw new Error('Not connected');
-    const params: SetSessionModeRequest = { sessionId, modeId };
-    await this.connection.setSessionMode(params);
-  }
-
-  async setSessionModel(sessionId: string, modelId: string): Promise<void> {
-    if (!this.connection) throw new Error('Not connected');
-    const params = { sessionId, modelId };
-    await this.connection.unstable_setSessionModel(params);
+    const params: SetSessionConfigOptionRequest = { sessionId, configId } as SetSessionConfigOptionRequest;
+    if (typeof value === 'boolean') {
+      (params as Record<string, unknown>).type = 'boolean';
+      (params as Record<string, unknown>).value = value;
+    } else {
+      (params as Record<string, unknown>).value = value;
+    }
+    return this.connection.setSessionConfigOption(params);
   }
 
   async closeSession(sessionId: string): Promise<void> {

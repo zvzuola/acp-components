@@ -1,0 +1,91 @@
+.acp-session-config-panel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.acp-session-config-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+
+.acp-session-config-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--acp-color-text-secondary);
+  white-space: nowrap;
+}
+
+.acp-session-config-select {
+  padding: 4px 8px;
+  border: 1px solid var(--acp-color-border);
+  border-radius: var(--acp-radius-sm);
+  background: var(--acp-color-bg-primary);
+  color: var(--acp-color-text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  min-width: 100px;
+
+  &:focus {
+    border-color: var(--acp-color-accent);
+  }
+
+  &:hover {
+    border-color: var(--acp-color-text-muted);
+  }
+}
+
+.acp-session-config-toggle {
+  display: flex;
+  align-items: center;
+}
+
+.acp-session-config-switch {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  border: none;
+  border-radius: 9px;
+  background: var(--acp-color-border);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s ease;
+  outline: none;
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px var(--acp-color-accent);
+  }
+
+  &--on {
+    background: var(--acp-color-accent);
+  }
+}
+
+.acp-session-config-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s ease;
+
+  .acp-session-config-switch--on & {
+    transform: translateX(14px);
+  }
+}
+
+.acp-session-config-description {
+  font-size: 11px;
+  color: var(--acp-color-text-muted);
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 2px;
+  white-space: nowrap;
+}

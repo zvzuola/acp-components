@@ -21,13 +21,8 @@ export function useSessions() {
     const meta = { id: res.sessionId, cwd: cwdToUse };
     addSession(meta);
     ensureSession(res.sessionId);
-    if (res.modes) {
-      useSessionStore.getState().setAvailableModes(res.sessionId, res.modes.availableModes);
-      useSessionStore.getState().setCurrentMode(res.sessionId, res.modes.currentModeId);
-    }
-    if (res.models) {
-      useSessionStore.getState().setAvailableModels(res.sessionId, res.models.availableModels);
-      useSessionStore.getState().setCurrentModel(res.sessionId, res.models.currentModelId);
+    if (res.configOptions) {
+      useSessionStore.getState().setConfigOptions(res.sessionId, res.configOptions);
     }
     return res.sessionId;
   }, [client, addSession, ensureSession]);
@@ -35,13 +30,8 @@ export function useSessions() {
   const loadSession = useCallback(async (sessionId: SessionId, cwd: string) => {
     useSessionStore.getState().resetSession(sessionId);
     const res = await client.loadSession(sessionId, cwd);
-    if (res.modes) {
-      useSessionStore.getState().setAvailableModes(sessionId, res.modes.availableModes);
-      useSessionStore.getState().setCurrentMode(sessionId, res.modes.currentModeId);
-    }
-    if (res.models) {
-      useSessionStore.getState().setAvailableModels(sessionId, res.models.availableModels);
-      useSessionStore.getState().setCurrentModel(sessionId, res.models.currentModelId);
+    if (res.configOptions) {
+      useSessionStore.getState().setConfigOptions(sessionId, res.configOptions);
     }
   }, [client]);
 
