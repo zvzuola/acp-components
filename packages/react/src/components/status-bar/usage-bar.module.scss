@@ -2,7 +2,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 2px 12px;
+  padding: 4px 10px;
   font-size: 11px;
   font-family: var(--acp-font-mono);
   color: var(--acp-color-text-muted);
@@ -11,8 +11,8 @@
   &__wrap {
     position: relative;
     width: 80px;
-    height: 4px;
-    background: var(--acp-color-border);
+    height: 3px;
+    background: var(--acp-color-border-subtle);
     border-radius: 2px;
     overflow: hidden;
     flex-shrink: 0;
@@ -21,8 +21,17 @@
   &__fill {
     height: 100%;
     border-radius: 2px;
-    transition: width 0.3s ease, background 0.3s ease;
+    transition: width 0.4s var(--acp-ease-out), background 0.4s var(--acp-ease-out);
     background: var(--acp-color-text-muted);
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, hsl(0 0% 100% / 0.15));
+      border-radius: 2px;
+    }
   }
 
   &__fillLow {
@@ -39,6 +48,7 @@
 
   &__text {
     flex-shrink: 0;
+    font-weight: 500;
   }
 
   &__cost {

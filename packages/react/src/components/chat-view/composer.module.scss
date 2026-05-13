@@ -1,7 +1,9 @@
 .acp-chat-composer {
-  border-top: 1px solid var(--acp-color-border);
-  padding: 12px 16px;
-  background: var(--acp-color-bg-primary);
+  border-top: 1px solid var(--acp-color-border-subtle);
+  padding: 14px 20px;
+  background: var(--acp-color-bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   position: relative;
 
   &__form {
@@ -17,42 +19,24 @@
     border: 1px solid var(--acp-color-border);
     border-radius: var(--acp-radius-md);
     padding: 10px 14px;
-    background: var(--acp-color-input-bg);
+    background: var(--acp-color-bg-input);
     color: var(--acp-color-text-primary);
     font-family: var(--acp-font-sans);
     font-size: 14px;
     line-height: 1.5;
-    min-height: 40px;
+    min-height: 42px;
     max-height: 200px;
     outline: none;
-    transition: border-color 0.15s;
+    transition: border-color var(--acp-duration-fast) var(--acp-ease-out),
+                box-shadow var(--acp-duration-fast) var(--acp-ease-out);
 
     &:focus {
       border-color: var(--acp-color-accent);
+      box-shadow: 0 0 0 3px var(--acp-color-accent-muted);
     }
 
     &::placeholder {
       color: var(--acp-color-text-muted);
-    }
-  }
-
-  &__send {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border: none;
-    border-radius: var(--acp-radius-md);
-    background: var(--acp-color-accent);
-    color: white;
-    cursor: pointer;
-    flex-shrink: 0;
-    font-size: 18px;
-    transition: background 0.15s;
-
-    &:hover {
-      background: var(--acp-color-accent-hover);
     }
 
     &:disabled {
@@ -61,23 +45,58 @@
     }
   }
 
+  &__send {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: var(--acp-radius-md);
+    background: var(--acp-color-accent);
+    color: var(--acp-color-text-inverse);
+    cursor: pointer;
+    flex-shrink: 0;
+    font-size: 18px;
+    transition: background var(--acp-duration-fast) var(--acp-ease-out),
+                transform var(--acp-duration-fast) var(--acp-ease-out);
+
+    &:hover {
+      background: var(--acp-color-accent-hover);
+      transform: scale(1.05);
+    }
+
+    &:active {
+      transform: scale(0.97);
+    }
+
+    &:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      transform: none;
+    }
+  }
+
   &__cancel {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     border: 1px solid var(--acp-color-border);
     border-radius: var(--acp-radius-md);
     background: transparent;
     color: var(--acp-color-text-secondary);
     cursor: pointer;
     flex-shrink: 0;
-    font-size: 18px;
+    font-size: 14px;
+    transition: border-color var(--acp-duration-fast) var(--acp-ease-out),
+                color var(--acp-duration-fast) var(--acp-ease-out);
 
     &:hover {
       border-color: var(--acp-color-error);
       color: var(--acp-color-error);
+      background: var(--acp-color-error-muted);
     }
   }
 
@@ -91,8 +110,8 @@
 
 .acp-composer-palette {
   position: absolute;
-  bottom: calc(100% - 12px);
-  left: 16px;
-  right: 16px;
+  bottom: calc(100% - 14px);
+  left: 20px;
+  right: 20px;
   z-index: 100;
 }

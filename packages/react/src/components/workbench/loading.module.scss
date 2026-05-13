@@ -4,17 +4,19 @@
   align-items: center;
   justify-content: center;
   height: 100vh;
-  gap: 16px;
+  gap: 18px;
   color: var(--acp-color-text-secondary);
+  background: var(--acp-color-bg-primary);
   font-size: 14px;
+  font-weight: 500;
 
   &__spinner {
-    width: 32px;
-    height: 32px;
-    border: 3px solid var(--acp-color-border);
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--acp-color-border-subtle);
     border-top-color: var(--acp-color-accent);
     border-radius: 50%;
-    animation: acp-spin 0.8s linear infinite;
+    animation: acp-spin 0.7s linear infinite;
   }
 }
 

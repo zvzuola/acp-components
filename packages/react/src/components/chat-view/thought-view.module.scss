@@ -1,12 +1,12 @@
 .acp-thought-view {
-  border: 1px solid var(--acp-color-border);
+  border: 1px solid var(--acp-color-border-subtle);
   border-left: 3px solid var(--acp-color-warning);
   border-radius: var(--acp-radius-md);
   margin: 8px 0;
   overflow: hidden;
   font-size: 13px;
   background: var(--acp-color-bg-primary);
-  transition: border-color 0.2s;
+  transition: border-color var(--acp-duration-normal) var(--acp-ease-out);
 
   &--streaming {
     border-left-color: var(--acp-color-accent);
@@ -16,14 +16,18 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 12px;
+    padding: 10px 14px;
     background: none;
     cursor: pointer;
     border: none;
     width: 100%;
     text-align: left;
     color: var(--acp-color-text-secondary);
-    font-size: 13px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    transition: background var(--acp-duration-fast) var(--acp-ease-out);
 
     &:hover {
       background: var(--acp-color-bg-tertiary);
@@ -31,13 +35,13 @@
   }
 
   &__label {
-    font-weight: 500;
+    font-weight: 600;
   }
 
   &__chevron {
     color: var(--acp-color-text-muted);
     font-size: 10px;
-    transition: transform 0.2s;
+    transition: transform var(--acp-duration-fast) var(--acp-ease-spring);
     flex-shrink: 0;
 
     &--open {
@@ -46,40 +50,42 @@
   }
 
   &__spinner {
-    width: 12px;
-    height: 12px;
-    border: 2px solid var(--acp-color-border);
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--acp-color-border-subtle);
     border-top-color: var(--acp-color-accent);
     border-radius: 50%;
-    animation: acp-thought-spin 0.8s linear infinite;
+    animation: acp-thought-spin 0.7s linear infinite;
   }
 
   &__body {
-    padding: 10px 12px;
-    border-top: 1px solid var(--acp-color-border);
+    padding: 12px 14px;
+    border-top: 1px solid var(--acp-color-border-subtle);
     background: var(--acp-color-bg-secondary);
     max-height: 400px;
     overflow-y: auto;
     color: var(--acp-color-text-secondary);
-    line-height: 1.6;
+    line-height: 1.7;
     font-size: 13px;
 
     p {
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       &:last-child {
         margin-bottom: 0;
       }
     }
 
     pre {
-      background: var(--acp-color-code-bg);
-      color: var(--acp-color-code-text);
+      background: var(--acp-color-bg-code);
+      color: var(--acp-color-text-primary);
+      border: 1px solid var(--acp-color-border-subtle);
       border-radius: var(--acp-radius-sm);
-      padding: 10px;
+      padding: 12px;
       overflow-x: auto;
       font-size: 12px;
-      line-height: 1.5;
-      margin: 6px 0;
+      line-height: 1.6;
+      margin: 8px 0;
+      font-family: var(--acp-font-mono);
     }
 
     code {
@@ -89,8 +95,9 @@
 
     :not(pre) > code {
       background: var(--acp-color-bg-tertiary);
-      padding: 1px 5px;
-      border-radius: 3px;
+      padding: 1px 6px;
+      border-radius: var(--acp-radius-xs);
+      border: 1px solid var(--acp-color-border-subtle);
     }
   }
 

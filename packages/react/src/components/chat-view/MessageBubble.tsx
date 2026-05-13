@@ -81,9 +81,6 @@ export function MessageBubble({ messages, isStreaming = false, onNavigateFile }:
 
   return (
     <div className={`${styles.acpMessageBubble} ${isUser ? styles.acpMessageBubbleUser : styles.acpMessageBubbleAgent}`}>
-      <div className={styles.acpMessageBubbleAvatar} aria-hidden="true">
-        {isUser ? 'U' : 'A'}
-      </div>
       <div className={styles.acpMessageBubbleContent}>
         {messages.map((msg) => (
           <React.Fragment key={msg.id}>
@@ -94,7 +91,7 @@ export function MessageBubble({ messages, isStreaming = false, onNavigateFile }:
           </React.Fragment>
         ))}
         {stopReason && (
-          <div style={{ fontSize: 11, color: 'var(--acp-color-text-muted)', marginTop: 4 }}>
+          <div style={{ fontSize: 11, color: 'var(--acp-color-text-muted)', marginTop: 8 }}>
             {stopReason}
           </div>
         )}

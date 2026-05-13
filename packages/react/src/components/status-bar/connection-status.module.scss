@@ -1,22 +1,25 @@
 .acp-connection-status {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   padding: 4px 12px;
   font-size: 12px;
+  font-weight: 500;
   color: var(--acp-color-text-secondary);
 
   &__dot {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
     flex-shrink: 0;
 
     &--connected {
       background: var(--acp-color-success);
+      box-shadow: 0 0 6px var(--acp-color-success);
     }
     &--connecting {
       background: var(--acp-color-warning);
+      box-shadow: 0 0 6px var(--acp-color-warning);
       animation: acp-pulse 1.5s infinite;
     }
     &--disconnected {
@@ -24,16 +27,12 @@
     }
     &--error {
       background: var(--acp-color-error);
+      box-shadow: 0 0 6px var(--acp-color-error);
     }
   }
 }
 
 @keyframes acp-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.4;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
 }

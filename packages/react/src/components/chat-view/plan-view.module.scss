@@ -1,11 +1,12 @@
 .acp-plan-view {
-  border: 1px solid var(--acp-color-border);
+  border: 1px solid var(--acp-color-border-subtle);
   border-left: 3px solid var(--acp-color-accent);
   border-radius: var(--acp-radius-md);
   margin: 8px 0;
   overflow: hidden;
   font-size: 13px;
   background: var(--acp-color-bg-primary);
+  transition: border-color var(--acp-duration-normal) var(--acp-ease-out);
 
   &--streaming {
     border-left-color: var(--acp-color-success);
@@ -15,14 +16,18 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 12px;
+    padding: 10px 14px;
     background: none;
     cursor: pointer;
     border: none;
     width: 100%;
     text-align: left;
     color: var(--acp-color-text-secondary);
-    font-size: 13px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    transition: background var(--acp-duration-fast) var(--acp-ease-out);
 
     &:hover {
       background: var(--acp-color-bg-tertiary);
@@ -32,7 +37,7 @@
   &__chevron {
     color: var(--acp-color-text-muted);
     font-size: 10px;
-    transition: transform 0.2s;
+    transition: transform var(--acp-duration-fast) var(--acp-ease-spring);
     flex-shrink: 0;
 
     &--open {
@@ -48,19 +53,20 @@
     color: var(--acp-color-text-muted);
     font-size: 11px;
     margin-left: auto;
+    font-family: var(--acp-font-mono);
   }
 
   &__spinner {
-    width: 12px;
-    height: 12px;
-    border: 2px solid var(--acp-color-border);
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--acp-color-border-subtle);
     border-top-color: var(--acp-color-accent);
     border-radius: 50%;
-    animation: acp-plan-spin 0.8s linear infinite;
+    animation: acp-plan-spin 0.7s linear infinite;
   }
 
   &__body {
-    border-top: 1px solid var(--acp-color-border);
+    border-top: 1px solid var(--acp-color-border-subtle);
     background: var(--acp-color-bg-secondary);
     padding: 8px 0;
     max-height: 360px;
@@ -70,15 +76,15 @@
 
 .acp-plan-list {
   list-style: none;
-  padding: 0 12px;
+  padding: 0 14px;
   margin: 0;
 }
 
 .acp-plan-item {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  padding: 6px 4px;
+  gap: 10px;
+  padding: 7px 6px;
   color: var(--acp-color-text-secondary);
   line-height: 1.5;
   position: relative;
@@ -86,11 +92,11 @@
   &::after {
     content: '';
     position: absolute;
-    left: 6.5px;
-    top: 24px;
+    left: 7.5px;
+    top: 26px;
     bottom: 0;
     width: 1px;
-    background: var(--acp-color-border);
+    background: var(--acp-color-border-subtle);
   }
 
   &:last-child::after {
@@ -113,10 +119,10 @@
 
 .acp-plan-item-status {
   flex-shrink: 0;
-  width: 14px;
+  width: 16px;
   text-align: center;
-  font-size: 11px;
-  line-height: 1.6;
+  font-size: 12px;
+  line-height: 1.7;
 
   &--pending {
     color: var(--acp-color-text-muted);
@@ -137,7 +143,7 @@
 
   &--done {
     text-decoration: line-through;
-    opacity: 0.6;
+    opacity: 0.5;
   }
 }
 
@@ -148,5 +154,5 @@
 
 @keyframes acp-plan-pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  50% { opacity: 0.35; }
 }

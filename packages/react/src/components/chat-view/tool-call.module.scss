@@ -1,25 +1,35 @@
 .acp-tool-call {
-  border: 1px solid var(--acp-color-border);
+  border: 1px solid var(--acp-color-border-subtle);
   border-radius: var(--acp-radius-md);
   margin: 8px 0;
   overflow: hidden;
   font-size: 13px;
+  background: var(--acp-color-bg-secondary);
+  transition: box-shadow var(--acp-duration-fast) var(--acp-ease-out),
+              border-color var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover {
+    border-color: var(--acp-color-border);
+    box-shadow: var(--acp-shadow-xs);
+  }
 
   &__header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    background: var(--acp-color-bg-tertiary);
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--acp-color-bg-glass);
     cursor: pointer;
     border: none;
     width: 100%;
     text-align: left;
     color: var(--acp-color-text-primary);
     font-size: 13px;
+    font-family: var(--acp-font-sans);
+    transition: background var(--acp-duration-fast) var(--acp-ease-out);
 
     &:hover {
-      background: var(--acp-color-bg-hover);
+      background: var(--acp-color-bg-tertiary);
     }
   }
 
@@ -31,6 +41,7 @@
 
     &--pending {
       background: var(--acp-color-text-muted);
+      box-shadow: none;
     }
     &--in_progress {
       background: var(--acp-color-warning);
@@ -46,7 +57,9 @@
 
   &__name {
     flex: 1;
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: -0.01em;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -55,7 +68,7 @@
   &__chevron {
     color: var(--acp-color-text-muted);
     font-size: 10px;
-    transition: transform 0.2s;
+    transition: transform var(--acp-duration-fast) var(--acp-ease-out);
 
     &--open {
       transform: rotate(90deg);
@@ -63,8 +76,8 @@
   }
 
   &__body {
-    padding: 10px 12px;
-    border-top: 1px solid var(--acp-color-border);
+    padding: 12px 14px;
+    border-top: 1px solid var(--acp-color-border-subtle);
     background: var(--acp-color-bg-primary);
     max-height: 300px;
     overflow-y: auto;
@@ -74,33 +87,36 @@
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
-    padding: 6px 12px;
-    border-top: 1px solid var(--acp-color-border-light);
+    padding: 8px 14px;
+    border-top: 1px solid var(--acp-color-border-subtle);
     background: var(--acp-color-bg-primary);
   }
 
   &__location {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 2px 8px;
+    gap: 5px;
+    padding: 3px 10px;
     border-radius: var(--acp-radius-sm);
-    background: var(--acp-color-bg-secondary);
-    border: 1px solid var(--acp-color-border-light);
+    background: var(--acp-color-bg-tertiary);
+    border: 1px solid var(--acp-color-border-subtle);
     cursor: pointer;
     font-size: 11px;
     font-family: var(--acp-font-mono);
     color: var(--acp-color-text-secondary);
-    transition: background 0.15s, color 0.15s;
+    transition: background var(--acp-duration-fast) var(--acp-ease-out),
+                color var(--acp-duration-fast) var(--acp-ease-out),
+                border-color var(--acp-duration-fast) var(--acp-ease-out);
 
     &:hover {
       background: var(--acp-color-bg-hover);
       color: var(--acp-color-text-primary);
+      border-color: var(--acp-color-accent);
     }
 
     &:focus-visible {
-      outline: 1px solid var(--acp-color-accent);
-      outline-offset: -1px;
+      outline: 2px solid var(--acp-color-accent);
+      outline-offset: 1px;
     }
 
     &-icon {
@@ -114,16 +130,12 @@
 
     &-line {
       color: var(--acp-color-accent);
+      font-weight: 600;
     }
   }
 }
 
 @keyframes acp-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.4;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
 }

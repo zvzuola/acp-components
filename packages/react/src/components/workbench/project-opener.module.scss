@@ -2,14 +2,21 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 8px 12px;
   border-radius: var(--acp-radius-sm);
   background: var(--acp-color-bg-tertiary);
-  margin: 0 8px 8px;
+  border: 1px solid var(--acp-color-border-subtle);
+  margin: 0 10px 10px;
+  transition: border-color var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:focus-within {
+    border-color: var(--acp-color-accent);
+  }
 
   &__icon {
     flex-shrink: 0;
     font-size: 14px;
+    opacity: 0.6;
   }
 
   &__path {
@@ -20,16 +27,17 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     cursor: pointer;
-    padding: 2px 4px;
-    border-radius: 2px;
+    padding: 3px 6px;
+    border-radius: var(--acp-radius-xs);
     user-select: none;
+    transition: background var(--acp-duration-fast) var(--acp-ease-out);
 
     &:hover {
       background: var(--acp-color-bg-hover);
     }
 
     &:focus-visible {
-      outline: 1px solid var(--acp-color-accent);
+      outline: 2px solid var(--acp-color-accent);
       outline-offset: 1px;
     }
   }
@@ -37,10 +45,10 @@
   &__input {
     flex: 1;
     font-size: 12px;
-    padding: 2px 6px;
+    padding: 3px 8px;
     border: 1px solid var(--acp-color-accent);
     border-radius: var(--acp-radius-sm);
-    background: var(--acp-color-input-bg);
+    background: var(--acp-color-bg-input);
     color: var(--acp-color-text-primary);
     outline: none;
     font-family: var(--acp-font-mono);
@@ -56,8 +64,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     border: none;
     border-radius: var(--acp-radius-sm);
     background: transparent;
@@ -65,6 +73,8 @@
     font-size: 16px;
     cursor: pointer;
     font-weight: 600;
+    transition: background var(--acp-duration-fast) var(--acp-ease-out),
+                color var(--acp-duration-fast) var(--acp-ease-out);
 
     &:hover {
       background: var(--acp-color-bg-hover);

@@ -2,24 +2,26 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: var(--acp-color-code-bg);
-  color: var(--acp-color-code-text);
+  background: var(--acp-color-bg-code);
+  color: var(--acp-color-text-primary);
+  font-family: var(--acp-font-mono);
 
   &__header {
-    padding: 8px 16px;
-    border-bottom: 1px solid var(--acp-color-border);
-    font-size: 13px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--acp-color-border-subtle);
+    font-size: 12px;
     font-weight: 600;
-    color: var(--acp-color-text-secondary);
+    color: var(--acp-color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 
   &__output {
     flex: 1;
     overflow-y: auto;
-    padding: 12px;
-    font-family: var(--acp-font-mono);
+    padding: 14px;
     font-size: 13px;
-    line-height: 1.5;
+    line-height: 1.65;
     white-space: pre-wrap;
   }
 }

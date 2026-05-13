@@ -1,70 +1,87 @@
 .acp-permission-dialog-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--acp-color-bg-overlay);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  z-index: 1000;
+  animation: acp-overlay-in 0.15s var(--acp-ease-out);
 }
 
 .acp-permission-dialog {
   background: var(--acp-color-bg-primary);
   border: 1px solid var(--acp-color-border);
-  border-radius: var(--acp-radius-lg);
-  padding: 24px;
+  border-radius: var(--acp-radius-xl);
+  padding: 28px;
   max-width: 480px;
   width: 90%;
   box-shadow: var(--acp-shadow-lg);
+  animation: acp-dialog-in 0.25s var(--acp-ease-spring);
 
   &__title {
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 600;
     margin-bottom: 8px;
+    letter-spacing: -0.02em;
   }
 
   &__desc {
     font-size: 13px;
     color: var(--acp-color-text-secondary);
-    margin-bottom: 16px;
+    margin-bottom: 18px;
+    line-height: 1.6;
   }
 
   &__tool {
-    padding: 12px;
+    padding: 14px;
     background: var(--acp-color-bg-secondary);
-    border-radius: var(--acp-radius-sm);
-    margin-bottom: 16px;
+    border: 1px solid var(--acp-color-border-subtle);
+    border-radius: var(--acp-radius-md);
+    margin-bottom: 18px;
   }
 
   &__tool-name {
     font-family: var(--acp-font-mono);
     font-size: 13px;
     font-weight: 600;
+    color: var(--acp-color-accent);
   }
 
   &__tool-args {
     font-family: var(--acp-font-mono);
     font-size: 12px;
     color: var(--acp-color-text-secondary);
-    margin-top: 4px;
+    margin-top: 6px;
     white-space: pre-wrap;
     max-height: 150px;
     overflow-y: auto;
+    line-height: 1.6;
   }
 
   &__actions {
     display: flex;
-    gap: 8px;
+    gap: 10px;
     justify-content: flex-end;
   }
 
   &__btn {
-    padding: 8px 16px;
+    padding: 9px 20px;
     border-radius: var(--acp-radius-sm);
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     border: none;
+    letter-spacing: -0.01em;
+    transition: background var(--acp-duration-fast) var(--acp-ease-out),
+                color var(--acp-duration-fast) var(--acp-ease-out),
+                transform var(--acp-duration-fast) var(--acp-ease-out);
+
+    &:active {
+      transform: scale(0.97);
+    }
 
     &--deny {
       background: transparent;
@@ -72,19 +89,35 @@
       color: var(--acp-color-text-primary);
 
       &:hover {
-        background: var(--acp-color-error);
-        color: white;
+        background: var(--acp-color-error-muted);
+        color: var(--acp-color-error);
         border-color: var(--acp-color-error);
       }
     }
 
     &--allow {
       background: var(--acp-color-accent);
-      color: white;
+      color: var(--acp-color-text-inverse);
 
       &:hover {
         background: var(--acp-color-accent-hover);
       }
     }
+  }
+}
+
+@keyframes acp-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes acp-dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }

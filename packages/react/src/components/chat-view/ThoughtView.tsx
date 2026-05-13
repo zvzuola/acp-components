@@ -26,7 +26,7 @@ function renderThoughtBlock(block: ContentBlock): React.ReactNode {
 }
 
 export function ThoughtView({ thought, isStreaming }: ThoughtViewProps) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const prevStreaming = useRef(isStreaming);
 
   useEffect(() => {
