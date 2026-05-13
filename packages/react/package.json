@@ -24,7 +24,8 @@
   },
   "dependencies": {
     "@acp-components/core": "workspace:*",
-    "marked": "^18.0.3"
+    "marked": "^18.0.3",
+    "zustand": "^5.0.0"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",

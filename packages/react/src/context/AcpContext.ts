@@ -1,6 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { AcpClient } from '../client/AcpClient';
-import type { TransportConfig, Implementation } from '../types';
+import type { AcpClient, TransportConfig, Implementation } from '@acp-components/core';
 
 export interface AcpContextValue {
   client: AcpClient;

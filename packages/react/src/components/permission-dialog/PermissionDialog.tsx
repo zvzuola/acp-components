@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { usePermission } from '@acp-components/core';
+import { usePermission } from '../../hooks/usePermission';
 import type { SessionId } from '@agentclientprotocol/sdk';
 import styles from './permission-dialog.module.scss';
 

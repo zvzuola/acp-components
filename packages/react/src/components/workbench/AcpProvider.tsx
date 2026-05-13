@@ -1,5 +1,8 @@
 import React, { useMemo } from 'react';
-import { AcpContext, useAcpProvider, useAcpStore } from '@acp-components/core';
+import { AcpContext } from '../../context/AcpContext';
+import { useAcpProvider } from '../../hooks/useAcpProvider';
+import { useAcpStore } from '../../hooks/useAcpStore';
+import { acpStore } from '@acp-components/core';
 import type { TransportConfig, Implementation, FileReadHandler, FileWriteHandler } from '@acp-components/core';
 import type { ClientCapabilities } from '@agentclientprotocol/sdk';
 import styles from './loading.module.scss';
@@ -29,7 +32,7 @@ export function AcpProvider({ transport, clientInfo, clientCapabilities, theme =
   // Sync defaultCwd to store once on mount
   React.useEffect(() => {
     if (defaultCwd) {
-      useAcpStore.getState().setProjectCwd(defaultCwd);
+      acpStore.getState().setProjectCwd(defaultCwd);
     }
   }, [defaultCwd]);
 

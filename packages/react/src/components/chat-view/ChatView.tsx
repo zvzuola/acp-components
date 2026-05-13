@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useMemo } from 'react';
-import { useSession } from '@acp-components/core';
+import { useSession } from '../../hooks/useSession';
 import type { SessionId } from '@agentclientprotocol/sdk';
 import type { Message } from '@acp-components/core';
 import { MessageBubble } from './MessageBubble';

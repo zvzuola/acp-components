@@ -1,4 +1,4 @@
-import { useAcpStore } from '../store/acpStore';
+import { useAcpStore } from './useAcpStore';
 
 export function useConnectionStatus() {
   const connectionStatus = useAcpStore((s) => s.connectionStatus);

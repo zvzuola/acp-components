@@ -6,7 +6,7 @@ import { ProjectOpener } from '@acp-components/react';
 import { SessionList } from '@acp-components/react';
 import { ChatView } from '@acp-components/react';
 import { PermissionDialog } from '@acp-components/react';
-import { useAcpStore, useSessions } from '@acp-components/core';
+import { useAcpStore, useSessions } from '@acp-components/react';
 
 // In web environments, stdio transport is unavailable (can't spawn child processes).
 // Use WebSocket transport connected to the acp-server backend, which bridges

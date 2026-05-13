@@ -7,7 +7,7 @@ import { SessionList } from '@acp-components/react';
 import { ChatView } from '@acp-components/react';
 import { PermissionDialog } from '@acp-components/react';
 import { ConnectionStatus } from '@acp-components/react';
-import { useAcpStore, useSessions } from '@acp-components/core';
+import { useAcpStore, useSessions } from '@acp-components/react';
 import { TauriIpcTransport } from './tauriIpcTransport';
 
 // Tauri IPC transport: the Rust backend spawns the agent process and bridges

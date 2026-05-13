@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { createStore } from 'zustand/vanilla';
 import type { Message, ToolCallState, PermissionRequest } from '../types';
 import type { SessionId, ContentBlock, StopReason, PlanEntry, UsageUpdate, SessionConfigOption, AvailableCommand } from '@agentclientprotocol/sdk';
 
@@ -51,7 +51,7 @@ function createSessionData(): SessionData {
   };
 }
 
-export const useSessionStore = create<SessionStoreState>((set) => ({
+export const sessionStore = createStore<SessionStoreState>((set) => ({
   sessions: new Map(),
 
   ensureSession: (id) =>

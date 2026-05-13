@@ -1,9 +1,10 @@
+import { useStore } from 'zustand/react';
 import { useMemo } from 'react';
-import { useSessionStore } from '../store/sessionStore';
+import { sessionStore } from '@acp-components/core';
 import type { SessionId } from '@agentclientprotocol/sdk';
 
 export function useSession(sessionId: SessionId | null) {
-  const sessions = useSessionStore((s) => s.sessions);
+  const sessions = useStore(sessionStore, (s) => s.sessions);
 
   const data = useMemo(() => {
     if (!sessionId) return null;

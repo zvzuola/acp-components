@@ -1,5 +1,5 @@
 import React from 'react';
-import { useConnectionStatus } from '@acp-components/core';
+import { useConnectionStatus } from '../../hooks/useConnectionStatus';
 import styles from './connection-status.module.scss';
 
 const dotClass: Record<string, string> = {

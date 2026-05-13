@@ -1,5 +1,5 @@
 import React from 'react';
-import { useSession } from '@acp-components/core';
+import { useSession } from '../../hooks/useSession';
 import type { SessionId } from '@agentclientprotocol/sdk';
 import styles from './usage-bar.module.scss';
 

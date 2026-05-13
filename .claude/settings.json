@@ -16,7 +16,14 @@
       "Bash(npx --package typescript tsc --emitDeclarationOnly)",
       "Bash(npx vite *)",
       "Bash(node_modules/.bin/vite build *)",
-      "Bash(packages/react/node_modules/.bin/tsc --noEmit -p packages/react/tsconfig.json)"
+      "Bash(packages/react/node_modules/.bin/tsc --noEmit -p packages/react/tsconfig.json)",
+      "Bash(packages/core/node_modules/.bin/tsc --noEmit -p packages/core/tsconfig.json)",
+      "Bash(node -e \"console.log\\(require.resolve\\('zustand'\\)\\)\")",
+      "Bash(node -e \"console.log\\(require.resolve\\('zustand', {paths: ['c:/Users/zw/work/acp-components/packages/core']}\\)\\)\")",
+      "Bash(npm run *)",
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\('peerDependencies:', JSON.stringify\\(p.peerDependencies\\)\\); console.log\\('dependencies:', JSON.stringify\\(p.dependencies\\)\\); console.log\\('devDependencies:', JSON.stringify\\(p.devDependencies\\)\\)\")",
+      "Bash(node -e \"const m = require\\('./dist/index.cjs'\\); console.log\\(Object.keys\\(m\\).sort\\(\\).join\\(', '\\)\\)\")",
+      "Bash(node -e \"const m = require\\('./dist/index.cjs'\\); const keys = Object.keys\\(m\\).sort\\(\\); console.log\\('React exports \\(' + keys.length + '\\):', keys.join\\(', '\\)\\)\")"
     ]
   }
 }

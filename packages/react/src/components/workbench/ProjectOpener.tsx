@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { useAcpStore } from '@acp-components/core';
+import { useAcpStore } from '../../hooks/useAcpStore';
 import styles from './project-opener.module.scss';
 
 export interface ProjectOpenerProps {

@@ -9,16 +9,11 @@ export default defineConfig({
     },
     rollupOptions: {
       external: [
-        'react',
-        'react/jsx-runtime',
-        'zustand',
+        'zustand/vanilla',
         '@agentclientprotocol/sdk',
       ],
       output: {
-        globals: {
-          react: 'React',
-          zustand: 'Zustand',
-        },
+        globals: {},
       },
     },
   },

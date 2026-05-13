@@ -13,6 +13,8 @@ export default defineConfig({
         'react',
         'react-dom',
         'react/jsx-runtime',
+        'zustand',
+        'zustand/react',
         '@acp-components/core',
         '@agentclientprotocol/sdk',
       ],

@@ -1,6 +1,6 @@
-import { create } from 'zustand';
-import type { SessionInfo, ConnectionStatus, Implementation, SessionMeta } from '../types';
-import type { SessionId } from '@agentclientprotocol/sdk';
+import { createStore } from 'zustand/vanilla';
+import type { ConnectionStatus, Implementation, SessionMeta } from '../types';
+import type { SessionId, SessionInfo } from '@agentclientprotocol/sdk';
 
 interface AcpStoreState {
   connectionStatus: ConnectionStatus;
@@ -21,7 +21,7 @@ interface AcpStoreState {
   setProjectCwd: (cwd: string) => void;
 }
 
-export const useAcpStore = create<AcpStoreState>((set) => ({
+export const acpStore = createStore<AcpStoreState>((set) => ({
   connectionStatus: 'disconnected',
   agentInfo: null,
   capabilities: null,

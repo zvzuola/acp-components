@@ -2,19 +2,13 @@ export { AcpClient } from './client/AcpClient';
 export type { FileReadHandler, FileWriteHandler, SessionUpdateHandler, PermissionHandler } from './client/AcpClient';
 export { StdioTransport, HttpTransport, WebSocketTransport } from './transport';
 export type { AcpTransport, Stream, AnyMessage } from './transport';
-export {
-  useAcpProvider,
-  getAcpClient,
-} from './hooks/useAcpProvider';
-export { useSessions } from './hooks/useSessions';
-export { useSession } from './hooks/useSession';
-export { usePrompt } from './hooks/usePrompt';
-export { useToolCalls } from './hooks/useToolCalls';
-export { usePermission } from './hooks/usePermission';
-export { useConnectionStatus } from './hooks/useConnectionStatus';
-export { AcpContext, useAcpContext } from './context/AcpContext';
-export { useAcpStore } from './store/acpStore';
-export { useSessionStore } from './store/sessionStore';
+export { acpStore } from './store/acpStore';
+export { sessionStore } from './store/sessionStore';
+export { createAcpProvider, getAcpClient } from './provider';
+export type { AcpProviderOptions, AcpProviderInstance } from './provider';
+export { createSession, loadSession, selectSession, closeSession, refreshSessions, setSessionConfigOption } from './actions/sessions';
+export { sendPrompt, cancelPrompt } from './actions/prompt';
+export { respondToPermission, denyPermission } from './actions/permission';
 export type {
   ConnectionStatus,
   Session,
@@ -27,4 +21,4 @@ export type {
   SessionMeta,
   Implementation,
 } from './types';
-export type { AcpContextValue } from './context/AcpContext';
+export type { ContentBlock, SessionId, SessionInfo, StopReason, ToolCall, ToolCallUpdate, ToolCallContent, AgentCapabilities, SessionUpdate } from './types';

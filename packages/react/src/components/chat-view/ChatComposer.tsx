@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useMemo } from 'react';
-import { usePrompt } from '@acp-components/core';
+import { usePrompt } from '../../hooks/usePrompt';
 import type { SessionId, ContentBlock, AvailableCommand } from '@agentclientprotocol/sdk';
 import { CommandPalette } from '../command-palette';
 import styles from './composer.module.scss';

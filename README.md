@@ -4,22 +4,22 @@ React UI component library for the [Agent Client Protocol (ACP)](https://github.
 
 ## Features
 
-- **Multi-Transport Support** — Connect to agents via Stdio, HTTP, WebSocket, or custom transports
-- **Rich UI Components** — Session list, chat view, diff view, terminal view, permission dialog, and more
-- **Streaming UX** — Real-time streaming responses with typing indicators and tool call status
-- **Session Management** — Create, load, switch between agent sessions with session mode support
-- **Tool Call Tracking** — Visualize agent tool invocations, their status, and output in real-time
-- **Permission Handling** — Built-in permission request dialog for tool call approvals
-- **Zustand State Management** — Lightweight, hook-based store for sessions, messages, and tool calls
-- **Theming** — Light and dark theme support out of the box
-- **Desktop Ready** — Includes Tauri example for building native desktop applications
+- **Multi-Transport** — Stdio, HTTP, WebSocket, and custom transports; ships with a Tauri IPC transport example
+- **Rich UI Components** — Session list, chat view (with rounds grouping), diff view, terminal view, permission dialog, plan view, thought view, command palette, and more
+- **Streaming UX** — Real-time content and thought streaming with typing indicators, tool call status, and usage tracking
+- **Session Management** — Create, load, switch, and close sessions with config option support
+- **Tool Call Tracking** — Visualize agent tool invocations with status, input/output, file locations, and diffs
+- **Permission Handling** — Built-in modal dialog for approving/rejecting tool call permissions
+- **Zustand State Management** — Two vanilla Zustand stores: `acpStore` (global state) and `sessionStore` (per-session state)
+- **Theming** — Light and dark theme via CSS custom properties and `data-acp-theme` attribute
+- **Desktop Ready** — Includes a Tauri example with a custom Tauri IPC transport for native desktop apps
 
 ## Packages
 
 | Package | Description |
 |---------|-------------|
-| [@acp-components/core](packages/core) | Transport layer, ACP client, state stores, and React hooks |
-| [@acp-components/react](packages/react) | Ready-to-use React UI components |
+| [@acp-components/core](packages/core) | Framework-agnostic: transport layer, ACP client, vanilla Zustand stores, and actions |
+| [@acp-components/react](packages/react) | React bindings: context provider, hooks, and 15+ UI components |
 
 ## Installation
 
@@ -27,14 +27,14 @@ React UI component library for the [Agent Client Protocol (ACP)](https://github.
 pnpm add @acp-components/core @acp-components/react
 ```
 
-**Peer dependencies**: `react` (^18 or ^19)
+**Peer dependencies**: `react` (^18 || ^19), `react-dom` (^18 || ^19)
 
 ## Quick Start
 
 ```tsx
 import ReactDOM from 'react-dom/client';
 import { AcpProvider, Workbench, SessionList, ChatView, PermissionDialog } from '@acp-components/react';
-import { useAcpStore } from '@acp-components/core';
+import { useAcpStore } from '@acp-components/react';
 
 function App() {
   const activeSessionId = useAcpStore((s) => s.activeSessionId);
@@ -62,27 +62,27 @@ ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
 ## Transport Options
 
 ```tsx
-// Stdio — spawn an agent process directly (ideal for Electron/Tauri/desktop)
+// Stdio — spawn an agent process directly (Electron / Tauri / desktop)
 <AcpProvider transport={{
   type: 'stdio',
   command: 'opencode',
   args: ['acp'],
 }}>
 
-// HTTP — connect to an agent over HTTP POST
+// HTTP — connect via HTTP POST
 <AcpProvider transport={{
   type: 'http',
   url: 'http://localhost:8080/acp',
   headers: { 'Authorization': 'Bearer token' },
 }}>
 
-// WebSocket — connect to a bridge server (ideal for browser environments)
+// WebSocket — connect to a bridge server (browser environments)
 <AcpProvider transport={{
   type: 'websocket',
   url: 'ws://127.0.0.1:3100',
 }}>
 
-// Custom — provide your own transport implementation
+// Custom — provide your own AcpTransport implementation
 <AcpProvider transport={{
   type: 'custom',
   transport: myCustomTransport,
@@ -93,59 +93,168 @@ ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
 
 | Component | Description |
 |-----------|-------------|
-| `AcpProvider` | Top-level provider that manages ACP connection and provides context |
-| `Workbench` | Three-panel layout (sidebar, main, panel) for the agent workspace |
-| `SessionList` | Sidebar list of sessions with create/switch functionality |
-| `ChatView` | Main chat interface displaying messages and composing prompts |
-| `MessageBubble` | Individual message with content blocks and thought indicators |
-| `ChatComposer` | Text input area for composing prompts |
-| `ToolCallCard` | Displays tool call details, status, and output |
-| `StreamingIndicator` | Shows typing/streaming state during agent responses |
+| `AcpProvider` | Top-level provider: manages connection lifecycle, wires session updates to stores, renders a loading spinner until ready. Props: `transport`, `clientInfo`, `clientCapabilities`, `theme`, `defaultCwd`, `onFileRead`, `onFileWrite` |
+| `Workbench` | Three-panel layout (sidebar, main, panel) using CSS grid |
+| `ProjectOpener` | Editable project directory display with optional browse button |
+| `SessionList` | Sidebar session list with create/select/delete actions |
+| `ChatView` | Main chat area: groups messages into user/agent rounds, shows plan, usage bar, and config panel. Props: `sessionId`, `onNavigateFile` |
+| `MessageBubble` | Renders message parts (content blocks, thought blocks, tool calls) with markdown via `marked` |
+| `ChatComposer` | Text input with command palette integration and send/cancel controls |
+| `StreamingIndicator` | Animated typing indicator shown during agent streaming |
+| `ToolCallCard` | Displays tool call name, status, input/output, file locations |
+| `ThoughtView` | Collapsible view for agent reasoning/thinking content |
+| `PlanView` | Displays the agent's plan entries during streaming |
 | `DiffView` | Side-by-side diff viewer for file changes |
-| `PermissionDialog` | Modal dialog for approving/rejecting tool call permissions |
+| `PermissionDialog` | Modal for approving/rejecting tool permission requests |
 | `TerminalView` | Embedded terminal output display |
-| `ConnectionStatus` | Connection state indicator (disconnected/connecting/connected/error) |
-| `SessionModeSelector` | Dropdown to switch between session modes |
+| `ConnectionStatus` | Connection state indicator with agent name |
+| `UsageBar` | Token usage bar showing context window consumption |
+| `SessionConfigPanel` | Dropdown for session configuration options |
+| `CommandPalette` | Slash-command palette for available agent commands |
 
-## Core Hooks
+## Hooks
 
 | Hook | Description |
 |------|-------------|
-| `useSessions()` | List all sessions with metadata |
-| `useSession(id)` | Get a single session with messages, streaming state, and tool calls |
-| `usePrompt(sessionId)` | Send prompts to the agent and manage the request lifecycle |
-| `useToolCalls(sessionId)` | Access pending and completed tool calls for a session |
-| `usePermission(sessionId)` | Handle permission requests and responses |
-| `useConnectionStatus()` | Subscribe to transport connection status changes |
-| `useAcpContext()` | Access the ACP client and configuration from context |
-| `useAcpStore()` | Raw access to the global Zustand store |
-| `useSessionStore()` | Raw access to the per-session Zustand store |
+| `useAcpProvider(opts)` | Creates and manages the ACP provider lifecycle (connect → initialize → ready) |
+| `useAcpStore(selector)` | Subscribe to the global `acpStore` (Zustand vanilla store via `useSyncExternalStore`) |
+| `useSessionStore(sessionId, selector)` | Subscribe to per-session `sessionStore` |
+| `useSessions()` | Session CRUD: list, create, select, close, refresh, plus `activeSessionId` |
+| `useSession(sessionId)` | All data for one session: messages, streaming state, tool calls, permissions, plan, usage, config options, available commands |
+| `usePrompt(sessionId)` | `sendPrompt(blocks)` and `cancelPrompt()` |
+| `useToolCalls(sessionId)` | Pending and completed tool calls |
+| `usePermission(sessionId)` | Current permission request and `respond`/`deny` actions |
+| `useConnectionStatus()` | Connection status and agent info (name, version) |
+| `useAcpContext()` | Raw access to `AcpClient`, config, and `projectCwd` from React context |
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────┐
-│  @acp-components/react (UI Components)                    │
-│  Workbench │ SessionList │ ChatView │ DiffView   │
-├─────────────────────────────────────────────────┤
-│  @acp-components/core                                     │
-│  ┌────────────┐ ┌────────────┐ ┌─────────────┐  │
-│  │  Hooks      │ │  Stores    │ │  Transport  │  │
-│  │  useSession │ │  acpStore  │ │  Stdio      │  │
-│  │  usePrompt  │ │  session   │ │  HTTP       │  │
-│  │  useTool... │ │  Store     │ │  WebSocket  │  │
-│  └────────────┘ └────────────┘ └─────────────┘  │
-│  ┌──────────────────────────────────────────┐    │
-│  │  AcpClient (ClientSideConnection)         │    │
-│  │  Implements ACP Client role               │    │
-│  └──────────────────────────────────────────┘    │
-├─────────────────────────────────────────────────┤
-│  @agentclientprotocol/sdk                        │
-│  Protocol types, NDJSON streaming, handshake     │
-└─────────────────────────────────────────────────┘
+@acp-components/react (React UI)
+┌──────────────────────────────────────────────────────────┐
+│  Components                                              │
+│  AcpProvider ── Workbench ── SessionList                 │
+│  ChatView ── MessageBubble ── ToolCallCard               │
+│  ChatComposer ── PlanView ── ThoughtView                 │
+│  PermissionDialog ── DiffView ── TerminalView            │
+│  CommandPalette ── UsageBar ── SessionConfigPanel        │
+│  ConnectionStatus ── StreamingIndicator                  │
+├──────────────────────────────────────────────────────────┤
+│  Hooks (useSyncExternalStore over vanilla stores)        │
+│  useAcpProvider ── useSessions ── useSession             │
+│  usePrompt ── useToolCalls ── usePermission              │
+│  useConnectionStatus ── useAcpStore ── useSessionStore   │
+├──────────────────────────────────────────────────────────┤
+│  AcpContext                                              │
+│  Provides client, config, projectCwd to component tree   │
+└──────────────┬───────────────────────────────────────────┘
+               │  depends on
+┌──────────────▼───────────────────────────────────────────┐
+│  @acp-components/core (framework-agnostic)                │
+│                                                          │
+│  createAcpProvider()  ── wires transport → stores        │
+│  ┌──────────┐  ┌──────────────┐  ┌──────────────────┐   │
+│  │ AcpClient│  │  acpStore    │  │  sessionStore    │   │
+│  │          │  │  (vanilla)   │  │  (vanilla)       │   │
+│  │ connect  │  │  sessions    │  │  per-session:    │   │
+│  │ init     │  │  status      │  │  messages, tc,   │   │
+│  │ prompt   │  │  projectCwd  │  │  plan, usage,    │   │
+│  │ sessions │  │  activeId    │  │  permissions     │   │
+│  └────┬─────┘  └──────────────┘  └──────────────────┘   │
+│       │                                                  │
+│  ┌────▼─────────────────────────────────────────────┐    │
+│  │  Transport Layer                                  │    │
+│  │  StdioTransport │ HttpTransport │ WebSocketTransport │ │
+│  │  All implement AcpTransport interface             │    │
+│  └──────────────────────────────────────────────────┘    │
+│                                                          │
+│  Actions (imperative, operate on client + stores)        │
+│  createSession ── loadSession ── selectSession           │
+│  closeSession ── refreshSessions ── setSessionConfigOption│
+│  sendPrompt ── cancelPrompt                              │
+│  respondToPermission ── denyPermission                   │
+└──────────────┬───────────────────────────────────────────┘
+               │  built on
+┌──────────────▼───────────────────────────────────────────┐
+│  @agentclientprotocol/sdk  (ACP protocol types & client)  │
+│  ClientSideConnection, NDJSON streaming, handshake        │
+└──────────────────────────────────────────────────────────┘
+```
+
+### Data Flow
+
+1. `AcpProvider` calls `createAcpProvider({ transport, ... })`
+2. `createAcpProvider` instantiates the transport, creates an `AcpClient`, and subscribes to `onSessionUpdate`
+3. On each session notification from the agent, it dispatches to the appropriate store action:
+   - `agent_message_chunk` / `user_message_chunk` → `sessionStore.appendContent()`
+   - `agent_thought_chunk` → `sessionStore.appendThought()`
+   - `tool_call` → `sessionStore.upsertToolCall()`
+   - `tool_call_update` → `sessionStore.updateToolCall()`
+   - `plan` → `sessionStore.setPlan()`
+   - `usage_update` → `sessionStore.setUsage()`
+   - `config_option_update` → `sessionStore.setConfigOptions()`
+   - `available_commands_update` → `sessionStore.setAvailableCommands()`
+4. React hooks subscribe to the vanilla stores via `useSyncExternalStore` and re-render components
+
+### State Management
+
+Two vanilla Zustand stores (no React dependency):
+
+- **`acpStore`** — Global state: `connectionStatus`, `agentInfo`, `capabilities`, `sessions` (Map), `activeSessionId`, `projectCwd`
+- **`sessionStore`** — Per-session state keyed by `SessionId`: `messages[]`, `isStreaming`, `pendingToolCalls` (Map), `stopReason`, `pendingPermissions[]`, `plan[]`, `usage`, `configOptions[]`, `availableCommands[]`
+
+## Project Structure
+
+```
+acp-components/
+├── packages/
+│   ├── core/                    # @acp-components/core
+│   │   └── src/
+│   │       ├── client/          # AcpClient (wraps ACP ClientSideConnection)
+│   │       ├── transport/       # StdioTransport, HttpTransport, WebSocketTransport
+│   │       ├── store/           # acpStore, sessionStore (vanilla Zustand)
+│   │       ├── actions/         # sessions, prompt, permission
+│   │       ├── types/           # Shared TypeScript types
+│   │       ├── provider.ts      # createAcpProvider() factory
+│   │       └── index.ts
+│   └── react/                   # @acp-components/react
+│       └── src/
+│           ├── components/
+│           │   ├── workbench/   # AcpProvider, Workbench, ProjectOpener
+│           │   ├── chat-view/   # ChatView, MessageBubble, ChatComposer,
+│           │   │                 ToolCallCard, StreamingIndicator,
+│           │   │                 ThoughtView, PlanView
+│           │   ├── session-list/
+│           │   ├── session-config-panel/
+│           │   ├── diff-view/
+│           │   ├── terminal-view/
+│           │   ├── permission-dialog/
+│           │   ├── status-bar/  # ConnectionStatus, UsageBar
+│           │   └── command-palette/
+│           ├── hooks/           # useAcpProvider, useAcpStore, useSessionStore,
+│           │                     useSessions, useSession, usePrompt,
+│           │                     useToolCalls, usePermission, useConnectionStatus
+│           ├── context/         # AcpContext
+│           ├── styles.css
+│           └── index.ts
+├── examples/
+│   ├── demo/                    # Vite browser demo (WebSocket transport)
+│   ├── server/                  # WebSocket ↔ stdio bridge server
+│   └── tauri/                   # Tauri desktop app (TauriIpcTransport)
+├── package.json                 # Root workspace config
+├── pnpm-workspace.yaml
+└── tsconfig.json
 ```
 
 ## Development
+
+### Prerequisites
+
+- Node.js >= 18
+- pnpm
+- An ACP-compatible agent (e.g., [opencode](https://github.com/anthropics/opencode) with `acp` subcommand)
+
+### Setup
 
 ```bash
 # Install dependencies
@@ -154,55 +263,44 @@ pnpm install
 # Build all packages
 pnpm build
 
-# Start demo app (requires acp-server bridge)
-pnpm dev:server   # Start the WebSocket bridge server
-pnpm dev          # Start the demo Vite dev server
-pnpm dev:all      # Start both server and demo concurrently
+# Build individual packages
+pnpm build:core
+pnpm build:react
 
 # Run tests
 pnpm test
-
-# Tauri desktop example
-pnpm dev:tauri
-pnpm build:tauri
 ```
-
-### Prerequisites
-
-- Node.js >= 18
-- pnpm
-- An ACP-compatible agent (e.g., [opencode](https://github.com/anthropics/opencode) with `acp` subcommand)
 
 ### Web Demo
 
 For browser-based development, start the WebSocket bridge server that proxies between the browser and the agent's stdio:
 
 ```bash
-cd examples/server && pnpm dev
-```
+# Terminal 1 — Start the bridge server
+pnpm dev:server
 
-Then in another terminal:
-
-```bash
+# Terminal 2 — Start the Vite demo
 pnpm dev
 ```
 
 The demo will be available at `http://localhost:5173`.
 
-## Project Structure
+### Tauri Desktop
 
-```
-acp-components/
-├── packages/
-│   ├── core/          # @acp-components/core — transports, client, hooks, stores
-│   └── react/         # @acp-components/react — UI components and styles
-├── examples/
-│   ├── demo/          # Vite-based browser demo
-│   ├── server/        # WebSocket ↔ stdio bridge server
-│   └── tauri/         # Tauri desktop application example
-├── package.json       # Root workspace config
-├── pnpm-workspace.yaml
-└── tsconfig.json
+```bash
+pnpm dev:tauri      # Development mode
+pnpm build:tauri    # Production build
 ```
 
+### Environment Variables (server)
 
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ACP_PORT` | `3100` | WebSocket server port |
+| `ACP_HOST` | `127.0.0.1` | WebSocket server host |
+| `ACP_AGENT` | `opencode` | Agent command to spawn |
+| `ACP_AGENT_ARGS` | `acp` | Arguments passed to the agent |
+
+## License
+
+MIT

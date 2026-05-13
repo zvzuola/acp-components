@@ -27,24 +27,26 @@ export type { CommandPaletteProps } from './components/command-palette/CommandPa
 export { TerminalView } from './components/terminal-view';
 export type { TerminalViewProps } from './components/terminal-view/TerminalView';
 
-// Re-export core hooks for convenience
-export {
-  useSessions,
-  useSession,
-  usePrompt,
-  useToolCalls,
-  usePermission,
-  useConnectionStatus,
-  useAcpContext,
-  useAcpStore,
-  useSessionStore,
-  AcpContext,
-} from '@acp-components/core';
+// Re-export hooks (now defined locally)
+export { useAcpProvider } from './hooks/useAcpProvider';
+export { useAcpStore } from './hooks/useAcpStore';
+export { useSessionStore } from './hooks/useSessionStore';
+export { useSessions } from './hooks/useSessions';
+export { useSession } from './hooks/useSession';
+export { usePrompt } from './hooks/usePrompt';
+export { useToolCalls } from './hooks/useToolCalls';
+export { usePermission } from './hooks/usePermission';
+export { useConnectionStatus } from './hooks/useConnectionStatus';
+export { AcpContext, useAcpContext } from './context/AcpContext';
+export type { AcpContextValue } from './context/AcpContext';
+
+// Re-export types from core for convenience
 export type {
   Session,
   Message,
   ToolCallState,
   TransportConfig,
   PermissionRequest,
+  ConnectionStatus as ConnectionStatusType,
+  MessagePart,
 } from '@acp-components/core';
-export type { ConnectionStatus as ConnectionStatusType } from '@acp-components/core';

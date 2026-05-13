@@ -1,5 +1,7 @@
 import React from 'react';
-import { useSessions, useConnectionStatus, useAcpStore } from '@acp-components/core';
+import { useSessions } from '../../hooks/useSessions';
+import { useConnectionStatus } from '../../hooks/useConnectionStatus';
+import { useAcpStore } from '../../hooks/useAcpStore';
 import type { SessionId } from '@agentclientprotocol/sdk';
 import styles from './session-list.module.scss';
 
