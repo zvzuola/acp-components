@@ -9,6 +9,7 @@ import styles from './chat-view.module.scss';
 export interface MessageBubbleProps {
   messages: Message[];
   isStreaming?: boolean;
+  onNavigateFile?: (path: string, line?: number | null) => void;
 }
 
 function MarkdownText({ text }: { text: string }) {
@@ -46,7 +47,7 @@ function renderContent(content: ContentBlock) {
   }
 }
 
-function renderPart(part: MessagePart, partIndex: number, isStreaming?: boolean) {
+function renderPart(part: MessagePart, partIndex: number, isStreaming?: boolean, onNavigateFile?: (path: string, line?: number | null) => void) {
   switch (part.type) {
     case 'thought':
       return (
@@ -58,7 +59,7 @@ function renderPart(part: MessagePart, partIndex: number, isStreaming?: boolean)
       );
     case 'tool_calls':
       return part.toolCalls.map((tc) => (
-        <ToolCallCard key={tc.toolCallId} toolCall={tc} />
+        <ToolCallCard key={tc.toolCallId} toolCall={tc} onNavigate={onNavigateFile} />
       ));
     case 'content':
       return part.content.map((block, j) => (
@@ -67,7 +68,7 @@ function renderPart(part: MessagePart, partIndex: number, isStreaming?: boolean)
   }
 }
 
-export function MessageBubble({ messages, isStreaming = false }: MessageBubbleProps) {
+export function MessageBubble({ messages, isStreaming = false, onNavigateFile }: MessageBubbleProps) {
   const role = messages[0]?.role ?? 'user';
   const isUser = role === 'user';
   const stopReason = messages.reduceRight<string | undefined>(
@@ -88,7 +89,7 @@ export function MessageBubble({ messages, isStreaming = false }: MessageBubblePr
           <React.Fragment key={msg.id}>
             {msg.parts.map((part, j) => {
               const isStreamingThought = msg === lastMsg && j === lastMsg.parts.length - 1 && thoughtStillStreaming;
-              return renderPart(part, j, isStreamingThought);
+              return renderPart(part, j, isStreamingThought, onNavigateFile);
             })}
           </React.Fragment>
         ))}

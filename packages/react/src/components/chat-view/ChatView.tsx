@@ -12,6 +12,7 @@ import styles from './chat-view.module.scss';
 
 export interface ChatViewProps {
   sessionId: SessionId | null;
+  onNavigateFile?: (path: string, line?: number | null) => void;
 }
 
 interface Round {
@@ -44,7 +45,7 @@ function groupMessagesIntoRounds(messages: Message[]): Round[] {
   return rounds;
 }
 
-export function ChatView({ sessionId }: ChatViewProps) {
+export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
   const { messages, isStreaming, plan, availableCommands } = useSession(sessionId);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -81,10 +82,10 @@ export function ChatView({ sessionId }: ChatViewProps) {
           return (
             <div key={round.userMessage?.id ?? round.agentMessages[0]?.id ?? i} className={styles.acpRound}>
               {round.userMessage && (
-                <MessageBubble messages={[round.userMessage]} />
+                <MessageBubble messages={[round.userMessage]} onNavigateFile={onNavigateFile} />
               )}
               {round.agentMessages.length > 0 && (
-                <MessageBubble messages={round.agentMessages} isStreaming={isLastRound && isStreaming} />
+                <MessageBubble messages={round.agentMessages} isStreaming={isLastRound && isStreaming} onNavigateFile={onNavigateFile} />
               )}
               {isLastRound && isStreaming && <StreamingIndicator />}
             </div>

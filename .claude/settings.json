@@ -14,7 +14,9 @@
       "Bash(pnpm run *)",
       "Bash(npx tsc *)",
       "Bash(npx --package typescript tsc --emitDeclarationOnly)",
-      "Bash(npx vite *)"
+      "Bash(npx vite *)",
+      "Bash(node_modules/.bin/vite build *)",
+      "Bash(packages/react/node_modules/.bin/tsc --noEmit -p packages/react/tsconfig.json)"
     ]
   }
 }

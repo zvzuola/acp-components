@@ -80,11 +80,13 @@ export function useAcpProvider({ transport, clientInfo, clientCapabilities, onFi
         case 'plan':
           store.setPlan(sessionId, update.entries);
           break;
-        case 'session_info_update':
-          if (update.title) {
-            useAcpStore.getState().updateSession(sessionId, { title: update.title });
-          }
+        case 'session_info_update': {
+          const patch: Record<string, string | undefined> = {};
+          if ('title' in update) patch.title = update.title ?? undefined;
+          if ('updatedAt' in update) patch.updatedAt = update.updatedAt ?? undefined;
+          useAcpStore.getState().updateSession(sessionId, patch);
           break;
+        }
         case 'usage_update':
           store.setUsage(sessionId, update);
           break;
