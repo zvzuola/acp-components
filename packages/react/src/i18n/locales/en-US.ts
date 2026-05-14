@@ -43,6 +43,12 @@ export const enUS = {
   'sessionList.defaultSessionTitle': 'New Session',
   'sessionList.emptyState': 'No sessions yet. Click + to start.',
 
+  // Time
+  'time.justNow': 'Just now',
+  'time.minutesAgo': '{minutes}m ago',
+  'time.hoursAgo': '{hours}h ago',
+  'time.daysAgo': '{days}d ago',
+
   // ThoughtView
   'thought.thinking': 'Thinking...',
   'thought.title': 'Thought',

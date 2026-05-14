@@ -9,7 +9,7 @@ export interface PermissionDialogProps {
 }
 
 export function PermissionDialog({ sessionId }: PermissionDialogProps) {
-  const { currentRequest, respond, deny } = usePermission(sessionId);
+  const { currentRequest, respond } = usePermission(sessionId);
   const dialogRef = useRef<HTMLDivElement>(null);
   const { t } = useI18n();
 
@@ -21,7 +21,8 @@ export function PermissionDialog({ sessionId }: PermissionDialogProps) {
 
   if (!currentRequest || !sessionId) return null;
 
-  const [allowOnce, allowAlways, denyOnce] = currentRequest.options;
+  const isAllowKind = (kind: string) => kind === 'allow_once' || kind === 'allow_always';
+  const firstAllow = currentRequest.options.find(o => isAllowKind(o.kind));
 
   return (
     <div className={styles.acpPermissionDialogOverlay} role="dialog" aria-modal="true" aria-label={t('permission.ariaLabel')}>
@@ -39,19 +40,16 @@ export function PermissionDialog({ sessionId }: PermissionDialogProps) {
           )}
         </div>
         <div className={styles.acpPermissionDialogActions}>
-          <button
-            className={`${styles.acpPermissionDialogBtn} ${styles.acpPermissionDialogBtnDeny}`}
-            onClick={() => deny(sessionId)}
-          >
-            {denyOnce?.name || t('permission.deny')}
-          </button>
-          <button
-            className={`${styles.acpPermissionDialogBtn} ${styles.acpPermissionDialogBtnAllow}`}
-            onClick={() => respond(sessionId, allowAlways?.optionId || allowOnce?.optionId || '')}
-            autoFocus
-          >
-            {allowAlways?.name || allowOnce?.name || t('permission.allow')}
-          </button>
+          {currentRequest.options.map((option) => (
+            <button
+              key={option.optionId}
+              className={`${styles.acpPermissionDialogBtn} ${isAllowKind(option.kind) ? styles.acpPermissionDialogBtnAllow : styles.acpPermissionDialogBtnDeny}`}
+              onClick={() => respond(sessionId, option.optionId)}
+              autoFocus={option.optionId === firstAllow?.optionId}
+            >
+              {option.name}
+            </button>
+          ))}
         </div>
       </div>
     </div>

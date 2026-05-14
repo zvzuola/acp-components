@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useSessions } from '../../hooks/useSessions';
 import { useConnectionStatus } from '../../hooks/useConnectionStatus';
 import { useAcpStore } from '../../hooks/useAcpStore';
@@ -11,6 +11,23 @@ export function SessionList() {
   const { agentName } = useConnectionStatus();
   const projectCwd = useAcpStore((s) => s.projectCwd);
   const { t } = useI18n();
+
+  const formatTime = useCallback((dateStr?: string): string => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '';
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return t('time.justNow');
+    if (minutes < 60) return t('time.minutesAgo', { minutes });
+    if (hours < 24) return t('time.hoursAgo', { hours });
+    if (days < 7) return t('time.daysAgo', { days });
+    return date.toLocaleDateString();
+  }, [t]);
 
   const handleNewSession = async () => {
     const id = await createSession(projectCwd);
@@ -42,7 +59,7 @@ export function SessionList() {
             <span className={styles.acpSessionItemIcon}>&#x1f4ac;</span>
             <div className={styles.acpSessionItemContent}>
               <div className={styles.acpSessionItemTitle}>{s.title || t('sessionList.defaultSessionTitle')}</div>
-              <div className={styles.acpSessionItemMeta}>{s.cwd}</div>
+              <div className={styles.acpSessionItemMeta}>{formatTime(s.updatedAt)}</div>
             </div>
             <button
               className={styles.acpSessionItemDelete}

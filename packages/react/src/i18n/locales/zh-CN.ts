@@ -43,6 +43,12 @@ export const zhCN = {
   'sessionList.defaultSessionTitle': '新会话',
   'sessionList.emptyState': '暂无会话，点击 + 开始',
 
+  // Time
+  'time.justNow': '刚刚',
+  'time.minutesAgo': '{minutes}分钟前',
+  'time.hoursAgo': '{hours}小时前',
+  'time.daysAgo': '{days}天前',
+
   // ThoughtView
   'thought.thinking': '思考中...',
   'thought.title': '思考过程',
