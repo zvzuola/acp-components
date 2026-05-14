@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../i18n';
 import styles from './terminal-view.module.scss';
 
 export interface TerminalViewProps {
@@ -7,13 +8,14 @@ export interface TerminalViewProps {
 }
 
 export function TerminalView({ output = '', exitCode = null }: TerminalViewProps) {
+  const { t } = useI18n();
   return (
     <div className={styles.acpTerminalView}>
       <div className={styles.acpTerminalViewHeader}>
-        Terminal
-        {exitCode !== null && ` (exit: ${exitCode})`}
+        {t('terminal.title')}
+        {exitCode !== null && ` ${t('terminal.exitCode', { code: exitCode })}`}
       </div>
-      <pre className={styles.acpTerminalViewOutput}>{output || 'No output'}</pre>
+      <pre className={styles.acpTerminalViewOutput}>{output || t('terminal.noOutput')}</pre>
     </div>
   );
 }

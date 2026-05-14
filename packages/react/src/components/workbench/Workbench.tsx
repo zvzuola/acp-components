@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../i18n';
 import styles from './workbench.module.scss';
 
 export interface WorkbenchProps {
@@ -10,12 +11,13 @@ export interface WorkbenchProps {
 
 export function Workbench({ sidebar, main, panel, className }: WorkbenchProps) {
   const hasPanel = !!panel;
+  const { t } = useI18n();
 
   return (
     <div
       className={`${styles.acpWorkbench}${hasPanel ? ` ${styles.acpWorkbenchHasPanel}` : ''}${className ? ` ${className}` : ''}`}
       role="application"
-      aria-label="ACP Workbench"
+      aria-label={t('workbench.ariaLabel')}
     >
       <aside className={styles.acpWorkbenchSidebar} role="complementary">
         {sidebar}

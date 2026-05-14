@@ -5,6 +5,7 @@ import { useAcpStore } from '../../hooks/useAcpStore';
 import { acpStore } from '@acp-components/core';
 import type { TransportConfig, Implementation, FileReadHandler, FileWriteHandler } from '@acp-components/core';
 import type { ClientCapabilities } from '@agentclientprotocol/sdk';
+import { useI18n } from '../../i18n';
 import styles from './loading.module.scss';
 
 export interface AcpProviderProps {
@@ -21,6 +22,7 @@ export interface AcpProviderProps {
 export function AcpProvider({ transport, clientInfo, clientCapabilities, theme = 'dark', children, onFileRead, onFileWrite, defaultCwd = '' }: AcpProviderProps) {
   const { client, ready } = useAcpProvider({ transport, clientInfo, clientCapabilities, onFileRead, onFileWrite });
   const projectCwd = useAcpStore((s) => s.projectCwd);
+  const { t } = useI18n();
 
   const contextValue = useMemo(() => ({
     client,
@@ -40,7 +42,7 @@ export function AcpProvider({ transport, clientInfo, clientCapabilities, theme =
     return (
       <div data-acp-theme={theme} className={styles.acpLoading}>
         <div className={styles.acpLoadingSpinner} />
-        <span>Connecting to agent...</span>
+        <span>{t('loading.connecting')}</span>
       </div>
     );
   }

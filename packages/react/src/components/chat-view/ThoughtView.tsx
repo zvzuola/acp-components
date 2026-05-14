@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { marked } from 'marked';
 import type { ContentBlock } from '@agentclientprotocol/sdk';
+import { useI18n } from '../../i18n';
 import styles from './thought-view.module.scss';
 
 export interface ThoughtViewProps {
@@ -28,6 +29,7 @@ function renderThoughtBlock(block: ContentBlock): React.ReactNode {
 export function ThoughtView({ thought, isStreaming }: ThoughtViewProps) {
   const [expanded, setExpanded] = useState(false);
   const prevStreaming = useRef(isStreaming);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (isStreaming) {
@@ -53,7 +55,7 @@ export function ThoughtView({ thought, isStreaming }: ThoughtViewProps) {
           &#x25b6;
         </span>
         <span className={styles.acpThoughtViewLabel}>
-          {isStreaming ? 'Thinking...' : 'Thought'}
+          {isStreaming ? t('thought.thinking') : t('thought.title')}
         </span>
         {isStreaming && <span className={styles.acpThoughtViewSpinner} />}
       </button>
@@ -66,7 +68,7 @@ export function ThoughtView({ thought, isStreaming }: ThoughtViewProps) {
       )}
       {expanded && isStreaming && !hasContent && (
         <div className={styles.acpThoughtViewBody}>
-          <span className={styles.acpThoughtViewEmpty}>Reasoning...</span>
+          <span className={styles.acpThoughtViewEmpty}>{t('thought.reasoning')}</span>
         </div>
       )}
     </div>

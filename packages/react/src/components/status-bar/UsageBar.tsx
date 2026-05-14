@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSession } from '../../hooks/useSession';
 import type { SessionId } from '@agentclientprotocol/sdk';
+import { useI18n } from '../../i18n';
 import styles from './usage-bar.module.scss';
 
 export interface UsageBarProps {
@@ -15,6 +16,7 @@ function formatTokens(n: number): string {
 
 export function UsageBar({ sessionId }: UsageBarProps) {
   const { usage } = useSession(sessionId);
+  const { t } = useI18n();
 
   if (!sessionId || !usage) return null;
 
@@ -24,7 +26,7 @@ export function UsageBar({ sessionId }: UsageBarProps) {
       : styles.acpUsageBarFillLow;
 
   return (
-    <div className={styles.acpUsageBar} role="meter" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`Context window: ${formatTokens(usage.used)} of ${formatTokens(usage.size)} tokens`}>
+    <div className={styles.acpUsageBar} role="meter" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={t('usageBar.ariaLabel', { used: formatTokens(usage.used), total: formatTokens(usage.size) })}>
       <div className={styles.acpUsageBarWrap}>
         <div
           className={`${styles.acpUsageBarFill} ${fillClass}`}

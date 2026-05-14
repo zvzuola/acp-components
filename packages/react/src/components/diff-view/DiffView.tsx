@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../i18n';
 import styles from './diff-view.module.scss';
 
 export interface DiffViewProps {
@@ -10,12 +11,13 @@ export interface DiffViewProps {
 }
 
 export function DiffView({ diffs = [] }: DiffViewProps) {
+  const { t } = useI18n();
   if (diffs.length === 0) {
     return (
       <div className={styles.acpDiffView}>
-        <div className={styles.acpDiffViewHeader}>Diff</div>
+        <div className={styles.acpDiffViewHeader}>{t('diff.title')}</div>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--acp-color-text-muted)', fontSize: 13 }}>
-          No diffs to display
+          {t('diff.emptyState')}
         </div>
       </div>
     );
@@ -23,7 +25,7 @@ export function DiffView({ diffs = [] }: DiffViewProps) {
 
   return (
     <div className={styles.acpDiffView}>
-      <div className={styles.acpDiffViewHeader}>Diff</div>
+      <div className={styles.acpDiffViewHeader}>{t('diff.title')}</div>
       <div className={styles.acpDiffViewContent}>
         {diffs.map((diff, i) => (
           <div key={i} className={styles.acpDiffViewFile}>

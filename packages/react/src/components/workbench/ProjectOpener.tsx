@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useAcpStore } from '../../hooks/useAcpStore';
+import { useI18n } from '../../i18n';
 import styles from './project-opener.module.scss';
 
 export interface ProjectOpenerProps {
@@ -11,6 +12,7 @@ export function ProjectOpener({ onBrowse }: ProjectOpenerProps) {
   const setProjectCwd = useAcpStore((s) => s.setProjectCwd);
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(projectCwd);
+  const { t } = useI18n();
 
   useEffect(() => {
     setValue(projectCwd);
@@ -39,7 +41,7 @@ export function ProjectOpener({ onBrowse }: ProjectOpenerProps) {
     }
   }, [onBrowse]);
 
-  const displayCwd = projectCwd || 'No project opened';
+  const displayCwd = projectCwd || t('projectOpener.noProject');
 
   return (
     <div className={styles.acpProjectOpener}>
@@ -52,9 +54,9 @@ export function ProjectOpener({ onBrowse }: ProjectOpenerProps) {
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={handleSave}
-          placeholder="/path/to/project"
+          placeholder={t('projectOpener.placeholder')}
           autoFocus
-          aria-label="Project directory"
+          aria-label={t('projectOpener.ariaLabel')}
         />
       ) : (
         <span
@@ -72,8 +74,8 @@ export function ProjectOpener({ onBrowse }: ProjectOpenerProps) {
         <button
           className={styles.acpProjectOpenerBrowse}
           onClick={handleBrowse}
-          aria-label="Browse for project"
-          title="Browse..."
+          aria-label={t('projectOpener.browseAriaLabel')}
+          title={t('projectOpener.browse')}
         >
           &#x2026;
         </button>

@@ -3,6 +3,7 @@ import type { ToolCallState } from '@acp-components/core';
 import type { ToolCallLocation } from '@agentclientprotocol/sdk';
 import { DiffView } from '../diff-view';
 import { TerminalView } from '../terminal-view';
+import { useI18n } from '../../i18n';
 import styles from './tool-call.module.scss';
 
 export interface ToolCallCardProps {
@@ -53,6 +54,7 @@ export function ToolCallCard({ toolCall, onNavigate }: ToolCallCardProps) {
   const [expanded, setExpanded] = useState(false);
   const hasContent = toolCall.content && toolCall.content.length > 0;
   const hasLocations = toolCall.locations && toolCall.locations.length > 0;
+  const { t } = useI18n();
 
   return (
     <div className={styles.acpToolCall}>
@@ -95,9 +97,9 @@ export function ToolCallCard({ toolCall, onNavigate }: ToolCallCardProps) {
                 );
               }
               case 'terminal': {
-                const t = item as unknown as { terminalId: string };
+                const term = item as unknown as { terminalId: string };
                 return (
-                  <TerminalView key={i} output={`Terminal #${t.terminalId}\nWaiting for output...`} exitCode={null} />
+                  <TerminalView key={i} output={`${t('terminal.title')} #${term.terminalId}\n${t('terminal.noOutput')}`} exitCode={null} />
                 );
               }
               default:

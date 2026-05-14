@@ -23,7 +23,9 @@
       "Bash(npm run *)",
       "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\('peerDependencies:', JSON.stringify\\(p.peerDependencies\\)\\); console.log\\('dependencies:', JSON.stringify\\(p.dependencies\\)\\); console.log\\('devDependencies:', JSON.stringify\\(p.devDependencies\\)\\)\")",
       "Bash(node -e \"const m = require\\('./dist/index.cjs'\\); console.log\\(Object.keys\\(m\\).sort\\(\\).join\\(', '\\)\\)\")",
-      "Bash(node -e \"const m = require\\('./dist/index.cjs'\\); const keys = Object.keys\\(m\\).sort\\(\\); console.log\\('React exports \\(' + keys.length + '\\):', keys.join\\(', '\\)\\)\")"
+      "Bash(node -e \"const m = require\\('./dist/index.cjs'\\); const keys = Object.keys\\(m\\).sort\\(\\); console.log\\('React exports \\(' + keys.length + '\\):', keys.join\\(', '\\)\\)\")",
+      "Bash(npx vitest *)",
+      "Bash(pnpm add *)"
     ]
   }
 }

@@ -50,3 +50,7 @@ export type {
   ConnectionStatus as ConnectionStatusType,
   MessagePart,
 } from '@acp-components/core';
+
+// i18n
+export { I18nProvider, useI18n } from './i18n';
+export type { I18nProviderProps } from './i18n';

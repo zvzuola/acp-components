@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { PlanEntry } from '@agentclientprotocol/sdk';
+import { useI18n } from '../../i18n';
 import styles from './plan-view.module.scss';
 
 export interface PlanViewProps {
@@ -28,6 +29,7 @@ const priorityClass: Record<string, string> = {
 export function PlanView({ entries, isStreaming }: PlanViewProps) {
   const [expanded, setExpanded] = useState(true);
   const prevStreaming = useRef(isStreaming);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (isStreaming) {
@@ -54,7 +56,7 @@ export function PlanView({ entries, isStreaming }: PlanViewProps) {
           &#x25b6;
         </span>
         <span className={styles.acpPlanViewLabel}>
-          {isStreaming ? 'Planning...' : 'Plan'}
+          {isStreaming ? t('plan.planning') : t('plan.title')}
         </span>
         <span className={styles.acpPlanViewProgress}>
           {completedCount}/{entries.length}

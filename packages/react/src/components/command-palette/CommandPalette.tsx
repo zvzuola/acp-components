@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import type { AvailableCommand } from '@agentclientprotocol/sdk';
+import { useI18n } from '../../i18n';
 import styles from './command-palette.module.scss';
 
 export interface CommandPaletteProps {
@@ -43,6 +44,7 @@ export function CommandPalette({
   const open = isControlled ? openProp : internalOpen;
   const query = inline && queryProp !== undefined ? queryProp : internalQuery;
   const activeIndex = isControlled && activeIndexProp !== undefined ? activeIndexProp : internalActiveIndex;
+  const { t } = useI18n();
 
   const filtered = useMemo(() => {
     if (!query || !query.trim()) return commands;
@@ -150,8 +152,8 @@ export function CommandPalette({
             className={styles.acpCommandPaletteTrigger}
             onClick={openPalette}
             disabled={disabled || commands.length === 0}
-            aria-label="Open command palette"
-            title="Commands"
+            aria-label={t('commandPalette.open')}
+            title={t('commandPalette.commands')}
           >
             /
           </button>
@@ -169,8 +171,8 @@ export function CommandPalette({
           className={styles.acpCommandPaletteTrigger}
           onClick={openPalette}
           disabled={disabled || commands.length === 0}
-          aria-label="Open command palette"
-          title="Commands"
+          aria-label={t('commandPalette.open')}
+          title={t('commandPalette.commands')}
         >
           /
         </button>
@@ -181,21 +183,21 @@ export function CommandPalette({
             <input
               ref={inputRef}
               type="text"
-              placeholder="Search commands..."
+              placeholder={t('commandPalette.searchPlaceholder')}
               value={internalQuery}
               onChange={(e) => {
                 setInternalQuery(e.target.value);
                 setInternalActiveIndex(0);
               }}
               onKeyDown={handleKeyDown}
-              aria-label="Filter commands"
+              aria-label={t('commandPalette.filterCommands')}
             />
           </div>
         )}
         <div ref={listRef} className={styles.acpCommandPaletteList} role="listbox">
           {filtered.length === 0 ? (
             <div className={styles.acpCommandPaletteEmpty}>
-              No matching commands
+              {t('commandPalette.noMatching')}
             </div>
           ) : (
             filtered.map((cmd, i) => (

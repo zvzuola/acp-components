@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { usePermission } from '../../hooks/usePermission';
 import type { SessionId } from '@agentclientprotocol/sdk';
+import { useI18n } from '../../i18n';
 import styles from './permission-dialog.module.scss';
 
 export interface PermissionDialogProps {
@@ -10,6 +11,7 @@ export interface PermissionDialogProps {
 export function PermissionDialog({ sessionId }: PermissionDialogProps) {
   const { currentRequest, respond, deny } = usePermission(sessionId);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (currentRequest && dialogRef.current) {
@@ -22,11 +24,11 @@ export function PermissionDialog({ sessionId }: PermissionDialogProps) {
   const [allowOnce, allowAlways, denyOnce] = currentRequest.options;
 
   return (
-    <div className={styles.acpPermissionDialogOverlay} role="dialog" aria-modal="true" aria-label="Permission required">
+    <div className={styles.acpPermissionDialogOverlay} role="dialog" aria-modal="true" aria-label={t('permission.ariaLabel')}>
       <div className={styles.acpPermissionDialog} ref={dialogRef} tabIndex={-1}>
-        <h3 className={styles.acpPermissionDialogTitle}>Permission Required</h3>
+        <h3 className={styles.acpPermissionDialogTitle}>{t('permission.title')}</h3>
         <p className={styles.acpPermissionDialogDesc}>
-          The agent wants to execute a tool that requires your approval.
+          {t('permission.description')}
         </p>
         <div className={styles.acpPermissionDialogTool}>
           <div className={styles.acpPermissionDialogToolName}>{currentRequest.toolCall.title}</div>
@@ -41,14 +43,14 @@ export function PermissionDialog({ sessionId }: PermissionDialogProps) {
             className={`${styles.acpPermissionDialogBtn} ${styles.acpPermissionDialogBtnDeny}`}
             onClick={() => deny(sessionId)}
           >
-            {denyOnce?.name || 'Deny'}
+            {denyOnce?.name || t('permission.deny')}
           </button>
           <button
             className={`${styles.acpPermissionDialogBtn} ${styles.acpPermissionDialogBtnAllow}`}
             onClick={() => respond(sessionId, allowAlways?.optionId || allowOnce?.optionId || '')}
             autoFocus
           >
-            {allowAlways?.name || allowOnce?.name || 'Allow'}
+            {allowAlways?.name || allowOnce?.name || t('permission.allow')}
           </button>
         </div>
       </div>

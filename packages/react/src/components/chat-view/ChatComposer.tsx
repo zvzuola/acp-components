@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useMemo } from 'react';
 import { usePrompt } from '../../hooks/usePrompt';
 import type { SessionId, ContentBlock, AvailableCommand } from '@agentclientprotocol/sdk';
 import { CommandPalette } from '../command-palette';
+import { useI18n } from '../../i18n';
 import styles from './composer.module.scss';
 
 export interface ChatComposerProps {
@@ -28,6 +29,7 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands }: Chat
   const [activeIndex, setActiveIndex] = useState(0);
   const { send, cancel } = usePrompt(sessionId);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { t } = useI18n();
 
   const commandState = useMemo(() => {
     if (!availableCommands || availableCommands.length === 0) return null;
@@ -175,7 +177,7 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands }: Chat
         <textarea
           ref={textareaRef}
           className={styles.acpChatComposerInput}
-          placeholder="Type a message... (Ctrl+Enter to send, / for commands)"
+          placeholder={t('composer.placeholder')}
           value={value}
           onChange={(e) => {
             setValue(e.target.value);
@@ -185,14 +187,14 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands }: Chat
           onKeyDown={handleKeyDown}
           rows={1}
           disabled={!sessionId}
-          aria-label="Message input"
+          aria-label={t('composer.ariaLabel')}
         />
         {isStreaming ? (
           <button
             className={styles.acpChatComposerCancel}
             onClick={handleCancel}
-            aria-label="Cancel generation"
-            title="Cancel"
+            aria-label={t('composer.cancelAriaLabel')}
+            title={t('composer.cancel')}
           >
             &#x25a0;
           </button>
@@ -201,14 +203,14 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands }: Chat
             className={styles.acpChatComposerSend}
             onClick={handleSend}
             disabled={!value.trim() || !sessionId}
-            aria-label="Send message"
-            title="Send (Ctrl+Enter)"
+            aria-label={t('composer.sendAriaLabel')}
+            title={t('composer.send')}
           >
             &#x2191;
           </button>
         )}
       </div>
-      <div className={styles.acpChatComposerHint}>Ctrl+Enter to send, / for commands</div>
+      <div className={styles.acpChatComposerHint}>{t('composer.hint')}</div>
     </div>
   );
 }

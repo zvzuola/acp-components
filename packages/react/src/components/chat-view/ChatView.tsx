@@ -8,6 +8,7 @@ import { StreamingIndicator } from './StreamingIndicator';
 import { PlanView } from './PlanView';
 import { UsageBar } from '../status-bar/UsageBar';
 import { SessionConfigPanel } from '../session-config-panel';
+import { useI18n } from '../../i18n';
 import styles from './chat-view.module.scss';
 
 export interface ChatViewProps {
@@ -48,6 +49,7 @@ function groupMessagesIntoRounds(messages: Message[]): Round[] {
 export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
   const { messages, isStreaming, plan, availableCommands } = useSession(sessionId);
   const listRef = useRef<HTMLDivElement>(null);
+  const { t } = useI18n();
 
   const rounds = useMemo(() => groupMessagesIntoRounds(messages), [messages]);
 
@@ -61,7 +63,7 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
     return (
       <div className={styles.acpChatView}>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--acp-color-text-muted)' }}>
-          Select or create a session to begin
+          {t('chat.emptyState')}
         </div>
       </div>
     );
@@ -70,7 +72,7 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
   return (
     <div className={styles.acpChatView}>
       <div className={styles.acpChatHeader}>
-        <span className={styles.acpChatHeaderTitle}>Chat</span>
+        <span className={styles.acpChatHeaderTitle}>{t('chat.title')}</span>
         <div className={styles.acpChatHeaderControls}>
           <SessionConfigPanel sessionId={sessionId} />
           <UsageBar sessionId={sessionId} />
