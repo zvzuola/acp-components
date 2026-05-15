@@ -1,6 +1,6 @@
 # acp-components
 
-A universal frontend component library for building AI Agent interfaces based on the [Agent Client Protocol (ACP)](https://github.com/agentclientprotocol/sdk). Designed with a **data-layer / UI-layer separation** architecture:
+A universal frontend component library for building AI Agent interfaces based on the [Agent Client Protocol (ACP)](https://github.com/agentclientprotocol/agent-client-protocol). Designed with a **data-layer / UI-layer separation** architecture:
 
 - **`@acp-components/core`** — Framework-agnostic TypeScript module: transport communication, state management, business logic
 - **`@acp-components/react`** — React component library: UI rendering and user interaction

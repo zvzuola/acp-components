@@ -42,11 +42,13 @@
     color: var(--acp-color-error);
     background: var(--acp-color-error-muted);
     padding: 2px 14px;
+    white-space: pre-wrap;
   }
 
   &__new {
     color: var(--acp-color-success);
     background: var(--acp-color-success-muted);
     padding: 2px 14px;
+    white-space: pre-wrap;
   }
 }

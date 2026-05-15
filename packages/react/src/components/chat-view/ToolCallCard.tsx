@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { marked } from 'marked';
 import type { ToolCallState } from '@acp-components/core';
-import type { ToolCallLocation } from '@agentclientprotocol/sdk';
+import type { ToolCallLocation, ToolKind } from '@agentclientprotocol/sdk';
 import { DiffView } from '../diff-view';
 import { TerminalView } from '../terminal-view';
 import { useI18n } from '../../i18n';
 import styles from './tool-call.module.scss';
+
+function MarkdownText({ text }: { text: string }) {
+  const html = useMemo(() => marked.parse(text, { async: false }) as string, [text]);
+  return <div dangerouslySetInnerHTML={{ __html: html }} />;
+}
 
 export interface ToolCallCardProps {
   toolCall: ToolCallState;
@@ -13,9 +19,21 @@ export interface ToolCallCardProps {
 
 const statusClass: Record<string, string> = {
   pending: styles.acpToolCallStatusPending,
-  in_progress: styles.acpToolCallStatusIn_progress,
+  in_progress: styles.acpToolCallStatusInProgress,
   completed: styles.acpToolCallStatusCompleted,
   failed: styles.acpToolCallStatusFailed,
+};
+
+const kindIcon: Record<string, string> = {
+  read: '📄',
+  edit: '✏️',
+  delete: '🗑️',
+  move: '📦',
+  search: '🔍',
+  execute: '⚡',
+  think: '💭',
+  fetch: '🌐',
+  switch_mode: '🔄',
 };
 
 function LocationChip({ loc, onNavigate }: { loc: ToolCallLocation; onNavigate?: ToolCallCardProps['onNavigate'] }) {
@@ -64,6 +82,11 @@ export function ToolCallCard({ toolCall, onNavigate }: ToolCallCardProps) {
         aria-expanded={expanded}
       >
         <span className={`${styles.acpToolCallStatus} ${statusClass[String(toolCall.status)] || ''}`} />
+        {toolCall.kind && (
+          <span className={styles.acpToolCallKind} title={toolCall.kind}>
+            {kindIcon[toolCall.kind] || '🔧'}
+          </span>
+        )}
         <span className={styles.acpToolCallName}>{toolCall.title}</span>
         <span className={`${styles.acpToolCallChevron}${expanded ? ` ${styles.acpToolCallChevronOpen}` : ''}`}>
           &#x25b6;
@@ -83,7 +106,7 @@ export function ToolCallCard({ toolCall, onNavigate }: ToolCallCardProps) {
               case 'content': {
                 const c = item as unknown as { content: { type: string; text?: string } };
                 if (c.content.type === 'text' && c.content.text) {
-                  return <div key={i}>{c.content.text}</div>;
+                  return <MarkdownText key={i} text={c.content.text} />;
                 }
                 return <pre key={i} style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(c.content, null, 2)}</pre>;
               }

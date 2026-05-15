@@ -2,7 +2,7 @@
 
 [English](README.md)
 
-基于 [Agent Client Protocol (ACP)](https://github.com/agentclientprotocol/sdk) 协议的通用前端组件库，用于快速搭建 AI Agent 交互界面。项目采用**数据层与 UI 层分离**的架构设计：
+基于 [Agent Client Protocol (ACP)](https://github.com/agentclientprotocol/agent-client-protocol) 协议的通用前端组件库，用于快速搭建 AI Agent 交互界面。项目采用**数据层与 UI 层分离**的架构设计：
 
 - **`@acp-components/core`** — 框架无关的纯 TypeScript 模块：传输通信、状态管理、业务逻辑
 - **`@acp-components/react`** — React 组件库：界面渲染与用户交互
