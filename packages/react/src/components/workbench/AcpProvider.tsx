@@ -1,17 +1,14 @@
 import React, { useMemo } from 'react';
 import { AcpContext } from '../../context/AcpContext';
 import { useAcpProvider } from '../../hooks/useAcpProvider';
-import { useAcpStore } from '../../hooks/useAcpStore';
 import { acpStore } from '@acp-components/core';
-import type { TransportConfig, Implementation, FileReadHandler, FileWriteHandler } from '@acp-components/core';
-import type { ClientCapabilities } from '@agentclientprotocol/sdk';
+import type { AgentConfig } from '@acp-components/core';
+import type { FileReadHandler, FileWriteHandler } from '@acp-components/core';
 import { useI18n } from '../../i18n';
 import styles from './loading.module.scss';
 
 export interface AcpProviderProps {
-  transport: TransportConfig;
-  clientInfo?: Implementation;
-  clientCapabilities?: ClientCapabilities;
+  agents: AgentConfig[];
   theme?: 'light' | 'dark';
   children: React.ReactNode;
   onFileRead?: FileReadHandler;
@@ -19,17 +16,19 @@ export interface AcpProviderProps {
   defaultCwd?: string;
 }
 
-export function AcpProvider({ transport, clientInfo, clientCapabilities, theme = 'dark', children, onFileRead, onFileWrite, defaultCwd = '' }: AcpProviderProps) {
-  const { client, ready } = useAcpProvider({ transport, clientInfo, clientCapabilities, onFileRead, onFileWrite });
-  const projectCwd = useAcpStore((s) => s.projectCwd);
+export function AcpProvider({ agents, theme = 'dark', children, onFileRead, onFileWrite, defaultCwd = '' }: AcpProviderProps) {
+  const provider = useAcpProvider({ agents, onFileRead, onFileWrite });
+  const projectCwd = provider.projectCwd;
   const { t } = useI18n();
 
   const contextValue = useMemo(() => ({
-    client,
-    config: transport,
-    clientInfo,
+    getClient: provider.getClient,
+    agents: provider.agents,
     projectCwd,
-  }), [client, transport, clientInfo, projectCwd]);
+    addAgent: provider.addAgent,
+    removeAgent: provider.removeAgent,
+    isReady: provider.isReady,
+  }), [provider, projectCwd]);
 
   // Sync defaultCwd to store once on mount
   React.useEffect(() => {
@@ -38,7 +37,7 @@ export function AcpProvider({ transport, clientInfo, clientCapabilities, theme =
     }
   }, [defaultCwd]);
 
-  if (!ready) {
+  if (!provider.isReady) {
     return (
       <div data-acp-theme={theme} className={styles.acpLoading}>
         <div className={styles.acpLoadingSpinner} />

@@ -1,6 +1,6 @@
-import React from 'react';
 import { useSession } from '../../hooks/useSession';
 import { useAcpContext } from '../../context/AcpContext';
+import { useAcpStore } from '../../hooks/useAcpStore';
 import { setSessionConfigOption } from '@acp-components/core';
 import type { SessionId, SessionConfigOption, SessionConfigSelectOptions, SessionConfigSelectOption, SessionConfigSelectGroup } from '@agentclientprotocol/sdk';
 import styles from './session-config-panel.module.scss';
@@ -19,12 +19,17 @@ function SelectOption({ option }: { option: SessionConfigSelectOption }) {
 
 export function SessionConfigPanel({ sessionId }: SessionConfigPanelProps) {
   const { configOptions } = useSession(sessionId);
-  const { client } = useAcpContext();
+  const { getClient } = useAcpContext();
+  const sessions = useAcpStore((s) => s.sessions);
 
   if (!sessionId || configOptions.length === 0) return null;
 
+  const agentId = sessions.get(sessionId)?.agentId;
+  const client = agentId ? getClient(agentId) : null;
+
   const handleChange = async (configId: string, value: string | boolean) => {
-    await setSessionConfigOption(client, sessionId!, configId, value);
+    if (!client || !sessionId) return;
+    await setSessionConfigOption(client, sessionId, configId, value);
   };
 
   return (

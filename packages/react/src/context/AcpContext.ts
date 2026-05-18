@@ -1,11 +1,13 @@
 import { createContext, useContext } from 'react';
-import type { AcpClient, TransportConfig, Implementation } from '@acp-components/core';
+import type { AcpClient, AgentConfig, AgentConnection } from '@acp-components/core';
 
 export interface AcpContextValue {
-  client: AcpClient;
-  config: TransportConfig;
-  clientInfo?: Implementation;
+  getClient(agentId: string): AcpClient | null;
+  agents: AgentConnection[];
   projectCwd: string;
+  addAgent(config: AgentConfig): Promise<void>;
+  removeAgent(agentId: string): Promise<void>;
+  isReady: boolean;
 }
 
 export const AcpContext = createContext<AcpContextValue | null>(null);

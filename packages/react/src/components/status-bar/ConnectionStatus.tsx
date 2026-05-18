@@ -1,5 +1,5 @@
 import React from 'react';
-import { useConnectionStatus } from '../../hooks/useConnectionStatus';
+import { useAllAgentStatuses } from '../../hooks/useConnectionStatus';
 import styles from './connection-status.module.scss';
 
 const dotClass: Record<string, string> = {
@@ -10,14 +10,29 @@ const dotClass: Record<string, string> = {
 };
 
 export function ConnectionStatus() {
-  const { status, isConnected, agentName } = useConnectionStatus();
+  const { agents, overallStatus } = useAllAgentStatuses();
+
+  if (agents.length === 0) {
+    return (
+      <div className={styles.acpConnectionStatus} role="status" aria-label="No agent connected">
+        <span className={`${styles.acpConnectionStatusDot} ${dotClass.disconnected}`} />
+        <span>disconnected</span>
+      </div>
+    );
+  }
 
   return (
-    <div className={styles.acpConnectionStatus} role="status" aria-label={`Agent status: ${status}`}>
-      <span className={`${styles.acpConnectionStatusDot} ${dotClass[status] || ''}`} />
-      <span>
-        {isConnected ? agentName : status}
-      </span>
+    <div className={styles.acpConnectionStatus} role="status" aria-label={`Agent status: ${overallStatus}`}>
+      {agents.map((agent) => (
+        <span
+          key={agent.id}
+          className={styles.acpConnectionStatusItem}
+          title={`${agent.name}: ${agent.status}`}
+        >
+          <span className={`${styles.acpConnectionStatusDot} ${dotClass[agent.status] || ''}`} />
+          <span>{agent.name}</span>
+        </span>
+      ))}
     </div>
   );
 }

@@ -68,15 +68,18 @@ const transportConfig = {
 function AppInner() {
   const activeSessionId = useAcpStore((s) => s.activeSessionId);
   const projectCwd = useAcpStore((s) => s.projectCwd);
+  const agents = useAcpStore((s) => s.agents);
   const { refreshSessions } = useSessions();
   const prevCwd = useRef(projectCwd);
 
   useEffect(() => {
     if (prevCwd.current !== projectCwd) {
       prevCwd.current = projectCwd;
-      refreshSessions(projectCwd);
+      for (const agentId of agents.keys()) {
+        refreshSessions(agentId, projectCwd);
+      }
     }
-  }, [projectCwd, refreshSessions]);
+  }, [projectCwd, refreshSessions, agents]);
 
   const handleBrowse = async () => {
     const { open } = await import('@tauri-apps/plugin-dialog');
@@ -111,7 +114,11 @@ function App() {
   return (
     <I18nProvider>
       <AcpProvider
-        transport={transportConfig}
+        agents={[{
+          id: 'default',
+          name: 'OpenCode',
+          transport: transportConfig,
+        }]}
         theme="dark"
       >
         <AppInner />

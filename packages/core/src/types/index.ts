@@ -10,6 +10,7 @@ import type {
   AgentCapabilities,
   SessionUpdate,
   PermissionOption,
+  ClientCapabilities,
 } from '@agentclientprotocol/sdk';
 import type { AcpTransport } from '../transport/types';
 
@@ -52,6 +53,23 @@ export interface SessionMeta {
   title?: string;
   cwd: string;
   updatedAt?: string;
+  agentId: string;
+}
+
+export interface AgentConfig {
+  id: string;
+  name: string;
+  transport: TransportConfig;
+  clientInfo?: Implementation;
+  clientCapabilities?: ClientCapabilities;
+}
+
+export interface AgentConnection {
+  id: string;
+  name: string;
+  status: ConnectionStatus;
+  agentInfo: Implementation | null;
+  capabilities: Record<string, unknown> | null;
 }
 
 export interface PermissionRequest {
@@ -62,4 +80,4 @@ export interface PermissionRequest {
   reject: () => void;
 }
 
-export type { ContentBlock, SessionId, SessionInfo, SessionUpdate, StopReason, ToolCall, ToolCallUpdate, ToolCallContent, Implementation, AgentCapabilities, PermissionOption };
+export type { ContentBlock, SessionId, SessionInfo, SessionUpdate, StopReason, ToolCall, ToolCallUpdate, ToolCallContent, Implementation, AgentCapabilities, PermissionOption, ClientCapabilities };

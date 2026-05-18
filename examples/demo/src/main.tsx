@@ -61,15 +61,18 @@ function LocaleSwitcher() {
 function AppInner() {
   const activeSessionId = useAcpStore((s) => s.activeSessionId);
   const projectCwd = useAcpStore((s) => s.projectCwd);
+  const agents = useAcpStore((s) => s.agents);
   const { refreshSessions } = useSessions();
   const prevCwd = useRef(projectCwd);
 
   useEffect(() => {
     if (prevCwd.current !== projectCwd) {
       prevCwd.current = projectCwd;
-      refreshSessions(projectCwd);
+      for (const agentId of agents.keys()) {
+        refreshSessions(agentId, projectCwd);
+      }
     }
-  }, [projectCwd, refreshSessions]);
+  }, [projectCwd, refreshSessions, agents]);
 
   const handleBrowse = async () => {
     // In a browser, we can't get the real filesystem path from showDirectoryPicker.
@@ -99,10 +102,15 @@ function App() {
   return (
     <I18nProvider>
       <AcpProvider
-        transport={{
-          type: 'websocket',
-          url: 'ws://127.0.0.1:3100',
-        }}
+        agents={[{
+          id: 'opencode',
+          name: 'OpenCode',
+          transport: {
+            type: 'websocket',
+            url: 'ws://127.0.0.1:3100',
+          },
+        }
+        ]}
         theme="dark"
       >
         <AppInner />

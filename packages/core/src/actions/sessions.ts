@@ -4,10 +4,10 @@ import { acpStore } from '../store/acpStore';
 import { sessionStore } from '../store/sessionStore';
 import type { SessionMeta } from '../types';
 
-export async function createSession(client: AcpClient, cwd?: string): Promise<SessionId> {
+export async function createSession(client: AcpClient, agentId: string, cwd?: string): Promise<SessionId> {
   const cwdToUse = cwd ?? acpStore.getState().projectCwd;
   const res = await client.newSession(cwdToUse);
-  const meta: SessionMeta = { id: res.sessionId, cwd: cwdToUse };
+  const meta: SessionMeta = { id: res.sessionId, cwd: cwdToUse, agentId };
   acpStore.getState().addSession(meta);
   sessionStore.getState().ensureSession(res.sessionId);
   if (res.configOptions) {
@@ -41,9 +41,9 @@ export async function closeSession(client: AcpClient, sessionId: SessionId): Pro
   sessionStore.getState().removeSession(sessionId);
 }
 
-export async function refreshSessions(client: AcpClient, cwd?: string): Promise<void> {
+export async function refreshSessions(client: AcpClient, agentId: string, cwd?: string): Promise<void> {
   const res = await client.listSessions(undefined, cwd);
-  acpStore.getState().setSessions(res.sessions);
+  acpStore.getState().setSessions(res.sessions, agentId);
 }
 
 export async function setSessionConfigOption(

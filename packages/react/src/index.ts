@@ -36,7 +36,7 @@ export { useSession } from './hooks/useSession';
 export { usePrompt } from './hooks/usePrompt';
 export { useToolCalls } from './hooks/useToolCalls';
 export { usePermission } from './hooks/usePermission';
-export { useConnectionStatus } from './hooks/useConnectionStatus';
+export { useConnectionStatus, useAllAgentStatuses } from './hooks/useConnectionStatus';
 export { AcpContext, useAcpContext } from './context/AcpContext';
 export type { AcpContextValue } from './context/AcpContext';
 
@@ -49,6 +49,8 @@ export type {
   PermissionRequest,
   ConnectionStatus as ConnectionStatusType,
   MessagePart,
+  AgentConfig,
+  AgentConnection,
 } from '@acp-components/core';
 
 // i18n

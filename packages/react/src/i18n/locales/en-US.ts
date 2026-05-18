@@ -72,7 +72,7 @@ export const enUS = {
   'terminal.noOutput': 'No output',
 
   // AcpProvider
-  'loading.connecting': 'Connecting to agent...',
+  'loading.connecting': 'Connecting to agents...',
 
   // UsageBar
   'usageBar.ariaLabel': 'Context window: {used} of {total} tokens',

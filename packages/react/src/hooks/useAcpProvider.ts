@@ -1,9 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
-import { createAcpProvider } from '@acp-components/core';
-import type { AcpProviderOptions } from '@acp-components/core';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { useStore } from 'zustand/react';
+import { useShallow } from 'zustand/shallow';
+import { createAcpProvider, acpStore } from '@acp-components/core';
+import type { MultiAgentProviderOptions, MultiAgentProviderInstance, AgentConfig } from '@acp-components/core';
+import { useAcpStore } from './useAcpStore';
 
-export function useAcpProvider(options: AcpProviderOptions) {
-  const providerRef = useRef<ReturnType<typeof createAcpProvider> | null>(null);
+export function useAcpProvider(options: MultiAgentProviderOptions) {
+  const providerRef = useRef<MultiAgentProviderInstance | null>(null);
   const [ready, setReady] = useState(false);
 
   if (!providerRef.current) {
@@ -12,21 +15,39 @@ export function useAcpProvider(options: AcpProviderOptions) {
 
   useEffect(() => {
     const provider = providerRef.current!;
-    provider.subscribe(() => {
+    const unsub = provider.subscribe(() => {
       setReady(provider.ready);
     });
     if (provider.ready) {
       setReady(true);
     }
     return () => {
+      unsub();
       provider.destroy();
     };
   }, []);
 
+  const agents = useStore(acpStore, useShallow((s) => Array.from(s.agents.values())));
+  const projectCwd = useAcpStore((s) => s.projectCwd);
+
+  const getClient = useCallback((agentId: string) => {
+    return providerRef.current?.getClient(agentId) ?? null;
+  }, []);
+
+  const addAgent = useCallback(async (config: AgentConfig) => {
+    await providerRef.current?.addAgent(config);
+  }, []);
+
+  const removeAgent = useCallback(async (agentId: string) => {
+    await providerRef.current?.removeAgent(agentId);
+  }, []);
+
   return {
-    client: providerRef.current.client,
-    ready,
-    config: options.transport,
-    clientInfo: options.clientInfo,
+    getClient,
+    agents,
+    projectCwd,
+    addAgent,
+    removeAgent,
+    isReady: ready,
   };
 }

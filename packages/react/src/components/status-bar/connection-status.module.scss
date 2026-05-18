@@ -1,11 +1,17 @@
 .acp-connection-status {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 12px;
   padding: 4px 12px;
   font-size: 12px;
   font-weight: 500;
   color: var(--acp-color-text-secondary);
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
 
   &__dot {
     width: 7px;
