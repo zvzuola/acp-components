@@ -2,6 +2,11 @@ import { createStore } from 'zustand/vanilla';
 import type { Message, ToolCallState, PermissionRequest } from '../types';
 import type { SessionId, ContentBlock, StopReason, PlanEntry, UsageUpdate, SessionConfigOption, AvailableCommand } from '@agentclientprotocol/sdk';
 
+let idCounter = 0;
+function generateId(prefix: string): string {
+  return `${prefix}_${Date.now()}_${++idCounter}`;
+}
+
 interface SessionData {
   messages: Message[];
   isStreaming: boolean;
@@ -216,24 +221,45 @@ export const sessionStore = createStore<SessionStoreState>((set) => ({
       const existing = toolCalls.get(tc.toolCallId);
       toolCalls.set(tc.toolCallId, existing ? { ...existing, ...tc } : tc);
 
-      const messages = data.messages.map((m, i, arr) => {
-        if (i === arr.length - 1 && m.role === 'agent') {
-          const parts = m.parts;
-          const last = parts[parts.length - 1];
-          if (last?.type === 'tool_calls') {
-            const tcs = last.toolCalls;
-            const idx = tcs.findIndex((t) => t.toolCallId === tc.toolCallId);
-            if (idx >= 0) {
-              const updatedTcs = [...tcs];
-              updatedTcs[idx] = { ...updatedTcs[idx], ...tc };
-              return { ...m, parts: [...parts.slice(0, -1), { ...last, toolCalls: updatedTcs }] };
-            }
-            return { ...m, parts: [...parts.slice(0, -1), { ...last, toolCalls: [...tcs, tc] }] };
+      const lastMsg = data.messages[data.messages.length - 1];
+      let messages: Message[];
+
+      if (lastMsg && lastMsg.role === 'agent') {
+        const parts = lastMsg.parts;
+        const last = parts[parts.length - 1];
+        if (last?.type === 'tool_calls') {
+          const tcs = last.toolCalls;
+          const idx = tcs.findIndex((t) => t.toolCallId === tc.toolCallId);
+          if (idx >= 0) {
+            const updatedTcs = [...tcs];
+            updatedTcs[idx] = { ...updatedTcs[idx], ...tc };
+            messages = [
+              ...data.messages.slice(0, -1),
+              { ...lastMsg, parts: [...parts.slice(0, -1), { ...last, toolCalls: updatedTcs }] },
+            ];
+          } else {
+            messages = [
+              ...data.messages.slice(0, -1),
+              { ...lastMsg, parts: [...parts.slice(0, -1), { ...last, toolCalls: [...tcs, tc] }] },
+            ];
           }
-          return { ...m, parts: [...parts, { type: 'tool_calls' as const, toolCalls: [tc] }] };
+        } else {
+          messages = [
+            ...data.messages.slice(0, -1),
+            { ...lastMsg, parts: [...parts, { type: 'tool_calls' as const, toolCalls: [tc] }] },
+          ];
         }
-        return m;
-      });
+      } else {
+        messages = [
+          ...data.messages,
+          {
+            id: generateId('msg'),
+            role: 'agent',
+            parts: [{ type: 'tool_calls' as const, toolCalls: [tc] }],
+            timestamp: Date.now(),
+          },
+        ];
+      }
 
       next.set(sessionId, { ...data, pendingToolCalls: toolCalls, messages });
       return { sessions: next };
