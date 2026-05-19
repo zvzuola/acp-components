@@ -9,11 +9,13 @@ You can use the data layer alone to build UI component libraries with Vue, Svelt
 
 ## Features
 
+- **Multi-Agent** — Connect to multiple ACP agents simultaneously, each with independent transport, capabilities, and session management
+- **Multi-Workspace** — Organize sessions by working directory (cwd); switch between workspaces seamlessly
 - **Framework-Agnostic Core** — Zustand vanilla stores with zero React dependency; works with Vue, Svelte, Solid, or vanilla JS
-- **Multi-Transport** — Stdio, HTTP, WebSocket, and custom transports out of the box; ships with a Tauri IPC transport example
-- **Rich UI Components** — Session list, chat view (with round grouping), diff view, terminal view, permission dialog, plan view, thought view, command palette, and more — 15+ components
+- **Multi-Transport** — Stdio, HTTP, WebSocket, and custom transports per agent; ships with a Tauri IPC transport example
+- **Rich UI Components** — Session list (grouped by agent), chat view (with round grouping), diff view, terminal view, permission dialog, plan view, thought view, command palette, workspace switcher, and more — 15+ components
 - **Streaming UX** — Real-time content and thought streaming with animated indicators, live tool call status, and token usage tracking
-- **Session Management** — Full CRUD: create, load, switch, and close sessions with config option support
+- **Session Management** — Full CRUD: create, load, switch, and close sessions scoped by workspace and agent
 - **Tool Call Visualization** — Track agent tool invocations with status, input/output, file locations, and diffs
 - **Permission Handling** — Promise-based permission flow with built-in modal dialog for approving or rejecting tool call requests
 - **Theming** — Dark and light themes via CSS custom properties (`--acp-*` design tokens); extensible via `data-acp-theme` attribute
@@ -34,7 +36,7 @@ You can use the data layer alone to build UI component libraries with Vue, Svelt
 
 | Package | Description |
 |---------|-------------|
-| [@acp-components/core](packages/core) | Framework-agnostic: transport layer, AcpClient, vanilla Zustand stores, and imperative actions |
+| [@acp-components/core](packages/core) | Framework-agnostic: multi-agent transport layer, AcpClient, vanilla Zustand stores (workspace + agent + session), and imperative actions |
 | [@acp-components/react](packages/react) | React bindings: context provider, hooks (useSyncExternalStore), and 15+ UI components |
 
 ## Installation
@@ -43,7 +45,7 @@ You can use the data layer alone to build UI component libraries with Vue, Svelt
 pnpm add @acp-components/core @acp-components/react
 ```
 
-**Peer dependencies**: `react` (^18 \|\| ^19), `react-dom` (^18 \|\| ^19)
+**Peer dependencies**: `react` (^18 || ^19), `react-dom` (^18 || ^19)
 
 ## Quick Start
 
@@ -53,6 +55,7 @@ import {
   I18nProvider,
   AcpProvider,
   Workbench,
+  ProjectOpener,
   SessionList,
   ChatView,
   PermissionDialog,
@@ -60,19 +63,31 @@ import {
 import { useAcpStore, useSessions } from '@acp-components/react';
 
 function App() {
-  const activeSessionId = useAcpStore((s) => s.activeSessionId);
+  const activeSessionId = useAcpStore((s) => {
+    if (!s.activeWorkspaceCwd) return null;
+    return s.workspaces.get(s.activeWorkspaceCwd)?.activeSessionId ?? null;
+  });
 
   return (
     <I18nProvider>
       <AcpProvider
-        transport={{
-          type: 'websocket',
-          url: 'ws://127.0.0.1:3100',
-        }}
+        agents={[
+          {
+            id: 'main',
+            name: 'Main Agent',
+            transport: { type: 'websocket', url: 'ws://127.0.0.1:3100' },
+          },
+        ]}
         theme="dark"
+        defaultCwd="/path/to/project"
       >
         <Workbench
-          sidebar={<SessionList />}
+          sidebar={
+            <>
+              <ProjectOpener />
+              <SessionList />
+            </>
+          }
           main={<ChatView sessionId={activeSessionId} />}
         />
         <PermissionDialog sessionId={activeSessionId} />
@@ -84,44 +99,73 @@ function App() {
 ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
 ```
 
+### Multi-Agent Example
+
+Connect to multiple agents in different modes simultaneously:
+
+```tsx
+<AcpProvider
+  agents={[
+    {
+      id: 'craft',
+      name: 'Craft Agent',
+      transport: { type: 'websocket', url: 'ws://127.0.0.1:3100' },
+      clientCapabilities: { fs: { readTextFile: true, writeTextFile: true } },
+    },
+    {
+      id: 'ask',
+      name: 'Ask Agent',
+      transport: { type: 'stdio', command: 'opencode', args: ['acp', '--mode', 'ask'] },
+    },
+  ]}
+  theme="dark"
+>
+  <App />
+</AcpProvider>
+```
+
 ## Transport Options
+
+Each agent in the `agents` array gets its own transport configuration:
 
 ```tsx
 // Stdio — spawn an agent process directly (Electron / Tauri / Node.js desktop)
-<AcpProvider transport={{
-  type: 'stdio',
-  command: 'opencode',
-  args: ['acp'],
-}}>
+{
+  id: 'desktop-agent',
+  name: 'Desktop',
+  transport: { type: 'stdio', command: 'opencode', args: ['acp'] },
+}
 
 // HTTP — connect via HTTP POST
-<AcpProvider transport={{
-  type: 'http',
-  url: 'http://localhost:8080/acp',
-  headers: { 'Authorization': 'Bearer token' },
-}}>
+{
+  id: 'http-agent',
+  name: 'HTTP',
+  transport: { type: 'http', url: 'http://localhost:8080/acp', headers: { 'Authorization': 'Bearer token' } },
+}
 
 // WebSocket — connect to a bridge server (browser environments)
-<AcpProvider transport={{
-  type: 'websocket',
-  url: 'ws://127.0.0.1:3100',
-}}>
+{
+  id: 'ws-agent',
+  name: 'WebSocket',
+  transport: { type: 'websocket', url: 'ws://127.0.0.1:3100' },
+}
 
 // Custom — provide your own AcpTransport implementation
-<AcpProvider transport={{
-  type: 'custom',
-  transport: myCustomTransport,
-}}>
+{
+  id: 'custom-agent',
+  name: 'Custom',
+  transport: { type: 'custom', transport: myCustomTransport },
+}
 ```
 
 ## Components
 
 | Component | Description |
 |-----------|-------------|
-| `AcpProvider` | Top-level provider: manages connection lifecycle, wires session updates to stores, renders a loading spinner until ready. Props: `transport`, `clientInfo`, `clientCapabilities`, `theme`, `defaultCwd`, `onFileRead`, `onFileWrite` |
+| `AcpProvider` | Top-level provider: connects to multiple agents in parallel, manages agent lifecycle, wires session updates to stores, renders a loading spinner until all agents are ready. Props: `agents`, `theme`, `defaultCwd`, `onFileRead`, `onFileWrite` |
 | `Workbench` | Three-panel layout (sidebar, main, panel) using CSS Grid |
-| `ProjectOpener` | Editable project directory display with browse button |
-| `SessionList` | Sidebar session list with create / select / delete actions |
+| `ProjectOpener` | Editable workspace directory display with dropdown to switch between active workspaces |
+| `SessionList` | Sidebar session list grouped by agent within the active workspace, with create / select / delete actions per agent |
 | `ChatView` | Main chat area: groups messages into user/agent rounds, renders plan, usage bar, and config panel. Props: `sessionId`, `onNavigateFile` |
 | `MessageBubble` | Renders message parts (content blocks, thought blocks, tool calls) with Markdown via `marked` |
 | `ChatComposer` | Text input with slash-command palette integration and send / cancel controls |
@@ -132,7 +176,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
 | `DiffView` | Side-by-side diff viewer for file changes |
 | `PermissionDialog` | Modal for approving / rejecting tool permission requests |
 | `TerminalView` | Embedded terminal output display |
-| `ConnectionStatus` | Connection state indicator with agent name and version |
+| `ConnectionStatus` | Per-agent connection state indicator with agent name and version |
 | `UsageBar` | Token usage progress bar showing context window consumption |
 | `SessionConfigPanel` | Dropdown for session configuration options |
 | `CommandPalette` | Slash-command palette for available agent commands |
@@ -141,19 +185,52 @@ ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
 
 | Hook | Description |
 |------|-------------|
-| `useAcpProvider(opts)` | Creates and manages the ACP provider lifecycle (connect → initialize → ready) |
+| `useAcpProvider(opts)` | Creates and manages the multi-agent ACP provider lifecycle (connect all agents → initialize → ready) |
 | `useAcpStore(selector)` | Subscribe to the global `acpStore` (Zustand vanilla store via `useSyncExternalStore`) |
 | `useSessionStore(sessionId, selector)` | Subscribe to per-session `sessionStore` |
-| `useSessions()` | Session CRUD: list, create, select, close, refresh, plus `activeSessionId` |
+| `useSessions()` | Workspace-scoped session CRUD: list, create, select, close, refresh for the active workspace; returns `activeSessionId` |
 | `useSession(sessionId)` | All data for one session: messages, streaming state, tool calls, permissions, plan, usage, config options, available commands |
-| `usePrompt(sessionId)` | `send(blocks)` and `cancel()` for sending / canceling prompts |
+| `usePrompt(sessionId)` | `send(blocks)` and `cancel()` for sending / canceling prompts (auto-resolves the correct agent client) |
 | `useToolCalls(sessionId)` | Pending and completed tool calls for a session |
 | `usePermission(sessionId)` | Current permission request with `respond(optionId)` and `deny()` actions |
-| `useConnectionStatus()` | Connection status, agent info (name, version) |
-| `useAcpContext()` | Raw access to `AcpClient`, config, and `projectCwd` from React context |
+| `useConnectionStatus(agentId)` | Per-agent connection status, agent info (name, version) |
+| `useAllAgentStatuses()` | Aggregate status across all agents: individual statuses plus overall status |
+| `useAcpContext()` | Raw access to `getClient(agentId)`, agents list, workspaces, and workspace management actions from React context |
 | `useI18n()` | Access to `t()` translation function and `i18n` instance |
 
 ## Architecture
+
+### Multi-Agent & Multi-Workspace Model
+
+The component library supports connecting to multiple ACP agents simultaneously and organizing sessions by workspace (working directory):
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                      acpStore (Global State)                  │
+│                                                              │
+│  agents: Map<agentId, AgentConnection>                       │
+│  ┌──────────┬──────────┬──────────┐                         │
+│  │ craft    │ ask      │ code     │   (parallel connections) │
+│  │ (ws://)  │ (stdio)  │ (http)   │                         │
+│  └──────────┴──────────┴──────────┘                         │
+│                                                              │
+│  workspaces: Map<cwd, WorkspaceState>                        │
+│  ┌─────────────────────────────────────┐                    │
+│  │ /projects/app                       │                    │
+│  │  ├─ craft → [session-1, session-2]  │                    │
+│  │  └─ ask   → [session-3]             │                    │
+│  ├─────────────────────────────────────┤                    │
+│  │ /projects/lib                       │                    │
+│  │  └─ code  → [session-4]             │                    │
+│  └─────────────────────────────────────┘                    │
+│                                                              │
+│  activeWorkspaceCwd: "/projects/app"                         │
+└──────────────────────────────────────────────────────────────┘
+```
+
+- **Workspace** — Identified by `cwd` (current working directory). Each workspace holds sessions from different agents. Switching workspaces filters the session list to that directory's context.
+- **Agent** — An independent ACP connection with its own transport, client info, capabilities, and status. Agents connect in parallel when the provider initializes.
+- **Session** — Belongs to a specific workspace + agent pair. The `SessionMeta` carries `agentId` and `cwd` for routing.
 
 ### Package Layering
 
@@ -168,12 +245,13 @@ ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
 │  ┌────────────────────────────────────────────────┐  │
 │  │  Components (15+)                              │  │
 │  │  Workbench  ChatView  SessionList  DiffView    │  │
-│  │  PermissionDialog  CommandPalette  ...         │  │
+│  │  ProjectOpener  PermissionDialog  ...          │  │
 │  ├────────────────────────────────────────────────┤  │
 │  │  Hooks (useSyncExternalStore)                  │  │
-│  │  useAcpStore  useSession  usePrompt  ...       │  │
+│  │  useAcpProvider  useSessions  usePrompt  ...   │  │
 │  ├────────────────────────────────────────────────┤  │
 │  │  AcpContext + I18nProvider                     │  │
+│  │  (multi-agent: getClient(agentId), agents[])   │  │
 │  ├────────────────────────────────────────────────┤  │
 │  │  Theme System (CSS Custom Properties)          │  │
 │  │  --acp-color-*  --acp-shadow-*  --acp-radius-*│  │
@@ -183,24 +261,26 @@ ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
 ┌────────────────────▼─────────────────────────────────┐
 │        Data Layer: @acp-components/core               │
 │  ┌────────────────────────────────────────────────┐  │
-│  │  AcpClient                                     │  │
+│  │  Multi-Agent Provider                           │  │
+│  │  createAcpProvider({ agents, onFileRead, ... })│  │
+│  │  → parallel connect → initialize → ready       │  │
+│  │  addAgent / removeAgent / getClient              │  │
+│  ├────────────────────────────────────────────────┤  │
+│  │  AcpClient (per agent)                          │  │
 │  │  connect / initialize / prompt / cancel         │  │
 │  │  session CRUD / setSessionConfigOption          │  │
 │  │  onSessionUpdate / setPermissionHandler         │  │
 │  ├────────────────────────────────────────────────┤  │
-│  │  Transport Layer                                │  │
+│  │  Transport Layer (per agent)                    │  │
 │  │  StdioTransport │ HttpTransport                 │  │
 │  │  WebSocketTransport │ Custom (AcpTransport)     │  │
 │  ├────────────────────────────────────────────────┤  │
 │  │  State Management (vanilla Zustand)             │  │
-│  │  acpStore — global state                       │  │
-│  │  sessionStore — per-session state               │  │
+│  │  acpStore — agents, workspaces, sessions        │  │
+│  │  sessionStore — per-session data                │  │
 │  ├────────────────────────────────────────────────┤  │
-│  │  Actions (imperative)                          │  │
-│  │  sessions / prompt / permission                │  │
-│  ├────────────────────────────────────────────────┤  │
-│  │  createAcpProvider() — lifecycle orchestrator  │  │
-│  │  wires transport → AcpClient → stores          │  │
+│  │  Actions (imperative, agent-aware)              │  │
+│  │  sessions / prompt / permission                 │  │
 │  └────────────────────────────────────────────────┘  │
 └────────────────────┬─────────────────────────────────┘
                      │  built on
@@ -217,7 +297,7 @@ ACP supports bidirectional communication between Client and Agent. Within the fr
 ```
 Agent (sessionUpdate via NDJSON stream)
     ↓ Transport.readable
-AcpClient.onSessionUpdate event
+AcpClient.onSessionUpdate event (per agent)
     ↓
 createAcpProvider dispatches to stores
     ↓
@@ -225,7 +305,7 @@ acpStore / sessionStore (Zustand vanilla)
     ↓ useSyncExternalStore
 React Hooks → Components (re-render)
     ↓ user action
-Actions (operate on client + stores)
+Actions (operate on client + stores, route to correct agent)
     ↓ ACP protocol messages
 AcpClient.prompt() / cancel() → Transport.writable → Agent
 ```
@@ -249,8 +329,27 @@ AcpClient.prompt() / cancel() → Transport.writable → Agent
 
 Two vanilla Zustand stores (no React dependency):
 
-- **`acpStore`** — Global state: `connectionStatus`, `agentInfo`, `capabilities`, `sessions` (Map), `activeSessionId`, `projectCwd`
+- **`acpStore`** — Global state:
+  - `agents: Map<agentId, AgentConnection>` — all connected agents with status, info, capabilities
+  - `workspaces: Map<cwd, WorkspaceState>` — workspaces each containing their own `sessions` (Map of `SessionMeta`) and `activeSessionId`
+  - `activeWorkspaceCwd: string | null` — currently selected workspace
 - **`sessionStore`** — Per-session data keyed by `SessionId`: `messages[]`, `isStreaming`, `pendingToolCalls` (Map), `stopReason`, `pendingPermissions[]`, `plan[]`, `usage`, `configOptions[]`, `availableCommands[]`
+
+### Workspace Lifecycle
+
+```
+User opens project dir → addWorkspace(cwd) → setActiveWorkspace(cwd)
+    → Provider auto-fetches sessions from all agents for that cwd
+    → SessionList renders sessions grouped by agent
+
+User switches workspace → setActiveWorkspace(otherCwd)
+    → Provider fetches sessions for new cwd (cached if already loaded)
+    → activeSessionId resets to null for workspace switch
+
+User closes workspace → removeWorkspace(cwd)
+    → All sessions in that workspace are cleaned up
+    → Active workspace falls back to next available or null
+```
 
 ### Permission Flow
 
@@ -277,8 +376,8 @@ The component library uses CSS custom properties as a design-token contract. All
 
 Two built-in themes via `data-acp-theme`:
 
-- `"dark"` — "Warp" dark theme (default): deep navy background with cyan electric accents
-- `"light"` — "Frost" light theme: cool white / blue-gray surfaces with cyan accents
+- `"dark"` — Dark theme (default): deep navy background with accent highlights
+- `"light"` — Light theme: cool white / blue-gray surfaces with color accents
 
 Create custom themes by overriding the variables:
 
@@ -291,7 +390,7 @@ Create custom themes by overriding the variables:
 ```
 
 ```tsx
-<AcpProvider theme="my-theme" transport={...}>
+<AcpProvider theme="my-theme" agents={[...]}>
 ```
 
 ## Internationalization (i18n)
@@ -328,24 +427,32 @@ The `@acp-components/core` package has zero React dependency. You can use it wit
 ```ts
 import { acpStore, sessionStore, createAcpProvider, sendPrompt } from '@acp-components/core';
 
-// 1. Create provider
+// 1. Create multi-agent provider
 const provider = createAcpProvider({
-  transport: { type: 'stdio', command: 'opencode', args: ['acp'] },
+  agents: [
+    { id: 'main', name: 'Main', transport: { type: 'stdio', command: 'opencode', args: ['acp'] } },
+  ],
 });
 
 // 2. Wait for ready
 provider.subscribe(() => {
   if (provider.ready) {
-    console.log('Connected!');
+    console.log('All agents connected!');
   }
 });
 
 // 3. Read from vanilla stores
-acpStore.getState().sessions;       // current sessions
-acpStore.subscribe((state) => { }); // watch for changes
+acpStore.getState().workspaces;       // workspace state tree
+acpStore.getState().agents;           // agent connection statuses
+acpStore.subscribe((state) => { });   // watch for changes
 
-// 4. Use actions
-await sendPrompt(provider.client, sessionId, blocks);
+// 4. Use actions (need to provide client and agentId)
+const client = provider.getClient('main');
+await sendPrompt(client!, sessionId, blocks);
+
+// 5. Add/remove agents dynamically
+await provider.addAgent({ id: 'analyze', name: 'Analyze', transport: { type: 'websocket', url: 'ws://...' } });
+await provider.removeAgent('analyze');
 ```
 
 ## Project Structure
@@ -355,12 +462,12 @@ acp-components/
 ├── packages/
 │   ├── core/                    # @acp-components/core (framework-agnostic)
 │   │   └── src/
-│   │       ├── client/          # AcpClient — wraps ACP ClientSideConnection
+│   │       ├── client/          # AcpClient — wraps ACP ClientSideConnection (per agent)
 │   │       ├── transport/       # StdioTransport, HttpTransport, WebSocketTransport
-│   │       ├── store/           # acpStore, sessionStore (vanilla Zustand)
-│   │       ├── actions/         # sessions.ts, prompt.ts, permission.ts
-│   │       ├── types/           # Shared TypeScript types
-│   │       ├── provider.ts      # createAcpProvider() factory
+│   │       ├── store/           # acpStore (agents, workspaces, sessions), sessionStore (vanilla Zustand)
+│   │       ├── actions/         # sessions.ts, prompt.ts, permission.ts (agent-aware)
+│   │       ├── types/           # Shared TypeScript types (AgentConfig, WorkspaceState, AgentConnection, etc.)
+│   │       ├── provider.ts      # createAcpProvider() — multi-agent lifecycle orchestrator
 │   │       └── index.ts
 │   └── react/                   # @acp-components/react (React UI)
 │       └── src/
@@ -368,17 +475,21 @@ acp-components/
 │           │   ├── workbench/    # AcpProvider, Workbench, ProjectOpener
 │           │   ├── chat-view/    # ChatView, MessageBubble, ChatComposer,
 │           │   │                  ToolCallCard, StreamingIndicator, ThoughtView, PlanView
-│           │   ├── session-list/
+│           │   ├── session-list/ # Agent-grouped session list
 │           │   ├── session-config-panel/
 │           │   ├── diff-view/
 │           │   ├── terminal-view/
 │           │   ├── permission-dialog/
 │           │   ├── status-bar/   # ConnectionStatus, UsageBar
-│           │   └── command-palette/
+│           │   ├── command-palette/
+│           │   ├── workspace-dialog/
+│           │   ├── workspace-list/
+│           │   └── project-switcher/
 │           ├── hooks/            # useAcpProvider, useAcpStore, useSessionStore,
 │           │                      useSessions, useSession, usePrompt,
-│           │                      useToolCalls, usePermission, useConnectionStatus
-│           ├── context/          # AcpContext
+│           │                      useToolCalls, usePermission, useConnectionStatus,
+│           │                      useAllAgentStatuses
+│           ├── context/          # AcpContext (multi-agent aware)
 │           ├── i18n/             # I18nProvider, useI18n, en-US / zh-CN locales
 │           ├── styles/           # themes.scss, styles.css
 │           └── index.ts
@@ -386,6 +497,9 @@ acp-components/
 │   ├── demo/                    # Vite browser demo (WebSocket transport)
 │   ├── server/                  # WebSocket ↔ stdio bridge server
 │   └── tauri/                   # Tauri desktop app (custom TauriIpcTransport)
+├── docs/
+│   ├── ARCHITECTURE.md          # Detailed architecture documentation
+│   └── DETAILED_DESIGN.md       # Detailed design specs
 ├── package.json                 # Root workspace config
 ├── pnpm-workspace.yaml
 └── tsconfig.json
@@ -460,18 +574,40 @@ class MyCustomTransport implements AcpTransport {
   onError?: (handler: (err: Error) => void) => () => void;
 }
 
-<AcpProvider transport={{ type: 'custom', transport: new MyCustomTransport() }}>
+<AcpProvider agents={[{
+  id: 'custom',
+  name: 'Custom Agent',
+  transport: { type: 'custom', transport: new MyCustomTransport() },
+}]}>
 ```
 
 Real-world examples: Tauri IPC, Electron IPC, Chrome Extension messaging, iframe postMessage.
 
+### Dynamic Agent Management
+
+Agents can be added or removed at runtime:
+
+```tsx
+const { addAgent, removeAgent } = useAcpContext();
+
+// Add a new agent mid-session
+await addAgent({
+  id: 'new-agent',
+  name: 'New Agent',
+  transport: { type: 'stdio', command: 'my-agent', args: ['acp'] },
+});
+
+// Remove an agent (cleans up its sessions automatically)
+await removeAgent('new-agent');
+```
+
 ### File System Integration
 
-Control how the agent reads and writes files:
+Control how agents read and write files:
 
 ```tsx
 <AcpProvider
-  transport={...}
+  agents={[...]}
   onFileRead={async (req) => {
     const content = await nativeFs.readTextFile(req.path);
     return { content };
@@ -481,6 +617,23 @@ Control how the agent reads and writes files:
     return {};
   }}
 >
+```
+
+### Workspace Management
+
+Programmatically manage workspaces:
+
+```tsx
+const { addWorkspace, setActiveWorkspace, removeWorkspace, workspaces } = useAcpContext();
+
+// Add a workspace
+addWorkspace('/path/to/project');
+
+// Switch to it
+setActiveWorkspace('/path/to/project');
+
+// List all workspaces
+workspaces.forEach(ws => console.log(ws.cwd, ws.sessions.size));
 ```
 
 ## Tech Stack
