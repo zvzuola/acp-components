@@ -6,7 +6,7 @@ export function respondToPermission(sessionId: SessionId, optionId: string): voi
   const req = reqs[0];
   if (req) {
     req.resolve(optionId);
-    sessionStore.getState().removePermissionRequest(sessionId);
+    sessionStore.getState().removePermissionRequest(sessionId, req.id);
   }
 }
 
@@ -15,6 +15,6 @@ export function denyPermission(sessionId: SessionId): void {
   const req = reqs[0];
   if (req) {
     req.reject();
-    sessionStore.getState().removePermissionRequest(sessionId);
+    sessionStore.getState().removePermissionRequest(sessionId, req.id);
   }
 }

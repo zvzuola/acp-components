@@ -7,6 +7,8 @@ import type { AgentConfig } from './types';
 import type { RequestPermissionResponse, ClientCapabilities } from '@agentclientprotocol/sdk';
 import type { PermissionRequest } from './types';
 
+let permissionIdCounter = 0;
+
 const clientRegistry = new Map<string, AcpClient>();
 const cleanupFns = new Map<string, () => void>();
 
@@ -37,6 +39,7 @@ function setupPermissionHandler(client: AcpClient): void {
     const sessStore = sessionStore.getState();
     return new Promise<RequestPermissionResponse>((resolve) => {
       const permissionReq: PermissionRequest = {
+        id: `perm_${++permissionIdCounter}`,
         sessionId: req.sessionId,
         toolCall: req.toolCall,
         options: req.options,

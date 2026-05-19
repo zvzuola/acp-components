@@ -62,7 +62,7 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
   if (!sessionId) {
     return (
       <div className={styles.acpChatView}>
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--acp-color-text-muted)' }}>
+        <div className={styles.acpChatEmpty}>
           {t('chat.emptyState')}
         </div>
       </div>

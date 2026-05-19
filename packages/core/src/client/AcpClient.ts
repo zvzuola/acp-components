@@ -101,6 +101,12 @@ export class AcpClient {
   }
 
   async connect(config: TransportConfig): Promise<void> {
+    if (this._status === 'connecting') {
+      return;
+    }
+    if (this.transport || this.connection) {
+      this.disconnect();
+    }
     this.transport = createTransport(config);
     this.setStatus('connecting');
 

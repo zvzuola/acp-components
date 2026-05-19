@@ -73,6 +73,7 @@ export interface AgentConnection {
 }
 
 export interface PermissionRequest {
+  id: string;
   sessionId: SessionId;
   toolCall: ToolCallUpdate;
   options: Array<PermissionOption>;

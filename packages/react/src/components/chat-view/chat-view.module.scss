@@ -206,3 +206,12 @@
     opacity: 1;
   }
 }
+
+// ── Empty State ───────────────────────────────────────────────────────────
+.acp-chat-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--acp-color-text-muted);
+}

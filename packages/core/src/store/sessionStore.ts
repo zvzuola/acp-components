@@ -35,7 +35,7 @@ interface SessionStoreState {
   upsertToolCall: (sessionId: SessionId, tc: ToolCallState) => void;
   updateToolCall: (sessionId: SessionId, id: string, update: Partial<ToolCallState>) => void;
   addPermissionRequest: (sessionId: SessionId, req: PermissionRequest) => void;
-  removePermissionRequest: (sessionId: SessionId) => void;
+  removePermissionRequest: (sessionId: SessionId, requestId?: string) => void;
   setPlan: (sessionId: SessionId, entries: PlanEntry[]) => void;
   setUsage: (sessionId: SessionId, usage: UsageUpdate) => void;
   setConfigOptions: (sessionId: SessionId, configOptions: SessionConfigOption[]) => void;
@@ -316,14 +316,14 @@ export const sessionStore = createStore<SessionStoreState>((set) => ({
       return { sessions: next };
     }),
 
-  removePermissionRequest: (sessionId) =>
+  removePermissionRequest: (sessionId, requestId) =>
     set((s) => {
       const data = s.sessions.get(sessionId);
       if (!data) return s;
       const next = new Map(s.sessions);
       next.set(sessionId, {
         ...data,
-        pendingPermissions: data.pendingPermissions.filter((r) => r.sessionId !== sessionId),
+        pendingPermissions: data.pendingPermissions.filter((r) => r.id !== requestId),
       });
       return { sessions: next };
     }),
