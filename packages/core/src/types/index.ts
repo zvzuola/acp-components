@@ -54,6 +54,7 @@ export interface SessionMeta {
   cwd: string;
   updatedAt?: string;
   agentId: string;
+  loaded: boolean;
 }
 
 export interface AgentConfig {

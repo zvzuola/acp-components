@@ -70,6 +70,7 @@ export const acpStore = createStore<AcpStoreState>((set) => ({
           cwd: s.cwd,
           updatedAt: s.updatedAt ?? undefined,
           agentId,
+          loaded: false,
         });
       }
       return { sessions: next };

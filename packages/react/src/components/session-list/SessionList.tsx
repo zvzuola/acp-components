@@ -85,7 +85,7 @@ export function SessionList() {
                 <div
                   key={s.id}
                   className={`${styles.acpSessionItem}${activeSessionId === s.id ? ` ${styles.acpSessionItemActive}` : ''}`}
-                  onClick={() => selectSession(s.id)}
+                  onClick={() => { if (activeSessionId !== s.id) selectSession(s.id); }}
                   role="option"
                   aria-selected={activeSessionId === s.id}
                 >

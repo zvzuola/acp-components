@@ -7,7 +7,7 @@ import type { SessionMeta } from '../types';
 export async function createSession(client: AcpClient, agentId: string, cwd?: string): Promise<SessionId> {
   const cwdToUse = cwd ?? acpStore.getState().projectCwd;
   const res = await client.newSession(cwdToUse);
-  const meta: SessionMeta = { id: res.sessionId, cwd: cwdToUse, agentId };
+  const meta: SessionMeta = { id: res.sessionId, cwd: cwdToUse, agentId, loaded: true };
   acpStore.getState().addSession(meta);
   sessionStore.getState().ensureSession(res.sessionId);
   if (res.configOptions) {
@@ -22,12 +22,14 @@ export async function loadSession(client: AcpClient, sessionId: SessionId, cwd: 
   if (res.configOptions) {
     sessionStore.getState().setConfigOptions(sessionId, res.configOptions);
   }
+  acpStore.getState().updateSession(sessionId, { loaded: true });
 }
 
 export async function selectSession(client: AcpClient, sessionId: SessionId): Promise<void> {
   const meta = acpStore.getState().sessions.get(sessionId);
   if (!meta) return;
   acpStore.getState().setActiveSession(sessionId);
+  if (meta.loaded) return;
   try {
     await loadSession(client, sessionId, meta.cwd);
   } catch {
