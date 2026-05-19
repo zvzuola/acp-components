@@ -1,29 +1,91 @@
 import { createStore } from 'zustand/vanilla';
-import type { SessionMeta, AgentConnection } from '../types';
+import type { SessionMeta, AgentConnection, WorkspaceState } from '../types';
 import type { SessionId, SessionInfo } from '@agentclientprotocol/sdk';
+
+function findWorkspaceBySession(
+  workspaces: Map<string, WorkspaceState>,
+  sessionId: SessionId,
+): string | null {
+  for (const [cwd, ws] of workspaces) {
+    if (ws.sessions.has(sessionId)) return cwd;
+  }
+  return null;
+}
+
+function createWorkspace(cwd: string): WorkspaceState {
+  return { cwd, activeSessionId: null, sessions: new Map() };
+}
 
 interface AcpStoreState {
   agents: Map<string, AgentConnection>;
-  sessions: Map<SessionId, SessionMeta>;
-  activeSessionId: SessionId | null;
-  projectCwd: string;
+  workspaces: Map<string, WorkspaceState>;
+  activeWorkspaceCwd: string | null;
+
+  addWorkspace: (cwd: string) => void;
+  removeWorkspace: (cwd: string) => void;
+  setActiveWorkspace: (cwd: string) => void;
 
   addAgent: (agent: AgentConnection) => void;
   removeAgent: (id: string) => void;
   updateAgent: (id: string, update: Partial<AgentConnection>) => void;
-  setSessions: (sessions: SessionInfo[], agentId: string) => void;
+
+  setSessions: (sessions: SessionInfo[], agentId: string, cwd: string) => void;
   addSession: (session: SessionMeta) => void;
   removeSession: (id: SessionId) => void;
   updateSession: (id: SessionId, update: Partial<SessionMeta>) => void;
   setActiveSession: (id: SessionId | null) => void;
-  setProjectCwd: (cwd: string) => void;
 }
 
 export const acpStore = createStore<AcpStoreState>((set) => ({
   agents: new Map(),
-  sessions: new Map(),
-  activeSessionId: null,
-  projectCwd: '',
+  workspaces: new Map(),
+  activeWorkspaceCwd: null,
+
+  // --- Workspace management ---
+
+  addWorkspace: (cwd) =>
+    set((state) => {
+      if (state.workspaces.has(cwd)) return state;
+      const next = new Map(state.workspaces);
+      next.set(cwd, createWorkspace(cwd));
+      return { workspaces: next };
+    }),
+
+  removeWorkspace: (cwd) =>
+    set((state) => {
+      const next = new Map(state.workspaces);
+      next.delete(cwd);
+      if (state.activeWorkspaceCwd !== cwd) {
+        return { workspaces: next };
+      }
+      const remaining = Array.from(next.keys());
+      if (remaining.length > 0) {
+        const first = remaining[0];
+        return {
+          workspaces: next,
+          activeWorkspaceCwd: first,
+        };
+      }
+      return {
+        workspaces: next,
+        activeWorkspaceCwd: null,
+      };
+    }),
+
+  setActiveWorkspace: (cwd) =>
+    set((state) => {
+      if (state.activeWorkspaceCwd === cwd) return state;
+      const next = new Map(state.workspaces);
+      if (!next.has(cwd)) {
+        next.set(cwd, createWorkspace(cwd));
+      }
+      return {
+        workspaces: next,
+        activeWorkspaceCwd: cwd,
+      };
+    }),
+
+  // --- Agent management ---
 
   addAgent: (agent) =>
     set((state) => {
@@ -36,14 +98,28 @@ export const acpStore = createStore<AcpStoreState>((set) => ({
     set((state) => {
       const next = new Map(state.agents);
       next.delete(id);
-      // Also remove sessions belonging to this agent
-      const nextSessions = new Map(state.sessions);
-      for (const [sid, meta] of state.sessions) {
-        if (meta.agentId === id) nextSessions.delete(sid);
+
+      const nextWorkspaces = new Map(state.workspaces);
+      for (const [cwd, ws] of state.workspaces) {
+        const nextSessions = new Map(ws.sessions);
+        let changed = false;
+        for (const [sid, meta] of ws.sessions) {
+          if (meta.agentId === id) {
+            nextSessions.delete(sid);
+            changed = true;
+          }
+        }
+        if (changed) {
+          let activeId = ws.activeSessionId;
+          if (activeId && !nextSessions.has(activeId)) {
+            activeId = null;
+          }
+          nextWorkspaces.set(cwd, { ...ws, sessions: nextSessions, activeSessionId: activeId });
+        }
       }
       return {
         agents: next,
-        sessions: nextSessions,
+        workspaces: nextWorkspaces,
       };
     }),
 
@@ -56,15 +132,19 @@ export const acpStore = createStore<AcpStoreState>((set) => ({
       return { agents: next };
     }),
 
-  setSessions: (sessions, agentId) =>
+  // --- Session management ---
+
+  setSessions: (sessions, agentId, cwd) =>
     set((state) => {
-      const next = new Map(state.sessions);
-      // Remove old sessions for this agentId, then merge in the new list
-      for (const [sid, meta] of state.sessions) {
-        if (meta.agentId === agentId) next.delete(sid);
+      const next = new Map(state.workspaces);
+      const ws = next.get(cwd);
+      if (!ws) return state;
+      const nextSessions = new Map(ws.sessions);
+      for (const [sid, meta] of ws.sessions) {
+        if (meta.agentId === agentId) nextSessions.delete(sid);
       }
       for (const s of sessions) {
-        next.set(s.sessionId, {
+        nextSessions.set(s.sessionId, {
           id: s.sessionId,
           title: s.title ?? undefined,
           cwd: s.cwd,
@@ -73,35 +153,69 @@ export const acpStore = createStore<AcpStoreState>((set) => ({
           loaded: false,
         });
       }
-      return { sessions: next };
+      next.set(cwd, { ...ws, sessions: nextSessions });
+      return { workspaces: next };
     }),
 
   addSession: (session) =>
     set((state) => {
-      const next = new Map(state.sessions);
-      next.set(session.id, session);
-      return { sessions: next };
+      const next = new Map(state.workspaces);
+      const ws = next.get(session.cwd);
+      if (!ws) return state;
+      const nextSessions = new Map(ws.sessions);
+      nextSessions.set(session.id, session);
+      next.set(session.cwd, { ...ws, sessions: nextSessions });
+      return { workspaces: next };
     }),
 
   removeSession: (id) =>
     set((state) => {
-      const next = new Map(state.sessions);
-      next.delete(id);
-      return {
-        sessions: next,
-        activeSessionId: state.activeSessionId === id ? null : state.activeSessionId,
-      };
+      const cwd = findWorkspaceBySession(state.workspaces, id);
+      if (!cwd) return state;
+      const next = new Map(state.workspaces);
+      const ws = next.get(cwd)!;
+      const nextSessions = new Map(ws.sessions);
+      nextSessions.delete(id);
+      next.set(cwd, {
+        ...ws,
+        sessions: nextSessions,
+        activeSessionId: ws.activeSessionId === id ? null : ws.activeSessionId,
+      });
+      return { workspaces: next };
     }),
 
   updateSession: (id, update) =>
     set((state) => {
-      const existing = state.sessions.get(id);
+      const cwd = findWorkspaceBySession(state.workspaces, id);
+      if (!cwd) return state;
+      const next = new Map(state.workspaces);
+      const ws = next.get(cwd)!;
+      const existing = ws.sessions.get(id);
       if (!existing) return state;
-      const next = new Map(state.sessions);
-      next.set(id, { ...existing, ...update });
-      return { sessions: next };
+      const nextSessions = new Map(ws.sessions);
+      nextSessions.set(id, { ...existing, ...update });
+      next.set(cwd, { ...ws, sessions: nextSessions });
+      return { workspaces: next };
     }),
 
-  setActiveSession: (id) => set({ activeSessionId: id }),
-  setProjectCwd: (cwd) => set({ projectCwd: cwd }),
+  setActiveSession: (id) =>
+    set((state) => {
+      if (id === null) {
+        if (!state.activeWorkspaceCwd) return state;
+        const next = new Map(state.workspaces);
+        const ws = next.get(state.activeWorkspaceCwd);
+        if (!ws || ws.activeSessionId === null) return state;
+        next.set(state.activeWorkspaceCwd, { ...ws, activeSessionId: null });
+        return { workspaces: next };
+      }
+      const cwd = findWorkspaceBySession(state.workspaces, id);
+      if (!cwd) return state;
+      const next = new Map(state.workspaces);
+      const ws = next.get(cwd);
+      if (ws && ws.activeSessionId === id) return state;
+      if (ws) {
+        next.set(cwd, { ...ws, activeSessionId: id });
+      }
+      return { workspaces: next };
+    }),
 }));

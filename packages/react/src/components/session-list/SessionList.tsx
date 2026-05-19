@@ -12,14 +12,20 @@ const agentDotClass: Record<string, string> = {
 };
 
 export function SessionList() {
-  const { sessions: allSessions, activeSessionId, setActiveSession, selectSession, createSession, closeSession } = useSessions();
+  const { activeSessionId, setActiveSession, selectSession, createSession, closeSession } = useSessions();
   const agents = useAcpStore((s) => s.agents);
-  const projectCwd = useAcpStore((s) => s.projectCwd);
+  const workspaces = useAcpStore((s) => s.workspaces);
+  const activeWorkspaceCwd = useAcpStore((s) => s.activeWorkspaceCwd);
   const { t } = useI18n();
 
+  const sessions = useMemo(() => {
+    if (!activeWorkspaceCwd) return [];
+    return Array.from(workspaces.get(activeWorkspaceCwd)?.sessions.values() ?? []);
+  }, [workspaces, activeWorkspaceCwd]);
+
   const agentSessions = useMemo(() => {
-    const map = new Map<string, typeof allSessions>();
-    for (const s of allSessions) {
+    const map = new Map<string, typeof sessions>();
+    for (const s of sessions) {
       const list = map.get(s.agentId);
       if (list) {
         list.push(s);
@@ -28,7 +34,7 @@ export function SessionList() {
       }
     }
     return map;
-  }, [allSessions]);
+  }, [sessions]);
 
   const agentList = Array.from(agents.values());
 
@@ -61,7 +67,7 @@ export function SessionList() {
           </div>
         )}
         {agentList.map((agent) => {
-          const sessions = agentSessions.get(agent.id) ?? [];
+          const agentSess = agentSessions.get(agent.id) ?? [];
           return (
             <div key={agent.id} className={styles.acpSessionAgentGroup}>
               <div className={styles.acpSessionAgentHeader}>
@@ -72,7 +78,8 @@ export function SessionList() {
                 <button
                   className={styles.acpSessionAgentHeaderAdd}
                   onClick={async () => {
-                    const id = await createSession(agent.id, projectCwd);
+                    if (!activeWorkspaceCwd) return;
+                    const id = await createSession(agent.id, activeWorkspaceCwd);
                     setActiveSession(id);
                   }}
                   aria-label={t('sessionList.newSession')}
@@ -81,7 +88,7 @@ export function SessionList() {
                   +
                 </button>
               </div>
-              {sessions.map((s) => (
+              {agentSess.map((s) => (
                 <div
                   key={s.id}
                   className={`${styles.acpSessionItem}${activeSessionId === s.id ? ` ${styles.acpSessionItemActive}` : ''}`}

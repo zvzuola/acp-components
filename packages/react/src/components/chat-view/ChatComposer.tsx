@@ -121,10 +121,8 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands }: Chat
         }
       }
 
-      // Ctrl+Enter always sends
+      // Ctrl+Enter: insert newline (default behavior)
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-        e.preventDefault();
-        handleSend();
         return;
       }
 

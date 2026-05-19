@@ -18,22 +18,25 @@ export interface AcpProviderProps {
 
 export function AcpProvider({ agents, theme = 'dark', children, onFileRead, onFileWrite, defaultCwd = '' }: AcpProviderProps) {
   const provider = useAcpProvider({ agents, onFileRead, onFileWrite });
-  const projectCwd = provider.projectCwd;
   const { t } = useI18n();
 
   const contextValue = useMemo(() => ({
     getClient: provider.getClient,
     agents: provider.agents,
-    projectCwd,
+    activeWorkspaceCwd: provider.activeWorkspaceCwd,
+    workspaces: provider.workspaces,
     addAgent: provider.addAgent,
     removeAgent: provider.removeAgent,
+    setActiveWorkspace: provider.setActiveWorkspace,
+    addWorkspace: provider.addWorkspace,
+    removeWorkspace: provider.removeWorkspace,
     isReady: provider.isReady,
-  }), [provider, projectCwd]);
+  }), [provider]);
 
   // Sync defaultCwd to store once on mount
   React.useEffect(() => {
     if (defaultCwd) {
-      acpStore.getState().setProjectCwd(defaultCwd);
+      acpStore.getState().setActiveWorkspace(defaultCwd);
     }
   }, [defaultCwd]);
 

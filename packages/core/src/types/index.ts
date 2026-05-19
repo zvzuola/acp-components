@@ -73,6 +73,13 @@ export interface AgentConnection {
   capabilities: Record<string, unknown> | null;
 }
 
+export interface WorkspaceState {
+  cwd: string;
+  label?: string;
+  activeSessionId: SessionId | null;
+  sessions: Map<SessionId, SessionMeta>;
+}
+
 export interface PermissionRequest {
   id: string;
   sessionId: SessionId;

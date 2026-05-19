@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import { AcpProvider } from '@acp-components/react';
 import { Workbench } from '@acp-components/react';
@@ -7,7 +6,7 @@ import { SessionList } from '@acp-components/react';
 import { ChatView } from '@acp-components/react';
 import { PermissionDialog } from '@acp-components/react';
 import { I18nProvider, useI18n } from '@acp-components/react';
-import { useAcpStore, useSessions } from '@acp-components/react';
+import { useAcpStore } from '@acp-components/react';
 
 function LocaleSwitcher() {
   const { i18n } = useI18n();
@@ -59,25 +58,13 @@ function LocaleSwitcher() {
 //   transport: { type: 'stdio', command: 'opencode', args: ['acp'] }
 
 function AppInner() {
-  const activeSessionId = useAcpStore((s) => s.activeSessionId);
-  const projectCwd = useAcpStore((s) => s.projectCwd);
-  const agents = useAcpStore((s) => s.agents);
-  const { refreshSessions } = useSessions();
-  const prevCwd = useRef(projectCwd);
-
-  useEffect(() => {
-    if (prevCwd.current !== projectCwd) {
-      prevCwd.current = projectCwd;
-      for (const agentId of agents.keys()) {
-        refreshSessions(agentId, projectCwd);
-      }
-    }
-  }, [projectCwd, refreshSessions, agents]);
+  const activeSessionId = useAcpStore((s) =>
+    s.activeWorkspaceCwd ? s.workspaces.get(s.activeWorkspaceCwd)?.activeSessionId ?? null : null,
+  );
+  const activeWorkspaceCwd = useAcpStore((s) => s.activeWorkspaceCwd);
 
   const handleBrowse = async () => {
-    // In a browser, we can't get the real filesystem path from showDirectoryPicker.
-    // Desktop environments (Tauri/Electron) should use their native dialog APIs instead.
-    const path = window.prompt('Enter project directory path:', projectCwd || '/path/to/project');
+    const path = window.prompt('Enter project directory path:', activeWorkspaceCwd || '/path/to/project');
     return path?.trim() || null;
   };
 

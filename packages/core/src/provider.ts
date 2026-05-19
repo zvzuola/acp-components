@@ -185,7 +185,19 @@ async function connectAgent(config: AgentConfig): Promise<void> {
     if (sessionCaps.list) {
       try {
         const res = await client.listSessions();
-        acpStore.getState().setSessions(res.sessions, config.id);
+        // Group sessions by cwd so each workspace gets its own batch
+        const sessionsByCwd = new Map<string, typeof res.sessions>();
+        for (const s of res.sessions) {
+          const list = sessionsByCwd.get(s.cwd);
+          if (list) {
+            list.push(s);
+          } else {
+            sessionsByCwd.set(s.cwd, [s]);
+          }
+        }
+        for (const [cwd, sessions] of sessionsByCwd) {
+          acpStore.getState().setSessions(sessions, config.id, cwd);
+        }
         for (const s of res.sessions) {
           sessionStore.getState().ensureSession(s.sessionId);
         }
@@ -229,6 +241,31 @@ export function createAcpProvider({ agents, onFileRead, onFileWrite }: MultiAgen
     notify();
   });
 
+  // Auto-refresh sessions when workspace changes (skip if already loaded)
+  const unsubWorkspace = acpStore.subscribe((state, prev) => {
+    if (!state.activeWorkspaceCwd || state.activeWorkspaceCwd === prev.activeWorkspaceCwd) return;
+    const cwd = state.activeWorkspaceCwd;
+    const ws = state.workspaces.get(cwd);
+    for (const [agentId, client] of clientRegistry) {
+      const sessionCaps = client.capabilities?.sessionCapabilities as Record<string, unknown> | undefined;
+      if (!sessionCaps?.list) continue;
+      // Skip if this workspace already has sessions for this agent
+      if (ws) {
+        let hasSessions = false;
+        for (const s of ws.sessions.values()) {
+          if (s.agentId === agentId) {
+            hasSessions = true;
+            break;
+          }
+        }
+        if (hasSessions) continue;
+      }
+      client.listSessions(undefined, cwd).then((res) => {
+        acpStore.getState().setSessions(res.sessions, agentId, cwd);
+      }).catch(() => {});
+    }
+  });
+
   async function addAgent(config: AgentConfig): Promise<void> {
     acpStore.getState().addAgent({
       id: config.id,
@@ -264,6 +301,7 @@ export function createAcpProvider({ agents, onFileRead, onFileWrite }: MultiAgen
       return () => { listeners.delete(fn); };
     },
     destroy() {
+      unsubWorkspace();
       for (const [, cleanup] of cleanupFns) cleanup();
       cleanupFns.clear();
       for (const [, client] of clientRegistry) client.disconnect();

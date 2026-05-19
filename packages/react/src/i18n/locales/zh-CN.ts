@@ -7,13 +7,13 @@ export const zhCN = {
   'commandPalette.noMatching': '无匹配命令',
 
   // ChatComposer
-  'composer.placeholder': '输入消息...（Ctrl+Enter 发送，/ 触发命令）',
+  'composer.placeholder': '输入消息...（Enter 发送，/ 触发命令）',
   'composer.ariaLabel': '消息输入',
   'composer.cancelAriaLabel': '取消生成',
   'composer.cancel': '取消',
   'composer.sendAriaLabel': '发送消息',
-  'composer.send': '发送（Ctrl+Enter）',
-  'composer.hint': 'Ctrl+Enter 发送，/ 触发命令',
+  'composer.send': '发送（Enter）',
+  'composer.hint': 'Enter 发送，/ 触发命令',
 
   // ChatView
   'chat.emptyState': '选择或创建一个会话以开始',
@@ -76,4 +76,11 @@ export const zhCN = {
 
   // UsageBar
   'usageBar.ariaLabel': '上下文窗口：{used} / {total} tokens',
+
+  // Workspace
+  'workspace.switchWorkspace': '切换工作区',
+  'workspace.addWorkspace': '添加工作区',
+  'workspace.removeWorkspace': '移除工作区',
+  'workspace.noWorkspaces': '暂无工作区',
+  'workspace.selectWorkspace': '选择工作区',
 };

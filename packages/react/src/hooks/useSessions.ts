@@ -1,3 +1,4 @@
+import { useShallow } from 'zustand/react/shallow';
 import { useCallback } from 'react';
 import { useAcpContext } from '../context/AcpContext';
 import { useAcpStore } from './useAcpStore';
@@ -7,23 +8,42 @@ import {
   selectSession as coreSelectSession,
   closeSession as coreCloseSession,
   refreshSessions as coreRefreshSessions,
+  acpStore,
 } from '@acp-components/core';
 import type { SessionId } from '@agentclientprotocol/sdk';
-import type { AcpClient } from '@acp-components/core';
+import type { AcpClient, SessionMeta } from '@acp-components/core';
 
 export function useSessions() {
   const { getClient } = useAcpContext();
-  const sessions = useAcpStore((s) => s.sessions);
-  const activeSessionId = useAcpStore((s) => s.activeSessionId);
+  const activeWorkspaceCwd = useAcpStore((s) => s.activeWorkspaceCwd);
+  const workspaces = useAcpStore((s) => s.workspaces);
+  const activeSessionId = useAcpStore((s) =>
+    s.activeWorkspaceCwd ? s.workspaces.get(s.activeWorkspaceCwd)?.activeSessionId ?? null : null,
+  );
   const setActiveSession = useAcpStore((s) => s.setActiveSession);
 
-  const getClientForSession = useCallback((sessionId: SessionId): AcpClient | null => {
-    const agentId = sessions.get(sessionId)?.agentId;
-    if (!agentId) return null;
-    return getClient(agentId);
-  }, [sessions, getClient]);
+  const sessions = useAcpStore(
+    useShallow((s) => {
+      if (!s.activeWorkspaceCwd) return [] as SessionMeta[];
+      return Array.from(s.workspaces.get(s.activeWorkspaceCwd)?.sessions.values() ?? []);
+    }),
+  );
 
-  const createSession = useCallback(async (agentId: string, cwd?: string) => {
+  const getClientForSession = useCallback((sessionId: SessionId): AcpClient | null => {
+    const state = acpStore.getState();
+    for (const [, ws] of state.workspaces) {
+      const meta = ws.sessions.get(sessionId);
+      if (meta) return getClient(meta.agentId);
+    }
+    // Fallback: try current workspace
+    if (state.activeWorkspaceCwd) {
+      const meta = state.workspaces.get(state.activeWorkspaceCwd)?.sessions.get(sessionId);
+      if (meta) return getClient(meta.agentId);
+    }
+    return null;
+  }, [getClient]);
+
+  const createSession = useCallback(async (agentId: string, cwd: string) => {
     const client = getClient(agentId);
     if (!client) throw new Error(`Agent ${agentId} not found`);
     return coreCreateSession(client, agentId, cwd);
@@ -47,14 +67,14 @@ export function useSessions() {
     return coreCloseSession(client, sessionId);
   }, [getClientForSession]);
 
-  const refreshSessions = useCallback(async (agentId: string, cwd?: string) => {
+  const refreshSessions = useCallback(async (agentId: string, cwd: string) => {
     const client = getClient(agentId);
     if (!client) return;
     return coreRefreshSessions(client, agentId, cwd);
   }, [getClient]);
 
   return {
-    sessions: Array.from(sessions.values()),
+    sessions,
     activeSessionId,
     setActiveSession,
     selectSession,

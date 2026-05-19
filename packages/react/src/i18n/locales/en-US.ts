@@ -7,13 +7,13 @@ export const enUS = {
   'commandPalette.noMatching': 'No matching commands',
 
   // ChatComposer
-  'composer.placeholder': 'Type a message... (Ctrl+Enter to send, / for commands)',
+  'composer.placeholder': 'Type a message... (Enter to send, / for commands)',
   'composer.ariaLabel': 'Message input',
   'composer.cancelAriaLabel': 'Cancel generation',
   'composer.cancel': 'Cancel',
   'composer.sendAriaLabel': 'Send message',
-  'composer.send': 'Send (Ctrl+Enter)',
-  'composer.hint': 'Ctrl+Enter to send, / for commands',
+  'composer.send': 'Send (Enter)',
+  'composer.hint': 'Enter to send, / for commands',
 
   // ChatView
   'chat.emptyState': 'Select or create a session to begin',
@@ -76,4 +76,11 @@ export const enUS = {
 
   // UsageBar
   'usageBar.ariaLabel': 'Context window: {used} of {total} tokens',
+
+  // Workspace
+  'workspace.switchWorkspace': 'Switch workspace',
+  'workspace.addWorkspace': 'Add workspace',
+  'workspace.removeWorkspace': 'Remove workspace',
+  'workspace.noWorkspaces': 'No workspaces',
+  'workspace.selectWorkspace': 'Select a workspace',
 };

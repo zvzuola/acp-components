@@ -1,13 +1,17 @@
 import { createContext, useContext } from 'react';
-import type { AcpClient, AgentConfig, AgentConnection } from '@acp-components/core';
+import type { AcpClient, AgentConfig, AgentConnection, WorkspaceState } from '@acp-components/core';
 
 export interface AcpContextValue {
   getClient(agentId: string): AcpClient | null;
   agents: AgentConnection[];
-  projectCwd: string;
+  activeWorkspaceCwd: string | null;
+  workspaces: WorkspaceState[];
   addAgent(config: AgentConfig): Promise<void>;
   removeAgent(agentId: string): Promise<void>;
   isReady: boolean;
+  setActiveWorkspace: (cwd: string) => void;
+  addWorkspace: (cwd: string) => void;
+  removeWorkspace: (cwd: string) => void;
 }
 
 export const AcpContext = createContext<AcpContextValue | null>(null);

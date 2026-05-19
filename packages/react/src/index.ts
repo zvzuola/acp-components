@@ -51,6 +51,7 @@ export type {
   MessagePart,
   AgentConfig,
   AgentConnection,
+  WorkspaceState,
 } from '@acp-components/core';
 
 // i18n

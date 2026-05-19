@@ -28,7 +28,8 @@ export function useAcpProvider(options: MultiAgentProviderOptions) {
   }, []);
 
   const agents = useStore(acpStore, useShallow((s) => Array.from(s.agents.values())));
-  const projectCwd = useAcpStore((s) => s.projectCwd);
+  const workspaces = useStore(acpStore, useShallow((s) => Array.from(s.workspaces.values())));
+  const activeWorkspaceCwd = useAcpStore((s) => s.activeWorkspaceCwd);
 
   const getClient = useCallback((agentId: string) => {
     return providerRef.current?.getClient(agentId) ?? null;
@@ -42,12 +43,28 @@ export function useAcpProvider(options: MultiAgentProviderOptions) {
     await providerRef.current?.removeAgent(agentId);
   }, []);
 
+  const setActiveWorkspace = useCallback((cwd: string) => {
+    acpStore.getState().setActiveWorkspace(cwd);
+  }, []);
+
+  const addWorkspace = useCallback((cwd: string) => {
+    acpStore.getState().addWorkspace(cwd);
+  }, []);
+
+  const removeWorkspace = useCallback((cwd: string) => {
+    acpStore.getState().removeWorkspace(cwd);
+  }, []);
+
   return {
     getClient,
     agents,
-    projectCwd,
+    workspaces,
+    activeWorkspaceCwd,
     addAgent,
     removeAgent,
+    setActiveWorkspace,
+    addWorkspace,
+    removeWorkspace,
     isReady: ready,
   };
 }

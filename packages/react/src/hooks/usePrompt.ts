@@ -1,19 +1,21 @@
 import { useCallback, useMemo } from 'react';
 import { useAcpContext } from '../context/AcpContext';
 import { useAcpStore } from './useAcpStore';
-import { sendPrompt, cancelPrompt } from '@acp-components/core';
+import { sendPrompt, cancelPrompt, acpStore } from '@acp-components/core';
 import type { SessionId, ContentBlock } from '@agentclientprotocol/sdk';
 
 export function usePrompt(sessionId: SessionId | null) {
   const { getClient } = useAcpContext();
-  const sessions = useAcpStore((s) => s.sessions);
 
   const client = useMemo(() => {
     if (!sessionId) return null;
-    const agentId = sessions.get(sessionId)?.agentId;
-    if (!agentId) return null;
-    return getClient(agentId);
-  }, [sessionId, sessions, getClient]);
+    const state = acpStore.getState();
+    for (const [, ws] of state.workspaces) {
+      const meta = ws.sessions.get(sessionId);
+      if (meta) return getClient(meta.agentId);
+    }
+    return null;
+  }, [sessionId, getClient]);
 
   const send = useCallback(async (contentBlocks: ContentBlock[]) => {
     if (!sessionId || !client) return;

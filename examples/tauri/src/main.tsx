@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import { AcpProvider } from '@acp-components/react';
 import { Workbench } from '@acp-components/react';
@@ -8,7 +7,7 @@ import { ChatView } from '@acp-components/react';
 import { PermissionDialog } from '@acp-components/react';
 import { ConnectionStatus } from '@acp-components/react';
 import { I18nProvider, useI18n } from '@acp-components/react';
-import { useAcpStore, useSessions } from '@acp-components/react';
+import { useAcpStore } from '@acp-components/react';
 import { TauriIpcTransport } from './tauriIpcTransport';
 
 function LocaleSwitcher() {
@@ -66,20 +65,9 @@ const transportConfig = {
 };
 
 function AppInner() {
-  const activeSessionId = useAcpStore((s) => s.activeSessionId);
-  const projectCwd = useAcpStore((s) => s.projectCwd);
-  const agents = useAcpStore((s) => s.agents);
-  const { refreshSessions } = useSessions();
-  const prevCwd = useRef(projectCwd);
-
-  useEffect(() => {
-    if (prevCwd.current !== projectCwd) {
-      prevCwd.current = projectCwd;
-      for (const agentId of agents.keys()) {
-        refreshSessions(agentId, projectCwd);
-      }
-    }
-  }, [projectCwd, refreshSessions, agents]);
+  const activeSessionId = useAcpStore((s) =>
+    s.activeWorkspaceCwd ? s.workspaces.get(s.activeWorkspaceCwd)?.activeSessionId ?? null : null,
+  );
 
   const handleBrowse = async () => {
     const { open } = await import('@tauri-apps/plugin-dialog');
