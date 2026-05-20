@@ -2,9 +2,9 @@ import { AcpClient } from './client/AcpClient';
 import type { FileReadHandler, FileWriteHandler } from './client/AcpClient';
 import { acpStore } from './store/acpStore';
 import { sessionStore } from './store/sessionStore';
-import type { ToolCallState } from './types';
+import type { ToolCallState, TerminalHandler, TerminalState } from './types';
 import type { AgentConfig } from './types';
-import type { RequestPermissionResponse, ClientCapabilities } from '@agentclientprotocol/sdk';
+import type { RequestPermissionResponse, ClientCapabilities, CreateTerminalRequest, TerminalExitStatus } from '@agentclientprotocol/sdk';
 import type { PermissionRequest } from './types';
 
 let permissionIdCounter = 0;
@@ -14,6 +14,7 @@ const cleanupFns = new Map<string, () => void>();
 
 let globalFileReadHandler: FileReadHandler | undefined;
 let globalFileWriteHandler: FileWriteHandler | undefined;
+let globalTerminalHandler: TerminalHandler | undefined;
 
 export function getClient(agentId: string): AcpClient | null {
   return clientRegistry.get(agentId) ?? null;
@@ -23,6 +24,7 @@ export interface MultiAgentProviderOptions {
   agents: AgentConfig[];
   onFileRead?: FileReadHandler;
   onFileWrite?: FileWriteHandler;
+  onTerminal?: TerminalHandler;
 }
 
 export interface MultiAgentProviderInstance {
@@ -132,6 +134,7 @@ function buildCapabilities(clientCapabilities?: ClientCapabilities): ClientCapab
       ...(globalFileReadHandler ? { readTextFile: true } : {}),
       ...(globalFileWriteHandler ? { writeTextFile: true } : {}),
     },
+    ...(globalTerminalHandler ? { terminal: true } : {}),
   };
   const hasFsCaps = caps.fs?.readTextFile || caps.fs?.writeTextFile;
   return hasFsCaps || caps.terminal || caps.auth ? caps : undefined;
@@ -153,6 +156,36 @@ async function connectAgent(config: AgentConfig): Promise<void> {
 
   // Permission handler
   setupPermissionHandler(client);
+
+  // Terminal handler
+  if (globalTerminalHandler) {
+    const storeBridge: TerminalHandler = {
+      create: async (params: CreateTerminalRequest) => {
+        const handle = await globalTerminalHandler!.create(params);
+        const state: TerminalState = {
+          terminalId: handle.terminalId,
+          command: params.command,
+          args: params.args,
+          cwd: params.cwd,
+          output: '',
+          exitStatus: null,
+          truncated: false,
+        };
+        sessionStore.getState().addTerminal(params.sessionId, state);
+
+        handle.onOutputChange((output) => {
+          sessionStore.getState().updateTerminalOutput(params.sessionId, handle.terminalId, output, false);
+        });
+
+        handle.onExit((exitStatus: TerminalExitStatus | null) => {
+          sessionStore.getState().updateTerminalExit(params.sessionId, handle.terminalId, exitStatus);
+        });
+
+        return handle;
+      },
+    };
+    client.setTerminalHandler(storeBridge);
+  }
 
   // File handlers
   if (globalFileReadHandler) {
@@ -208,9 +241,10 @@ async function connectAgent(config: AgentConfig): Promise<void> {
   }
 }
 
-export function createAcpProvider({ agents, onFileRead, onFileWrite }: MultiAgentProviderOptions): MultiAgentProviderInstance {
+export function createAcpProvider({ agents, onFileRead, onFileWrite, onTerminal }: MultiAgentProviderOptions): MultiAgentProviderInstance {
   globalFileReadHandler = onFileRead;
   globalFileWriteHandler = onFileWrite;
+  globalTerminalHandler = onTerminal;
 
   let ready = false;
   const listeners = new Set<() => void>();

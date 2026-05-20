@@ -68,8 +68,11 @@ export const zhCN = {
 
   // TerminalView
   'terminal.title': '终端',
-  'terminal.exitCode': '（退出码: {code}）',
-  'terminal.noOutput': '无输出',
+  'terminal.empty': '无活动终端',
+  'terminal.command': '命令:',
+  'terminal.running': '运行中...',
+  'terminal.signaled': '信号',
+  'terminal.truncated': '输出已截断',
 
   // AcpProvider
   'loading.connecting': '正在连接智能体...',

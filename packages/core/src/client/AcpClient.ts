@@ -23,10 +23,15 @@ import {
   type WriteTextFileRequest,
   type WriteTextFileResponse,
   type ClientCapabilities,
+  type CreateTerminalRequest,
+  type TerminalOutputRequest,
+  type ReleaseTerminalRequest,
+  type WaitForTerminalExitRequest,
+  type KillTerminalRequest,
 } from '@agentclientprotocol/sdk';
 import { StdioTransport, HttpTransport, WebSocketTransport } from '../transport';
 import type { AcpTransport } from '../transport';
-import type { ConnectionStatus, Implementation, TransportConfig } from '../types';
+import type { ConnectionStatus, Implementation, TransportConfig, TerminalHandler } from '../types';
 
 export type SessionUpdateHandler = (update: SessionNotification) => void;
 export type PermissionHandler = (request: RequestPermissionRequest) => Promise<RequestPermissionResponse>;
@@ -59,6 +64,8 @@ export class AcpClient {
   private permissionHandler: PermissionHandler | null = null;
   private fileReadHandler: FileReadHandler | null = null;
   private fileWriteHandler: FileWriteHandler | null = null;
+  private terminalHandler: TerminalHandler | null = null;
+  private terminalHandles = new Map<string, import('../types').TerminalHandle>();
   private statusHandlers = new Set<(status: ConnectionStatus) => void>();
 
   get status(): ConnectionStatus {
@@ -100,6 +107,10 @@ export class AcpClient {
     this.fileWriteHandler = handler;
   }
 
+  setTerminalHandler(handler: TerminalHandler): void {
+    this.terminalHandler = handler;
+  }
+
   async connect(config: TransportConfig): Promise<void> {
     if (this._status === 'connecting') {
       return;
@@ -136,6 +147,46 @@ export class AcpClient {
           return this.fileWriteHandler(params);
         }
         return Promise.reject(new Error('writeTextFile not supported'));
+      },
+      createTerminal: (params: CreateTerminalRequest) => {
+        if (this.terminalHandler) {
+          return this.terminalHandler.create(params).then((handle) => {
+            this.terminalHandles.set(handle.terminalId, handle);
+            return { terminalId: handle.terminalId };
+          });
+        }
+        return Promise.reject(new Error('terminal not supported'));
+      },
+      terminalOutput: (params: TerminalOutputRequest) => {
+        const handle = this.terminalHandles.get(params.terminalId);
+        if (handle) {
+          return handle.getOutput();
+        }
+        return Promise.reject(new Error(`terminal ${params.terminalId} not found`));
+      },
+      releaseTerminal: (params: ReleaseTerminalRequest) => {
+        const handle = this.terminalHandles.get(params.terminalId);
+        if (handle) {
+          return handle.release().then(() => {
+            this.terminalHandles.delete(params.terminalId);
+            return {};
+          });
+        }
+        return Promise.resolve({});
+      },
+      waitForTerminalExit: (params: WaitForTerminalExitRequest) => {
+        const handle = this.terminalHandles.get(params.terminalId);
+        if (handle) {
+          return handle.waitForExit();
+        }
+        return Promise.reject(new Error(`terminal ${params.terminalId} not found`));
+      },
+      killTerminal: (params: KillTerminalRequest) => {
+        const handle = this.terminalHandles.get(params.terminalId);
+        if (handle) {
+          return handle.kill().then(() => ({}));
+        }
+        return Promise.reject(new Error(`terminal ${params.terminalId} not found`));
       },
     };
 
@@ -216,6 +267,10 @@ export class AcpClient {
   }
 
   disconnect(): void {
+    for (const [, handle] of this.terminalHandles) {
+      try { handle.release(); } catch { /* best effort */ }
+    }
+    this.terminalHandles.clear();
     this.transport?.disconnect();
     this.connection = null;
     this.transport = null;

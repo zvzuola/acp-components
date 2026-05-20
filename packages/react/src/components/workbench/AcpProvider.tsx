@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { AcpContext } from '../../context/AcpContext';
 import { useAcpProvider } from '../../hooks/useAcpProvider';
 import { acpStore } from '@acp-components/core';
-import type { AgentConfig } from '@acp-components/core';
+import type { AgentConfig, TerminalHandler } from '@acp-components/core';
 import type { FileReadHandler, FileWriteHandler } from '@acp-components/core';
 import { useI18n } from '../../i18n';
 import styles from './loading.module.scss';
@@ -13,11 +13,12 @@ export interface AcpProviderProps {
   children: React.ReactNode;
   onFileRead?: FileReadHandler;
   onFileWrite?: FileWriteHandler;
+  onTerminal?: TerminalHandler;
   defaultCwd?: string;
 }
 
-export function AcpProvider({ agents, theme = 'dark', children, onFileRead, onFileWrite, defaultCwd = '' }: AcpProviderProps) {
-  const provider = useAcpProvider({ agents, onFileRead, onFileWrite });
+export function AcpProvider({ agents, theme = 'dark', children, onFileRead, onFileWrite, onTerminal, defaultCwd = '' }: AcpProviderProps) {
+  const provider = useAcpProvider({ agents, onFileRead, onFileWrite, onTerminal });
   const { t } = useI18n();
 
   const contextValue = useMemo(() => ({

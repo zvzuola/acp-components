@@ -9,6 +9,7 @@ import { ConnectionStatus } from '@acp-components/react';
 import { I18nProvider, useI18n } from '@acp-components/react';
 import { useAcpStore } from '@acp-components/react';
 import { TauriIpcTransport } from './tauriIpcTransport';
+import { TauriTerminalHandler } from './tauriTerminal';
 
 function LocaleSwitcher() {
   const { i18n } = useI18n();
@@ -64,6 +65,8 @@ const transportConfig = {
   }),
 };
 
+const terminalHandler = new TauriTerminalHandler();
+
 function AppInner() {
   const activeSessionId = useAcpStore((s) =>
     s.activeWorkspaceCwd ? s.workspaces.get(s.activeWorkspaceCwd)?.activeSessionId ?? null : null,
@@ -108,6 +111,7 @@ function App() {
           transport: transportConfig,
         }]}
         theme="dark"
+        onTerminal={terminalHandler}
       >
         <AppInner />
       </AcpProvider>

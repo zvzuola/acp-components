@@ -11,6 +11,10 @@ import type {
   SessionUpdate,
   PermissionOption,
   ClientCapabilities,
+  CreateTerminalRequest,
+  TerminalOutputResponse,
+  WaitForTerminalExitResponse,
+  TerminalExitStatus,
 } from '@agentclientprotocol/sdk';
 import type { AcpTransport } from '../transport/types';
 
@@ -89,4 +93,28 @@ export interface PermissionRequest {
   reject: () => void;
 }
 
-export type { ContentBlock, SessionId, SessionInfo, SessionUpdate, StopReason, ToolCall, ToolCallUpdate, ToolCallContent, Implementation, AgentCapabilities, PermissionOption, ClientCapabilities };
+export interface TerminalState {
+  terminalId: string;
+  command: string;
+  args?: string[];
+  cwd?: string | null;
+  output: string;
+  exitStatus: TerminalExitStatus | null;
+  truncated: boolean;
+}
+
+export interface TerminalHandle {
+  readonly terminalId: string;
+  getOutput(): Promise<TerminalOutputResponse>;
+  waitForExit(): Promise<WaitForTerminalExitResponse>;
+  kill(): Promise<void>;
+  release(): Promise<void>;
+  onOutputChange(fn: (output: string) => void): () => void;
+  onExit(fn: (status: TerminalExitStatus | null) => void): () => void;
+}
+
+export interface TerminalHandler {
+  create(params: CreateTerminalRequest): Promise<TerminalHandle>;
+}
+
+export type { ContentBlock, SessionId, SessionInfo, SessionUpdate, StopReason, ToolCall, ToolCallUpdate, ToolCallContent, Implementation, AgentCapabilities, PermissionOption, ClientCapabilities, CreateTerminalRequest, TerminalOutputResponse, WaitForTerminalExitResponse, TerminalExitStatus };

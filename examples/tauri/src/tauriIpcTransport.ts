@@ -20,7 +20,6 @@ export class TauriIpcTransport implements AcpTransport {
   private closeHandlers: Array<() => void> = [];
   private errorHandlers: Array<(err: Error) => void> = [];
   private unlisten: (() => void) | null = null;
-  private started = false;
 
   constructor(private options: TauriIpcOptions) {}
 
@@ -37,7 +36,6 @@ export class TauriIpcTransport implements AcpTransport {
         args: this.options.args ?? [],
       },
     });
-    this.started = true;
 
     // Build ReadableStream from Tauri events (message-level, like WebSocket transport)
     const readable = new ReadableStream<AnyMessage>({
@@ -99,7 +97,6 @@ export class TauriIpcTransport implements AcpTransport {
   disconnect(): void {
     this.unlisten?.();
     this.unlisten = null;
-    this.started = false;
 
     import('@tauri-apps/api/core')
       .then(({ invoke }) => invoke('kill_agent'))

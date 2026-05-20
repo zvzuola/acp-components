@@ -23,5 +23,8 @@ export type {
   AgentConnection,
   WorkspaceState,
   Implementation,
+  TerminalState,
+  TerminalHandle,
+  TerminalHandler,
 } from './types';
-export type { ContentBlock, SessionId, SessionInfo, StopReason, ToolCall, ToolCallUpdate, ToolCallContent, AgentCapabilities, SessionUpdate, ClientCapabilities } from './types';
+export type { ContentBlock, SessionId, SessionInfo, StopReason, ToolCall, ToolCallUpdate, ToolCallContent, AgentCapabilities, SessionUpdate, ClientCapabilities, CreateTerminalRequest, TerminalOutputResponse, WaitForTerminalExitResponse, TerminalExitStatus } from './types';

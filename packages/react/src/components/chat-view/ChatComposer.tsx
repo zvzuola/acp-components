@@ -3,7 +3,7 @@ import { usePrompt } from '../../hooks/usePrompt';
 import type { SessionId, ContentBlock, AvailableCommand } from '@agentclientprotocol/sdk';
 import { CommandPalette } from '../command-palette';
 import { useI18n } from '../../i18n';
-import styles from './composer.module.scss';
+import styles from './chat-composer.module.scss';
 
 export interface ChatComposerProps {
   sessionId: SessionId | null;
@@ -139,14 +139,6 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands }: Chat
     cancel();
   }, [cancel]);
 
-  const adjustHeight = () => {
-    const ta = textareaRef.current;
-    if (ta) {
-      ta.style.height = 'auto';
-      ta.style.height = Math.min(ta.scrollHeight, 200) + 'px';
-    }
-  };
-
   // Reset activeIndex when query changes
   const prevQuery = useRef(commandState?.query);
   if (commandState?.query !== prevQuery.current) {
@@ -180,7 +172,6 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands }: Chat
           onChange={(e) => {
             setValue(e.target.value);
             setActiveIndex(0);
-            adjustHeight();
           }}
           onKeyDown={handleKeyDown}
           rows={1}

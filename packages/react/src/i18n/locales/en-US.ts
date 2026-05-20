@@ -68,8 +68,11 @@ export const enUS = {
 
   // TerminalView
   'terminal.title': 'Terminal',
-  'terminal.exitCode': '(exit: {code})',
-  'terminal.noOutput': 'No output',
+  'terminal.empty': 'No active terminals',
+  'terminal.command': 'Command:',
+  'terminal.running': 'Running...',
+  'terminal.signaled': 'SIG',
+  'terminal.truncated': 'Output truncated',
 
   // AcpProvider
   'loading.connecting': 'Connecting to agents...',

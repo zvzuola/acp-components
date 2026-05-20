@@ -37,6 +37,7 @@ export { usePrompt } from './hooks/usePrompt';
 export { useToolCalls } from './hooks/useToolCalls';
 export { usePermission } from './hooks/usePermission';
 export { useConnectionStatus, useAllAgentStatuses } from './hooks/useConnectionStatus';
+export { useTerminals } from './hooks/useTerminals';
 export { AcpContext, useAcpContext } from './context/AcpContext';
 export type { AcpContextValue } from './context/AcpContext';
 
@@ -52,6 +53,7 @@ export type {
   AgentConfig,
   AgentConnection,
   WorkspaceState,
+  TerminalState,
 } from '@acp-components/core';
 
 // i18n

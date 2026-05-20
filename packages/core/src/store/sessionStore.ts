@@ -1,6 +1,6 @@
 import { createStore } from 'zustand/vanilla';
-import type { Message, ToolCallState, PermissionRequest } from '../types';
-import type { SessionId, ContentBlock, StopReason, PlanEntry, UsageUpdate, SessionConfigOption, AvailableCommand } from '@agentclientprotocol/sdk';
+import type { Message, ToolCallState, PermissionRequest, TerminalState } from '../types';
+import type { SessionId, ContentBlock, StopReason, PlanEntry, UsageUpdate, SessionConfigOption, AvailableCommand, TerminalExitStatus } from '@agentclientprotocol/sdk';
 
 let idCounter = 0;
 function generateId(prefix: string): string {
@@ -17,6 +17,7 @@ interface SessionData {
   usage: UsageUpdate | null;
   configOptions: SessionConfigOption[];
   availableCommands: AvailableCommand[];
+  terminals: Map<string, TerminalState>;
 }
 
 interface SessionStoreState {
@@ -40,6 +41,11 @@ interface SessionStoreState {
   setUsage: (sessionId: SessionId, usage: UsageUpdate) => void;
   setConfigOptions: (sessionId: SessionId, configOptions: SessionConfigOption[]) => void;
   setAvailableCommands: (sessionId: SessionId, commands: AvailableCommand[]) => void;
+
+  addTerminal: (sessionId: SessionId, terminal: TerminalState) => void;
+  updateTerminalOutput: (sessionId: SessionId, terminalId: string, output: string, truncated: boolean) => void;
+  updateTerminalExit: (sessionId: SessionId, terminalId: string, exitStatus: TerminalExitStatus | null) => void;
+  removeTerminal: (sessionId: SessionId, terminalId: string) => void;
 }
 
 function createSessionData(): SessionData {
@@ -53,6 +59,7 @@ function createSessionData(): SessionData {
     usage: null,
     configOptions: [],
     availableCommands: [],
+    terminals: new Map(),
   };
 }
 
@@ -361,6 +368,55 @@ export const sessionStore = createStore<SessionStoreState>((set) => ({
       if (!data) return s;
       const next = new Map(s.sessions);
       next.set(sessionId, { ...data, availableCommands: commands });
+      return { sessions: next };
+    }),
+
+  addTerminal: (sessionId, terminal) =>
+    set((s) => {
+      const data = s.sessions.get(sessionId);
+      if (!data) return s;
+      const terminals = new Map(data.terminals);
+      terminals.set(terminal.terminalId, terminal);
+      const next = new Map(s.sessions);
+      next.set(sessionId, { ...data, terminals });
+      return { sessions: next };
+    }),
+
+  updateTerminalOutput: (sessionId, terminalId, output, truncated) =>
+    set((s) => {
+      const data = s.sessions.get(sessionId);
+      if (!data) return s;
+      const existing = data.terminals.get(terminalId);
+      if (!existing) return s;
+      const terminals = new Map(data.terminals);
+      terminals.set(terminalId, { ...existing, output, truncated });
+      const next = new Map(s.sessions);
+      next.set(sessionId, { ...data, terminals });
+      return { sessions: next };
+    }),
+
+  updateTerminalExit: (sessionId, terminalId, exitStatus) =>
+    set((s) => {
+      const data = s.sessions.get(sessionId);
+      if (!data) return s;
+      const existing = data.terminals.get(terminalId);
+      if (!existing) return s;
+      const terminals = new Map(data.terminals);
+      terminals.set(terminalId, { ...existing, exitStatus });
+      const next = new Map(s.sessions);
+      next.set(sessionId, { ...data, terminals });
+      return { sessions: next };
+    }),
+
+  removeTerminal: (sessionId, terminalId) =>
+    set((s) => {
+      const data = s.sessions.get(sessionId);
+      if (!data) return s;
+      if (!data.terminals.has(terminalId)) return s;
+      const terminals = new Map(data.terminals);
+      terminals.delete(terminalId);
+      const next = new Map(s.sessions);
+      next.set(sessionId, { ...data, terminals });
       return { sessions: next };
     }),
 }));

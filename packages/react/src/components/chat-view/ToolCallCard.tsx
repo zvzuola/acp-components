@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
+import { useStore } from 'zustand/react';
 import { marked } from 'marked';
-import type { ToolCallState } from '@acp-components/core';
+import type { ToolCallState, TerminalState } from '@acp-components/core';
+import { sessionStore } from '@acp-components/core';
 import type { ToolCallLocation, ToolKind } from '@agentclientprotocol/sdk';
 import { DiffView } from '../diff-view';
 import { TerminalView } from '../terminal-view';
@@ -73,6 +75,7 @@ export function ToolCallCard({ toolCall, onNavigate }: ToolCallCardProps) {
   const hasContent = toolCall.content && toolCall.content.length > 0;
   const hasLocations = toolCall.locations && toolCall.locations.length > 0;
   const { t } = useI18n();
+  const sessions = useStore(sessionStore, (s) => s.sessions);
 
   return (
     <div className={styles.acpToolCall}>
@@ -121,9 +124,15 @@ export function ToolCallCard({ toolCall, onNavigate }: ToolCallCardProps) {
               }
               case 'terminal': {
                 const term = item as unknown as { terminalId: string };
-                return (
-                  <TerminalView key={i} output={`${t('terminal.title')} #${term.terminalId}\n${t('terminal.noOutput')}`} exitCode={null} />
-                );
+                let terminalState: TerminalState | undefined;
+                for (const [, data] of sessions) {
+                  const found = data.terminals.get(term.terminalId);
+                  if (found) { terminalState = found; break; }
+                }
+                const terminals = terminalState
+                  ? [terminalState]
+                  : [{ terminalId: term.terminalId, command: '', output: '', exitStatus: null, truncated: false }];
+                return <TerminalView key={i} terminals={terminals} />;
               }
               default:
                 return null;
