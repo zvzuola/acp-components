@@ -103,7 +103,7 @@
     border-radius: var(--acp-radius-sm);
     background: var(--acp-color-bg-primary);
     border: 1px solid var(--acp-color-border);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--acp-shadow-md);
     z-index: 100;
     overflow: hidden;
   }

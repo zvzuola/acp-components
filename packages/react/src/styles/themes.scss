@@ -6,76 +6,79 @@
 // with values for every token listed under "Token Reference" below.
 //
 // Token Reference (by role):
-//   Bg: primary, secondary, tertiary, hover, glass, input, code, overlay
-//   Text: primary, secondary, muted, inverse
+//   Bg: primary, secondary, tertiary, hover, glass, input, code, overlay, selected, danger
+//   Text: primary, secondary, muted, inverse, danger
 //   Border: default, subtle, accent
-//   Accent: default, hover, muted
-//   Status: success, warning, error, info
+//   Accent: default, hover, muted, text
+//   Status: success, warning, error, info (+ muted / bg variants)
 //   Bubble: user-bg, user-text, agent-bg, agent-text
-//   Surface: elevation-1..3 (shadow values)
+//   Surface: knob, knob-shadow, shadow-xs..lg
 //   Radius: xs, sm, md, lg, xl
 //   Font: sans, mono
-//   Motion: duration-fast, duration-normal, duration-slow, ease-out, ease-in-out, ease-spring
+//   Motion: duration-fast/normal/slow, ease-out/in-out/spring
 // =============================================================================
 
 // ---------------------------------------------------------------------------
-// DARK THEME (default) — "Warp"
-// Near-black base with cool blue undertones. Cyan/electric-blue accents
-// inspired by the Warp terminal aesthetic.
+// DARK THEME (default) — "Midnight"
+// GitHub Dark palette + One Dark Pro blue accent.
+// Cool slate backgrounds with glass sidebars. Clean, modern, professional.
 // ---------------------------------------------------------------------------
 :root,
 [data-acp-theme='dark'] {
   // ── Backgrounds ───────────────────────────────────────────────────────
-  --acp-color-bg-primary: #08080e;
-  --acp-color-bg-secondary: #0e0e18;
-  --acp-color-bg-tertiary: #141423;
-  --acp-color-bg-hover: #1c1c30;
-  --acp-color-bg-glass: hsl(240 20% 7% / 0.75);
-  --acp-color-bg-input: #10101c;
-  --acp-color-bg-code: #0a0a14;
-  --acp-color-bg-overlay: hsl(240 20% 3% / 0.65);
+  --acp-color-bg-primary: #0d1117;
+  --acp-color-bg-secondary: #161b22;
+  --acp-color-bg-tertiary: #1c2128;
+  --acp-color-bg-hover: #252b33;
+  --acp-color-bg-glass: rgba(22, 27, 34, 0.86);
+  --acp-color-bg-input: #0d1117;
+  --acp-color-bg-code: #0d1117;
+  --acp-color-bg-overlay: rgba(0, 0, 0, 0.55);
+  --acp-color-bg-selected: rgba(97, 175, 239, 0.12);
+  --acp-color-bg-danger: rgba(248, 81, 73, 0.12);
 
   // ── Text ──────────────────────────────────────────────────────────────
-  --acp-color-text-primary: #e8e8f0;
-  --acp-color-text-secondary: #9696a8;
-  --acp-color-text-muted: #5e5e72;
-  --acp-color-text-inverse: #0a0a14;
+  --acp-color-text-primary: #e6edf3;
+  --acp-color-text-secondary: #8b949e;
+  --acp-color-text-muted: #6e7681;
+  --acp-color-text-inverse: #0d1117;
+  --acp-color-text-danger: #f85149;
 
   // ── Borders ───────────────────────────────────────────────────────────
-  --acp-color-border: hsl(240 10% 22% / 0.8);
-  --acp-color-border-subtle: hsl(240 10% 18% / 0.5);
-  --acp-color-border-accent: hsl(194 80% 52% / 0.35);
+  --acp-color-border: rgba(255, 255, 255, 0.13);
+  --acp-color-border-subtle: rgba(255, 255, 255, 0.07);
+  --acp-color-border-accent: rgba(97, 175, 239, 0.3);
 
-  // ── Accent (cyan/electric-blue) ───────────────────────────────────────
-  --acp-color-accent: #00c8e8;
-  --acp-color-accent-hover: #1ad4f0;
-  --acp-color-accent-muted: hsl(192 80% 42% / 0.16);
-  --acp-color-accent-text: #6ee7ff;
+  // ── Accent (vibrant blue) ─────────────────────────────────────────────
+  --acp-color-accent: #61afef;
+  --acp-color-accent-hover: #75bdf3;
+  --acp-color-accent-muted: rgba(97, 175, 239, 0.12);
+  --acp-color-accent-text: #82c7ff;
 
   // ── Status ────────────────────────────────────────────────────────────
-  --acp-color-success: #2dd4a8;
-  --acp-color-success-muted: hsl(164 60% 46% / 0.14);
-  --acp-color-warning: #f0b848;
-  --acp-color-warning-muted: hsl(42 80% 56% / 0.16);
-  --acp-color-error: #f44a5a;
-  --acp-color-error-muted: hsl(354 80% 56% / 0.14);
-  --acp-color-info: #48a0f0;
-  --acp-color-info-muted: hsl(208 80% 56% / 0.14);
+  --acp-color-success: #3fb950;
+  --acp-color-success-muted: rgba(63, 185, 80, 0.12);
+  --acp-color-success-bg: rgba(63, 185, 80, 0.08);
+  --acp-color-warning: #d29922;
+  --acp-color-warning-muted: rgba(210, 153, 34, 0.12);
+  --acp-color-error: #f85149;
+  --acp-color-error-muted: rgba(248, 81, 73, 0.12);
+  --acp-color-error-bg: rgba(248, 81, 73, 0.08);
+  --acp-color-info: #58a6ff;
+  --acp-color-info-muted: rgba(88, 166, 255, 0.12);
 
-  // ── Message bubbles ───────────────────────────────────────────────────
-  --acp-color-user-bubble: #0078d4;
-  --acp-color-user-text: #e8f4ff;
-  --acp-color-agent-bubble: #141423;
-  --acp-color-agent-text: #e8e8f0;
+  // ── Surface ───────────────────────────────────────────────────────────
+  --acp-color-knob: #ffffff;
+  --acp-color-knob-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 
   // ── Surface elevation ─────────────────────────────────────────────────
-  --acp-shadow-xs: 0 1px 2px hsl(240 20% 3% / 0.5);
-  --acp-shadow-sm: 0 2px 8px hsl(240 20% 3% / 0.55), 0 0 0 1px hsl(240 20% 100% / 0.04);
-  --acp-shadow-md: 0 8px 24px hsl(240 20% 3% / 0.65), 0 0 0 1px hsl(240 20% 100% / 0.05);
-  --acp-shadow-lg: 0 16px 48px hsl(240 20% 3% / 0.75), 0 0 0 1px hsl(240 20% 100% / 0.06);
+  --acp-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --acp-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --acp-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --acp-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.07);
 
   // ── Radius ────────────────────────────────────────────────────────────
-  --acp-radius-xs: 3px;
+  --acp-radius-xs: 4px;
   --acp-radius-sm: 6px;
   --acp-radius-md: 10px;
   --acp-radius-lg: 14px;
@@ -97,62 +100,71 @@
 }
 
 // ---------------------------------------------------------------------------
-// LIGHT THEME — "Frost"
-// Cool white/blue-gray surfaces with cyan/electric-blue accents.
-// Matches the Warp dark theme's cool spectrum.
+// LIGHT THEME — "Dawn"
+// GitHub Light palette + matching blue accent.
+// Clean white base with bright blue interactions. Crisp, professional.
 // ---------------------------------------------------------------------------
 [data-acp-theme='light'] {
   // ── Backgrounds ───────────────────────────────────────────────────────
-  --acp-color-bg-primary: #f6f7fa;
-  --acp-color-bg-secondary: #eeeff4;
-  --acp-color-bg-tertiary: #e4e5ed;
-  --acp-color-bg-hover: #d8dae5;
-  --acp-color-bg-glass: hsl(230 12% 96% / 0.8);
+  --acp-color-bg-primary: #ffffff;
+  --acp-color-bg-secondary: #f6f8fa;
+  --acp-color-bg-tertiary: #eaeef2;
+  --acp-color-bg-hover: #dde3e8;
+  --acp-color-bg-glass: rgba(255, 255, 255, 0.84);
   --acp-color-bg-input: #ffffff;
-  --acp-color-bg-code: #edf0f5;
-  --acp-color-bg-overlay: hsl(230 12% 18% / 0.35);
+  --acp-color-bg-code: #f6f8fa;
+  --acp-color-bg-overlay: rgba(0, 0, 0, 0.25);
+  --acp-color-bg-selected: rgba(37, 99, 235, 0.08);
+  --acp-color-bg-danger: rgba(207, 34, 46, 0.08);
 
   // ── Text ──────────────────────────────────────────────────────────────
-  --acp-color-text-primary: #141726;
-  --acp-color-text-secondary: #4e5368;
-  --acp-color-text-muted: #8e92a4;
-  --acp-color-text-inverse: #f6f7fa;
+  --acp-color-text-primary: #1f2328;
+  --acp-color-text-secondary: #656d76;
+  --acp-color-text-muted: #8b949e;
+  --acp-color-text-inverse: #ffffff;
+  --acp-color-text-danger: #cf222e;
 
   // ── Borders ───────────────────────────────────────────────────────────
-  --acp-color-border: hsl(230 8% 76% / 0.85);
-  --acp-color-border-subtle: hsl(230 8% 82% / 0.55);
-  --acp-color-border-accent: hsl(194 80% 44% / 0.3);
+  --acp-color-border: rgba(0, 0, 0, 0.12);
+  --acp-color-border-subtle: rgba(0, 0, 0, 0.07);
+  --acp-color-border-accent: rgba(37, 99, 235, 0.25);
 
-  // ── Accent (cyan/electric-blue) ───────────────────────────────────────
-  --acp-color-accent: #008fb8;
-  --acp-color-accent-hover: #00a3d0;
-  --acp-color-accent-muted: hsl(194 80% 38% / 0.10);
-  --acp-color-accent-text: #005f7a;
+  // ── Accent (bright blue) ──────────────────────────────────────────────
+  --acp-color-accent: #2563eb;
+  --acp-color-accent-hover: #1d4ed8;
+  --acp-color-accent-muted: rgba(37, 99, 235, 0.08);
+  --acp-color-accent-text: #1d4ed8;
 
   // ── Status ────────────────────────────────────────────────────────────
-  --acp-color-success: #0fa878;
-  --acp-color-success-muted: hsl(164 70% 33% / 0.09);
-  --acp-color-warning: #b87a18;
-  --acp-color-warning-muted: hsl(40 60% 38% / 0.10);
-  --acp-color-error: #d4283c;
-  --acp-color-error-muted: hsl(354 64% 46% / 0.09);
-  --acp-color-info: #2878c8;
-  --acp-color-info-muted: hsl(208 62% 44% / 0.09);
+  --acp-color-success: #1a7f37;
+  --acp-color-success-muted: rgba(26, 127, 55, 0.08);
+  --acp-color-success-bg: rgba(26, 127, 55, 0.06);
+  --acp-color-warning: #9a6700;
+  --acp-color-warning-muted: rgba(154, 103, 0, 0.08);
+  --acp-color-error: #cf222e;
+  --acp-color-error-muted: rgba(207, 34, 46, 0.08);
+  --acp-color-error-bg: rgba(207, 34, 46, 0.06);
+  --acp-color-info: #2563eb;
+  --acp-color-info-muted: rgba(37, 99, 235, 0.08);
 
   // ── Message bubbles ───────────────────────────────────────────────────
-  --acp-color-user-bubble: #0066b8;
-  --acp-color-user-text: #e8f4ff;
-  --acp-color-agent-bubble: #eeeff4;
-  --acp-color-agent-text: #141726;
+  --acp-color-user-bubble: #2563eb;
+  --acp-color-user-text: #ffffff;
+  --acp-color-agent-bubble: #f0f0f0;
+  --acp-color-agent-text: #1f2328;
+
+  // ── Surface ───────────────────────────────────────────────────────────
+  --acp-color-knob: #ffffff;
+  --acp-color-knob-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 
   // ── Surface elevation ─────────────────────────────────────────────────
-  --acp-shadow-xs: 0 1px 2px hsl(230 12% 16% / 0.05);
-  --acp-shadow-sm: 0 2px 8px hsl(230 12% 16% / 0.07), 0 0 0 1px hsl(0 0% 0% / 0.03);
-  --acp-shadow-md: 0 8px 24px hsl(230 12% 16% / 0.10), 0 0 0 1px hsl(0 0% 0% / 0.04);
-  --acp-shadow-lg: 0 16px 48px hsl(230 12% 16% / 0.13), 0 0 0 1px hsl(0 0% 0% / 0.05);
+  --acp-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --acp-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.03);
+  --acp-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  --acp-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05);
 
   // ── Radius ────────────────────────────────────────────────────────────
-  --acp-radius-xs: 3px;
+  --acp-radius-xs: 4px;
   --acp-radius-sm: 6px;
   --acp-radius-md: 10px;
   --acp-radius-lg: 14px;

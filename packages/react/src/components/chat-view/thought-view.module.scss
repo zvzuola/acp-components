@@ -1,15 +1,10 @@
 .acp-thought-view {
-  border: 1px solid var(--acp-color-border-subtle);
-  border-left: 3px solid var(--acp-color-warning);
-  border-radius: var(--acp-radius-md);
   margin: 8px 0;
   overflow: hidden;
-  font-size: 13px;
-  background: var(--acp-color-bg-primary);
-  transition: border-color var(--acp-duration-normal) var(--acp-ease-out);
+  font-size: 12px;
 
   &--streaming {
-    border-left-color: var(--acp-color-accent);
+    background: var(--acp-color-accent-muted);
   }
 
   &__header {
@@ -27,11 +22,6 @@
     font-weight: 600;
     letter-spacing: 0.02em;
     text-transform: uppercase;
-    transition: background var(--acp-duration-fast) var(--acp-ease-out);
-
-    &:hover {
-      background: var(--acp-color-bg-tertiary);
-    }
   }
 
   &__label {
@@ -60,8 +50,7 @@
 
   &__body {
     padding: 12px 14px;
-    border-top: 1px solid var(--acp-color-border-subtle);
-    background: var(--acp-color-bg-secondary);
+    background: var(--acp-color-bg-primary);
     max-height: 400px;
     overflow-y: auto;
     color: var(--acp-color-text-secondary);
@@ -76,12 +65,6 @@
     }
 
     pre {
-      background: var(--acp-color-bg-code);
-      color: var(--acp-color-text-primary);
-      border: 1px solid var(--acp-color-border-subtle);
-      border-radius: var(--acp-radius-sm);
-      padding: 12px;
-      overflow-x: auto;
       font-size: 12px;
       line-height: 1.6;
       margin: 8px 0;

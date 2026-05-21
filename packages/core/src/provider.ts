@@ -9,6 +9,13 @@ import type { PermissionRequest } from './types';
 
 let permissionIdCounter = 0;
 
+function generateMsgId(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
 const clientRegistry = new Map<string, AcpClient>();
 const cleanupFns = new Map<string, () => void>();
 
@@ -68,14 +75,14 @@ function setupSessionUpdateHandler(client: AcpClient): () => void {
       case 'agent_message_chunk':
       case 'user_message_chunk':
         if ('content' in update && update.content) {
-          const msgId = (update as { messageId?: string }).messageId ?? 'current';
+          const msgId = (update as { messageId?: string }).messageId || generateMsgId();
           const role = update.sessionUpdate === 'user_message_chunk' ? 'user' as const : 'agent' as const;
           store.appendContent(sessionId, msgId, role, update.content);
         }
         break;
       case 'agent_thought_chunk':
         if ('content' in update && update.content) {
-          const msgId = (update as { messageId?: string }).messageId ?? 'current';
+          const msgId = (update as { messageId?: string }).messageId || generateMsgId();
           store.appendThought(sessionId, msgId, 'agent', update.content);
         }
         break;

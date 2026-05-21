@@ -9,11 +9,6 @@ import { TerminalView } from '../terminal-view';
 import { useI18n } from '../../i18n';
 import styles from './tool-call.module.scss';
 
-function MarkdownText({ text }: { text: string }) {
-  const html = useMemo(() => marked.parse(text, { async: false }) as string, [text]);
-  return <div dangerouslySetInnerHTML={{ __html: html }} />;
-}
-
 export interface ToolCallCardProps {
   toolCall: ToolCallState;
   onNavigate?: (path: string, line?: number | null) => void;
@@ -108,10 +103,7 @@ export function ToolCallCard({ toolCall, onNavigate }: ToolCallCardProps) {
             switch (item.type) {
               case 'content': {
                 const c = item as unknown as { content: { type: string; text?: string } };
-                if (c.content.type === 'text' && c.content.text) {
-                  return <MarkdownText key={i} text={c.content.text} />;
-                }
-                return <pre key={i} style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(c.content, null, 2)}</pre>;
+                return <pre key={i} style={{ whiteSpace: 'pre-wrap' }}>{c.content.text}</pre>;
               }
               case 'diff': {
                 const d = item as unknown as { path: string; oldText?: string | null; newText: string };
