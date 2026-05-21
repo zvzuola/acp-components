@@ -339,8 +339,17 @@ export const sessionStore = createStore<SessionStoreState>((set) => ({
     set((s) => {
       const data = s.sessions.get(sessionId);
       if (!data) return s;
+      const messages = [
+        ...data.messages,
+        {
+          id: generateId('plan'),
+          role: 'agent' as const,
+          parts: [{ type: 'plan' as const, plan: entries }],
+          timestamp: Date.now(),
+        },
+      ];
       const next = new Map(s.sessions);
-      next.set(sessionId, { ...data, plan: entries });
+      next.set(sessionId, { ...data, plan: entries, messages });
       return { sessions: next };
     }),
 

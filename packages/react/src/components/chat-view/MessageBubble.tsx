@@ -4,6 +4,7 @@ import type { Message, MessagePart } from '@acp-components/core';
 import type { ContentBlock } from '@agentclientprotocol/sdk';
 import { ToolCallCard } from './ToolCallCard';
 import { ThoughtView } from './ThoughtView';
+import { PlanView } from './PlanView';
 import styles from './chat-view.module.scss';
 
 export interface MessageBubbleProps {
@@ -65,6 +66,9 @@ function renderPart(part: MessagePart, partIndex: number, isStreaming?: boolean,
       return part.content.map((block, j) => (
         <React.Fragment key={j}>{renderContent(block)}</React.Fragment>
       ));
+    case 'plan':
+      if (!part.plan.every((e) => e.status === 'completed')) return null;
+      return <PlanView key={partIndex} entries={part.plan} isStreaming={false} />;
   }
 }
 

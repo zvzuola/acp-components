@@ -94,7 +94,11 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
           );
         })}
       </div>
-      <PlanView entries={plan} isStreaming={isStreaming} />
+      {plan.some((e) => e.status !== 'completed') && (
+        <div className={styles.acpPlanWrapper}>
+          <PlanView entries={plan} isStreaming={isStreaming} />
+        </div>
+      )}
       <ChatComposer sessionId={sessionId} isStreaming={isStreaming} availableCommands={availableCommands} />
     </div>
   );

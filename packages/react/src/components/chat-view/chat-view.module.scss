@@ -50,7 +50,7 @@
 .acp-round {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 12px;
 }
 
 // ── Message Bubble ──────────────────────────────────────────────────────
@@ -199,6 +199,11 @@
     transform: scale(1);
     opacity: 1;
   }
+}
+
+// ── Plan Wrapper ─────────────────────────────────────────────────────────
+.acp-plan-wrapper {
+  margin: 0 20px;
 }
 
 // ── Empty State ─────────────────────────────────────────────────────────

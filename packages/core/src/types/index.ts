@@ -15,6 +15,7 @@ import type {
   TerminalOutputResponse,
   WaitForTerminalExitResponse,
   TerminalExitStatus,
+  PlanEntry,
 } from '@agentclientprotocol/sdk';
 import type { AcpTransport } from '../transport/types';
 
@@ -23,7 +24,8 @@ export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'er
 export type MessagePart =
   | { type: 'content'; content: ContentBlock[] }
   | { type: 'thought'; thought: ContentBlock[] }
-  | { type: 'tool_calls'; toolCalls: ToolCallState[] };
+  | { type: 'tool_calls'; toolCalls: ToolCallState[] }
+  | { type: 'plan'; plan: PlanEntry[] };
 
 export interface Message {
   id: string;
@@ -117,4 +119,4 @@ export interface TerminalHandler {
   create(params: CreateTerminalRequest): Promise<TerminalHandle>;
 }
 
-export type { ContentBlock, SessionId, SessionInfo, SessionUpdate, StopReason, ToolCall, ToolCallUpdate, ToolCallContent, Implementation, AgentCapabilities, PermissionOption, ClientCapabilities, CreateTerminalRequest, TerminalOutputResponse, WaitForTerminalExitResponse, TerminalExitStatus };
+export type { ContentBlock, SessionId, SessionInfo, SessionUpdate, StopReason, ToolCall, ToolCallUpdate, ToolCallContent, Implementation, AgentCapabilities, PermissionOption, ClientCapabilities, CreateTerminalRequest, TerminalOutputResponse, WaitForTerminalExitResponse, TerminalExitStatus, PlanEntry };

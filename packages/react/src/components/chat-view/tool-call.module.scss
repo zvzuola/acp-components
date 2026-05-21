@@ -4,7 +4,6 @@
   margin: 8px 0;
   overflow: hidden;
   font-size: 13px;
-  background: var(--acp-color-bg-secondary);
   transition: box-shadow var(--acp-duration-fast) var(--acp-ease-out),
               border-color var(--acp-duration-fast) var(--acp-ease-out);
 
@@ -18,7 +17,7 @@
     align-items: center;
     gap: 10px;
     padding: 10px 14px;
-    background: var(--acp-color-bg-glass);
+    background: none;
     cursor: pointer;
     border: none;
     width: 100%;
@@ -26,11 +25,6 @@
     color: var(--acp-color-text-primary);
     font-size: 13px;
     font-family: var(--acp-font-sans);
-    transition: background var(--acp-duration-fast) var(--acp-ease-out);
-
-    &:hover {
-      background: var(--acp-color-bg-tertiary);
-    }
   }
 
   &__status {
@@ -84,7 +78,6 @@
   &__body {
     padding: 12px 14px;
     border-top: 1px solid var(--acp-color-border-subtle);
-    background: var(--acp-color-bg-primary);
     max-height: 300px;
     overflow-y: auto;
   }
