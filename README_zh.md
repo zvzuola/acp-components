@@ -169,7 +169,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
 | `ProjectOpener` | 可编辑的工作区目录展示，带下拉菜单用于切换活跃工作区 |
 | `SessionList` | 侧边栏会话列表，在当前工作区内按 Agent 分组展示，每个 Agent 有独立的创建/选择/删除操作 |
 | `ChatView` | 主聊天区域：将消息分组为用户/Agent 回合，渲染计划、用量条和配置面板。Props：`sessionId`、`onNavigateFile` |
-| `MessageBubble` | 渲染消息内容（内容块、思考块、工具调用），通过 `marked` 支持 Markdown |
+| `MessageBubble` | 渲染消息内容（内容块、思考块、工具调用），通过 `react-markdown` 支持 Markdown |
 | `ChatComposer` | 文本输入框，集成斜杠命令面板和发送/取消控制 |
 | `StreamingIndicator` | Agent 流式输出时的动画打字指示器 |
 | `ToolCallCard` | 展示工具调用名称、状态、输入/输出、文件位置 |
@@ -646,7 +646,7 @@ workspaces.forEach(ws => console.log(ws.cwd, ws.sessions.size));
 | 状态管理 | Zustand v5（vanilla store，无 React 依赖） |
 | UI 框架 | React 18 / 19 |
 | 国际化 | i18next + react-i18next |
-| Markdown 渲染 | marked |
+| Markdown 渲染 | react-markdown |
 | 样式 | SCSS Modules + CSS 自定义属性 |
 | 构建工具 | Vite 6（library mode） |
 | 类型系统 | TypeScript 5.6（strict mode） |

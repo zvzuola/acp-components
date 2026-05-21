@@ -5,7 +5,8 @@
   overflow: hidden;
   font-size: 13px;
   transition: box-shadow var(--acp-duration-fast) var(--acp-ease-out),
-              border-color var(--acp-duration-fast) var(--acp-ease-out);
+    border-color var(--acp-duration-fast) var(--acp-ease-out);
+  color: var(--acp-color-text-secondary);
 
   &:hover {
     border-color: var(--acp-color-border);
@@ -22,7 +23,7 @@
     border: none;
     width: 100%;
     text-align: left;
-    color: var(--acp-color-text-primary);
+  color: var(--acp-color-text-secondary);
     font-size: 13px;
     font-family: var(--acp-font-sans);
   }
@@ -37,13 +38,16 @@
       background: var(--acp-color-text-muted);
       box-shadow: none;
     }
+
     &--in-progress {
       background: var(--acp-color-warning);
       animation: acp-pulse 1.5s infinite;
     }
+
     &--completed {
       background: var(--acp-color-success);
     }
+
     &--failed {
       background: var(--acp-color-error);
     }
@@ -104,8 +108,8 @@
     font-family: var(--acp-font-mono);
     color: var(--acp-color-text-secondary);
     transition: background var(--acp-duration-fast) var(--acp-ease-out),
-                color var(--acp-duration-fast) var(--acp-ease-out),
-                border-color var(--acp-duration-fast) var(--acp-ease-out);
+      color var(--acp-duration-fast) var(--acp-ease-out),
+      border-color var(--acp-duration-fast) var(--acp-ease-out);
 
     &:hover {
       background: var(--acp-color-bg-hover);
@@ -135,6 +139,13 @@
 }
 
 @keyframes acp-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.35;
+  }
 }

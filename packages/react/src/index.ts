@@ -7,6 +7,8 @@ export type { WorkbenchProps } from './components/workbench/Workbench';
 export { ProjectOpener } from './components/workbench';
 export type { ProjectOpenerProps } from './components/workbench/ProjectOpener';
 export { SessionList } from './components/session-list';
+export { Markdown } from './components/markdown';
+export type { MarkdownProps } from './components/markdown/Markdown';
 export { ChatView, MessageBubble, ChatComposer, ToolCallCard, StreamingIndicator, ThoughtView, PlanView } from './components/chat-view';
 export type { ChatViewProps } from './components/chat-view/ChatView';
 export type { MessageBubbleProps } from './components/chat-view/MessageBubble';

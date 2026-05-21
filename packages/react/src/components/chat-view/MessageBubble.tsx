@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
-import { marked } from 'marked';
+import React from 'react';
 import type { Message, MessagePart } from '@acp-components/core';
 import type { ContentBlock } from '@agentclientprotocol/sdk';
+import { Markdown } from '../markdown';
 import { ToolCallCard } from './ToolCallCard';
 import { ThoughtView } from './ThoughtView';
 import { PlanView } from './PlanView';
@@ -13,15 +13,10 @@ export interface MessageBubbleProps {
   onNavigateFile?: (path: string, line?: number | null) => void;
 }
 
-function MarkdownText({ text }: { text: string }) {
-  const html = useMemo(() => marked.parse(text, { async: false }) as string, [text]);
-  return <div dangerouslySetInnerHTML={{ __html: html }} />;
-}
-
 function renderContent(content: ContentBlock) {
   switch (content.type) {
     case 'text':
-      return <MarkdownText text={(content as { text: string }).text} />;
+      return <Markdown>{(content as { text: string }).text}</Markdown>;
     case 'resource':
       const res = content as { resource: { uri: string; text?: string; mimeType?: string } };
       return (

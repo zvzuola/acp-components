@@ -167,7 +167,7 @@ Each agent in the `agents` array gets its own transport configuration:
 | `ProjectOpener` | Editable workspace directory display with dropdown to switch between active workspaces |
 | `SessionList` | Sidebar session list grouped by agent within the active workspace, with create / select / delete actions per agent |
 | `ChatView` | Main chat area: groups messages into user/agent rounds, renders plan, usage bar, and config panel. Props: `sessionId`, `onNavigateFile` |
-| `MessageBubble` | Renders message parts (content blocks, thought blocks, tool calls) with Markdown via `marked` |
+| `MessageBubble` | Renders message parts (content blocks, thought blocks, tool calls) with Markdown via `react-markdown` |
 | `ChatComposer` | Text input with slash-command palette integration and send / cancel controls |
 | `StreamingIndicator` | Animated typing indicator shown during agent streaming |
 | `ToolCallCard` | Displays tool call name, status, input/output, file locations |
@@ -644,7 +644,7 @@ workspaces.forEach(ws => console.log(ws.cwd, ws.sessions.size));
 | State Management | Zustand v5 (vanilla store, no React dependency) |
 | UI Framework | React 18 / 19 |
 | Internationalization | i18next + react-i18next |
-| Markdown Rendering | marked |
+| Markdown Rendering | react-markdown |
 | Styling | SCSS Modules + CSS Custom Properties |
 | Build Tool | Vite 6 (library mode) |
 | Type System | TypeScript 5.6 (strict mode) |

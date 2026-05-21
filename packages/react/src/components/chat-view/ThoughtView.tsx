@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { marked } from 'marked';
+import React, { useEffect, useRef, useState } from 'react';
 import type { ContentBlock } from '@agentclientprotocol/sdk';
+import { Markdown } from '../markdown';
 import { useI18n } from '../../i18n';
 import styles from './thought-view.module.scss';
 
@@ -9,15 +9,10 @@ export interface ThoughtViewProps {
   isStreaming: boolean;
 }
 
-function MarkdownText({ text }: { text: string }) {
-  const html = useMemo(() => marked.parse(text, { async: false }) as string, [text]);
-  return <div dangerouslySetInnerHTML={{ __html: html }} />;
-}
-
 function renderThoughtBlock(block: ContentBlock): React.ReactNode {
   switch (block.type) {
     case 'text':
-      return <MarkdownText text={(block as { text: string }).text} />;
+      return <Markdown>{(block as { text: string }).text}</Markdown>;
     case 'resource':
     case 'resource_link':
       return null;

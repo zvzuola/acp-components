@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { useStore } from 'zustand/react';
-import { marked } from 'marked';
 import type { ToolCallState, TerminalState } from '@acp-components/core';
 import { sessionStore } from '@acp-components/core';
 import type { ToolCallLocation, ToolKind } from '@agentclientprotocol/sdk';
