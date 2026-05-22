@@ -1,24 +1,20 @@
 .acp-thought-view {
-  margin: 8px 0;
+  margin: 4px 0;
   overflow: hidden;
-  font-size: 12px;
-
-  &--streaming {
-    background: var(--acp-color-accent-muted);
-  }
+  font-size: 11px;
 
   &__header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
+    gap: 6px;
+    padding: 6px 10px;
     background: none;
     cursor: pointer;
     border: none;
     width: 100%;
     text-align: left;
     color: var(--acp-color-text-secondary);
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.02em;
     text-transform: uppercase;
@@ -30,7 +26,7 @@
 
   &__chevron {
     color: var(--acp-color-text-muted);
-    font-size: 10px;
+    font-size: 9px;
     transition: transform var(--acp-duration-fast) var(--acp-ease-spring);
     flex-shrink: 0;
 
@@ -40,34 +36,33 @@
   }
 
   &__spinner {
-    width: 14px;
-    height: 14px;
-    border: 2px solid var(--acp-color-border-subtle);
+    width: 12px;
+    height: 12px;
+    border: 1.5px solid var(--acp-color-border-subtle);
     border-top-color: var(--acp-color-accent);
     border-radius: 50%;
     animation: acp-thought-spin 0.7s linear infinite;
   }
 
   &__body {
-    padding: 12px 14px;
-    background: var(--acp-color-bg-primary);
-    max-height: 400px;
+    padding: 8px 10px;
+    max-height: 300px;
     overflow-y: auto;
     color: var(--acp-color-text-secondary);
-    line-height: 1.7;
-    font-size: 13px;
+    line-height: 1.5;
+    font-size: 12px;
 
     p {
-      margin-bottom: 8px;
+      margin-bottom: 4px;
       &:last-child {
         margin-bottom: 0;
       }
     }
 
     pre {
-      font-size: 12px;
-      line-height: 1.6;
-      margin: 8px 0;
+      font-size: 11px;
+      line-height: 1.45;
+      margin: 4px 0;
       font-family: var(--acp-font-mono);
     }
 
@@ -78,7 +73,7 @@
 
     :not(pre) > code {
       background: var(--acp-color-bg-tertiary);
-      padding: 1px 6px;
+      padding: 1px 4px;
       border-radius: var(--acp-radius-xs);
       border: 1px solid var(--acp-color-border-subtle);
     }

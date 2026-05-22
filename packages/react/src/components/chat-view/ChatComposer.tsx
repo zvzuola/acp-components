@@ -31,13 +31,15 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands }: Chat
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { t } = useI18n();
 
+  const [paletteSuppressed, setPaletteSuppressed] = useState(false);
+
   const commandState = useMemo(() => {
     if (!availableCommands || availableCommands.length === 0) return null;
     const pos = textareaRef.current?.selectionStart ?? value.length;
     return getCommandQuery(value, pos);
   }, [value, availableCommands]);
 
-  const showPalette = commandState !== null;
+  const showPalette = commandState !== null && !paletteSuppressed;
 
   // Filter commands by query
   const filteredCommands = useMemo(() => {
@@ -52,7 +54,7 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands }: Chat
 
   const closePalette = useCallback(() => {
     setActiveIndex(0);
-    textareaRef.current?.focus();
+    setPaletteSuppressed(true);
   }, []);
 
   const selectCommand = useCallback(
@@ -65,6 +67,7 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands }: Chat
       const newValue = before + insertion + after;
       setValue(newValue);
       setActiveIndex(0);
+      setPaletteSuppressed(true);
       const cursorTarget = before.length + insertion.length;
       setTimeout(() => {
         const ta = textareaRef.current;
@@ -77,15 +80,34 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands }: Chat
     [value, commandState]
   );
 
+  const sendText = useCallback(
+    async (text: string) => {
+      if (!text.trim() || !sessionId || isStreaming) return;
+      setValue('');
+      const blocks: ContentBlock[] = [
+        { type: 'text', text, _meta: null, annotations: null },
+      ];
+      await send(blocks);
+    },
+    [sessionId, isStreaming, send]
+  );
+
   const handleSend = useCallback(async () => {
-    if (!value.trim() || !sessionId || isStreaming) return;
-    const text = value;
-    setValue('');
-    const blocks: ContentBlock[] = [
-      { type: 'text', text, _meta: null, annotations: null },
-    ];
-    await send(blocks);
-  }, [value, sessionId, isStreaming, send]);
+    await sendText(value);
+  }, [value, sendText]);
+
+  const selectAndSendCommand = useCallback(
+    async (cmd: AvailableCommand) => {
+      if (!commandState) return;
+      const before = value.slice(0, commandState.slashIndex);
+      const cursorPos = textareaRef.current?.selectionStart ?? commandState.slashIndex;
+      const after = value.slice(cursorPos);
+      const finalText = before + `/${cmd.name} ` + after;
+      setActiveIndex(0);
+      await sendText(finalText);
+    },
+    [value, commandState, sendText]
+  );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -102,7 +124,7 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands }: Chat
           case 'Enter':
             if (filteredCommands[activeIndex]) {
               e.preventDefault();
-              selectCommand(filteredCommands[activeIndex]);
+              selectAndSendCommand(filteredCommands[activeIndex]);
               return;
             }
             // No match — let Enter send the message (fall through)
@@ -132,7 +154,7 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands }: Chat
         handleSend();
       }
     },
-    [showPalette, filteredCommands, activeIndex, selectCommand, closePalette, handleSend]
+    [showPalette, filteredCommands, activeIndex, selectCommand, selectAndSendCommand, closePalette, handleSend]
   );
 
   const handleCancel = useCallback(() => {
@@ -172,8 +194,10 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands }: Chat
           onChange={(e) => {
             setValue(e.target.value);
             setActiveIndex(0);
+            setPaletteSuppressed(false);
           }}
           onKeyDown={handleKeyDown}
+          onBlur={() => showPalette && closePalette()}
           rows={1}
           disabled={!sessionId}
           aria-label={t('composer.ariaLabel')}

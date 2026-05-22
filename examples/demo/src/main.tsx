@@ -74,7 +74,9 @@ function AppInner() {
         sidebar={
           <>
             <ProjectOpener onBrowse={handleBrowse} />
-            <SessionList />
+            <div style={{ flex: 1, overflow: "hidden" }}>
+              <SessionList />
+            </div>
             <LocaleSwitcher />
           </>
         }

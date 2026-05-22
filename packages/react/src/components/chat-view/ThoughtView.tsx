@@ -40,7 +40,7 @@ export function ThoughtView({ thought, isStreaming }: ThoughtViewProps) {
   );
 
   return (
-    <div className={`${styles.acpThoughtView}${isStreaming ? ` ${styles.acpThoughtViewStreaming}` : ''}`}>
+    <div className={styles.acpThoughtView}>
       <button
         className={styles.acpThoughtViewHeader}
         onClick={() => setExpanded(!expanded)}

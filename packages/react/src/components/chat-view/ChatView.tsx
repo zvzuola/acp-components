@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { useSession } from '../../hooks/useSession';
+import { useSessions } from '../../hooks/useSessions';
 import type { SessionId } from '@agentclientprotocol/sdk';
 import type { Message } from '@acp-components/core';
 import { MessageBubble } from './MessageBubble';
@@ -48,6 +49,11 @@ function groupMessagesIntoRounds(messages: Message[]): Round[] {
 
 export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
   const { messages, isStreaming, plan, availableCommands } = useSession(sessionId);
+  const { sessions } = useSessions();
+  const sessionTitle = useMemo(() => {
+    if (!sessionId) return null;
+    return sessions.find((s) => s.id === sessionId)?.title;
+  }, [sessions, sessionId]);
   const listRef = useRef<HTMLDivElement>(null);
   const { t } = useI18n();
 
@@ -55,7 +61,10 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
 
   useEffect(() => {
     if (listRef.current) {
-      listRef.current.scrollTop = listRef.current.scrollHeight;
+      listRef.current.scrollTo({
+        top: listRef.current.scrollHeight,
+        behavior: isStreaming ? 'smooth' : 'instant',
+      });
     }
   }, [messages, isStreaming]);
 
@@ -72,7 +81,7 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
   return (
     <div className={styles.acpChatView}>
       <div className={styles.acpChatHeader}>
-        <span className={styles.acpChatHeaderTitle}>{t('chat.title')}</span>
+        <span className={styles.acpChatHeaderTitle}>{sessionTitle || t('chat.title')}</span>
         <div className={styles.acpChatHeaderControls}>
           <SessionConfigPanel sessionId={sessionId} />
           <UsageBar sessionId={sessionId} />
