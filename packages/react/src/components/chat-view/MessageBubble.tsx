@@ -25,7 +25,7 @@ function renderContent(content: ContentBlock) {
           <div>
             <div className={styles.acpMessageBubbleResourceName}>{res.resource.uri}</div>
             {res.resource.text && (
-              <pre style={{ marginTop: 4, fontSize: 12 }}>{res.resource.text.slice(0, 500)}</pre>
+              <pre className={styles.acpMessageBubbleResourceText}>{res.resource.text.slice(0, 500)}</pre>
             )}
           </div>
         </div>
@@ -90,7 +90,7 @@ export function MessageBubble({ messages, isStreaming = false, onNavigateFile }:
           </React.Fragment>
         ))}
         {stopReason && (
-          <div style={{ fontSize: 11, color: 'var(--acp-color-text-muted)', marginTop: 8 }}>
+          <div className={styles.acpMessageBubbleStopReason}>
             {stopReason}
           </div>
         )}

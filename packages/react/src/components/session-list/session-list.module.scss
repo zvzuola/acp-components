@@ -50,6 +50,13 @@
     flex-direction: column;
     gap: 1px;
   }
+
+  &__empty-state {
+    padding: 16px;
+    text-align: center;
+    color: var(--acp-color-text-muted);
+    font-size: 13px;
+  }
 }
 
 .acp-session-item {

@@ -16,7 +16,7 @@ export function DiffView({ diffs = [] }: DiffViewProps) {
     return (
       <div className={styles.acpDiffView}>
         <div className={styles.acpDiffViewHeader}>{t('diff.title')}</div>
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--acp-color-text-muted)', fontSize: 13 }}>
+        <div className={styles.acpDiffEmptyState}>
           {t('diff.emptyState')}
         </div>
       </div>

@@ -1,11 +1,7 @@
 import { createStore } from 'zustand/vanilla';
 import type { Message, ToolCallState, PermissionRequest, TerminalState } from '../types';
 import type { SessionId, ContentBlock, StopReason, PlanEntry, UsageUpdate, SessionConfigOption, AvailableCommand, TerminalExitStatus } from '@agentclientprotocol/sdk';
-
-let idCounter = 0;
-function generateId(prefix: string): string {
-  return `${prefix}_${Date.now()}_${++idCounter}`;
-}
+import { generateId } from '../utils/id';
 
 interface SessionData {
   messages: Message[];

@@ -62,7 +62,7 @@ export function SessionList() {
       </div>
       <div className={styles.acpSessionListItems} role="listbox" aria-label={t('sessionList.title')}>
         {agentList.length === 0 && (
-          <div style={{ padding: '16px', textAlign: 'center', color: 'var(--acp-color-text-muted)', fontSize: '13px' }}>
+          <div className={styles.acpSessionListEmptyState}>
             {t('sessionList.emptyState')}
           </div>
         )}

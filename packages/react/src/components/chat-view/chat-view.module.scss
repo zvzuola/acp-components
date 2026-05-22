@@ -103,6 +103,17 @@
     font-size: 12px;
     color: var(--acp-color-text-secondary);
   }
+
+  &__resource-text {
+    margin-top: 4px;
+    font-size: 12px;
+  }
+
+  &__stop-reason {
+    font-size: 11px;
+    color: var(--acp-color-text-muted);
+    margin-top: 8px;
+  }
 }
 
 @keyframes acp-message-in {

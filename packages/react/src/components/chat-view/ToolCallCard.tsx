@@ -102,7 +102,7 @@ export function ToolCallCard({ toolCall, onNavigate }: ToolCallCardProps) {
             switch (item.type) {
               case 'content': {
                 const c = item as unknown as { content: { type: string; text?: string } };
-                return <pre key={i} style={{ whiteSpace: 'pre-wrap' }}>{c.content.text}</pre>;
+                return <pre key={i} className={styles.acpToolCallContentText}>{c.content.text}</pre>;
               }
               case 'diff': {
                 const d = item as unknown as { path: string; oldText?: string | null; newText: string };

@@ -86,6 +86,10 @@
     overflow-y: auto;
   }
 
+  &__content-text {
+    white-space: pre-wrap;
+  }
+
   &__locations {
     display: flex;
     flex-wrap: wrap;

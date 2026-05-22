@@ -2,12 +2,7 @@ import type { SessionId, ContentBlock, PromptResponse } from '@agentclientprotoc
 import type { AcpClient } from '../client/AcpClient';
 import { sessionStore } from '../store/sessionStore';
 import type { Message } from '../types';
-
-let messageCounter = 0;
-
-function generateId(prefix: string): string {
-  return `${prefix}_${Date.now()}_${++messageCounter}`;
-}
+import { generateId } from '../utils/id';
 
 export async function sendPrompt(client: AcpClient, sessionId: SessionId, contentBlocks: ContentBlock[]): Promise<PromptResponse> {
   const store = sessionStore.getState();
