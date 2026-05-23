@@ -4,7 +4,7 @@ export { StdioTransport, HttpTransport, WebSocketTransport } from './transport';
 export type { AcpTransport, Stream, AnyMessage } from './transport';
 export { acpStore } from './store/acpStore';
 export { sessionStore } from './store/sessionStore';
-export { createAcpProvider, getClient } from './provider';
+export { createAcpProvider } from './provider';
 export type { MultiAgentProviderOptions, MultiAgentProviderInstance } from './provider';
 export { createSession, loadSession, selectSession, closeSession, refreshSessions, loadMoreSessions, setSessionConfigOption } from './actions/sessions';
 export { sendPrompt, cancelPrompt } from './actions/prompt';

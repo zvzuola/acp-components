@@ -7,24 +7,11 @@ import type { AgentConfig } from './types';
 import type { RequestPermissionResponse, ClientCapabilities, CreateTerminalRequest, TerminalExitStatus } from '@agentclientprotocol/sdk';
 import type { PermissionRequest } from './types';
 
-let permissionIdCounter = 0;
-
 function generateMsgId(): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
   }
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
-
-const clientRegistry = new Map<string, AcpClient>();
-const cleanupFns = new Map<string, () => void>();
-
-let globalFileReadHandler: FileReadHandler | undefined;
-let globalFileWriteHandler: FileWriteHandler | undefined;
-let globalTerminalHandler: TerminalHandler | undefined;
-
-export function getClient(agentId: string): AcpClient | null {
-  return clientRegistry.get(agentId) ?? null;
 }
 
 export interface MultiAgentProviderOptions {
@@ -41,28 +28,6 @@ export interface MultiAgentProviderInstance {
   getClient(agentId: string): AcpClient | null;
   addAgent(config: AgentConfig): Promise<void>;
   removeAgent(agentId: string): Promise<void>;
-}
-
-function setupPermissionHandler(client: AcpClient): void {
-  client.setPermissionHandler((req) => {
-    const sessStore = sessionStore.getState();
-    return new Promise<RequestPermissionResponse>((resolve) => {
-      const permissionReq: PermissionRequest = {
-        id: `perm_${++permissionIdCounter}`,
-        sessionId: req.sessionId,
-        toolCall: req.toolCall,
-        options: req.options,
-        resolve: (optionId: string) => {
-          resolve({ outcome: { outcome: 'selected', optionId } });
-        },
-        reject: () => {
-          resolve({ outcome: { outcome: 'cancelled' } });
-        },
-      };
-      sessStore.ensureSession(req.sessionId);
-      sessStore.addPermissionRequest(req.sessionId, permissionReq);
-    });
-  });
 }
 
 function setupSessionUpdateHandler(client: AcpClient): () => void {
@@ -133,96 +98,127 @@ function setupSessionUpdateHandler(client: AcpClient): () => void {
   });
 }
 
-function buildCapabilities(clientCapabilities?: ClientCapabilities): ClientCapabilities | undefined {
+function buildCapabilities(
+  clientCapabilities: ClientCapabilities | undefined,
+  fileReadHandler: FileReadHandler | undefined,
+  fileWriteHandler: FileWriteHandler | undefined,
+  terminalHandler: TerminalHandler | undefined,
+): ClientCapabilities | undefined {
   const caps: ClientCapabilities = {
     ...clientCapabilities,
     fs: {
       ...clientCapabilities?.fs,
-      ...(globalFileReadHandler ? { readTextFile: true } : {}),
-      ...(globalFileWriteHandler ? { writeTextFile: true } : {}),
+      ...(fileReadHandler ? { readTextFile: true } : {}),
+      ...(fileWriteHandler ? { writeTextFile: true } : {}),
     },
-    ...(globalTerminalHandler ? { terminal: true } : {}),
+    ...(terminalHandler ? { terminal: true } : {}),
   };
   const hasFsCaps = caps.fs?.readTextFile || caps.fs?.writeTextFile;
   return hasFsCaps || caps.terminal || caps.auth ? caps : undefined;
 }
 
-async function connectAgent(config: AgentConfig): Promise<void> {
-  const client = new AcpClient();
-
-  // Register client immediately so getClient works during connection
-  clientRegistry.set(config.id, client);
-
-  // Status handler
-  const unsubStatus = client.onStatusChange((status) => {
-    acpStore.getState().updateAgent(config.id, { status });
-  });
-
-  // Session update handler
-  const unsubSession = setupSessionUpdateHandler(client);
-
-  // Permission handler
-  setupPermissionHandler(client);
-
-  // Terminal handler
-  if (globalTerminalHandler) {
-    const storeBridge: TerminalHandler = {
-      create: async (params: CreateTerminalRequest) => {
-        const handle = await globalTerminalHandler!.create(params);
-        const state: TerminalState = {
-          terminalId: handle.terminalId,
-          command: params.command,
-          args: params.args,
-          cwd: params.cwd,
-          output: '',
-          exitStatus: null,
-          truncated: false,
-        };
-        sessionStore.getState().addTerminal(params.sessionId, state);
-
-        handle.onOutputChange((output) => {
-          sessionStore.getState().updateTerminalOutput(params.sessionId, handle.terminalId, output, false);
-        });
-
-        handle.onExit((exitStatus: TerminalExitStatus | null) => {
-          sessionStore.getState().updateTerminalExit(params.sessionId, handle.terminalId, exitStatus);
-        });
-
-        return handle;
-      },
-    };
-    client.setTerminalHandler(storeBridge);
-  }
-
-  // File handlers
-  if (globalFileReadHandler) {
-    client.setFileReadHandler(globalFileReadHandler);
-  }
-  if (globalFileWriteHandler) {
-    client.setFileWriteHandler(globalFileWriteHandler);
-  }
-
-  cleanupFns.set(config.id, () => {
-    unsubStatus();
-    unsubSession();
-  });
-
-  // Connect and initialize
-  await client.connect(config.transport);
-  const mergedCaps = buildCapabilities(config.clientCapabilities);
-  await client.initialize(config.clientInfo, mergedCaps);
-
-  acpStore.getState().updateAgent(config.id, {
-    agentInfo: client.agentInfo,
-    capabilities: client.capabilities,
-    status: 'connected',
-  });
-}
-
 export function createAcpProvider({ agents, onFileRead, onFileWrite, onTerminal }: MultiAgentProviderOptions): MultiAgentProviderInstance {
-  globalFileReadHandler = onFileRead;
-  globalFileWriteHandler = onFileWrite;
-  globalTerminalHandler = onTerminal;
+  // Scoped state — each provider instance has its own isolated handlers and registries
+  const scopedFileReadHandler = onFileRead;
+  const scopedFileWriteHandler = onFileWrite;
+  const scopedTerminalHandler = onTerminal;
+  const scopedClientRegistry = new Map<string, AcpClient>();
+  const scopedCleanupFns = new Map<string, () => void>();
+  let permissionIdCounter = 0;
+
+  function scopedSetupPermissionHandler(client: AcpClient): void {
+    client.setPermissionHandler((req) => {
+      const sessStore = sessionStore.getState();
+      return new Promise<RequestPermissionResponse>((resolve) => {
+        const permissionReq: PermissionRequest = {
+          id: `perm_${++permissionIdCounter}`,
+          sessionId: req.sessionId,
+          toolCall: req.toolCall,
+          options: req.options,
+          resolve: (optionId: string) => {
+            resolve({ outcome: { outcome: 'selected', optionId } });
+          },
+          reject: () => {
+            resolve({ outcome: { outcome: 'cancelled' } });
+          },
+        };
+        sessStore.ensureSession(req.sessionId);
+        sessStore.addPermissionRequest(req.sessionId, permissionReq);
+      });
+    });
+  }
+
+  async function connectAgent(config: AgentConfig): Promise<void> {
+    const client = new AcpClient();
+
+    // Register client immediately so getClient works during connection
+    scopedClientRegistry.set(config.id, client);
+
+    // Status handler
+    const unsubStatus = client.onStatusChange((status) => {
+      acpStore.getState().updateAgent(config.id, { status });
+    });
+
+    // Session update handler
+    const unsubSession = setupSessionUpdateHandler(client);
+
+    // Permission handler
+    scopedSetupPermissionHandler(client);
+
+    // Terminal handler
+    if (scopedTerminalHandler) {
+      const storeBridge: TerminalHandler = {
+        create: async (params: CreateTerminalRequest) => {
+          const handle = await scopedTerminalHandler!.create(params);
+          const state: TerminalState = {
+            terminalId: handle.terminalId,
+            command: params.command,
+            args: params.args,
+            cwd: params.cwd,
+            output: '',
+            exitStatus: null,
+            truncated: false,
+          };
+          sessionStore.getState().addTerminal(params.sessionId, state);
+
+          handle.onOutputChange((output) => {
+            sessionStore.getState().updateTerminalOutput(params.sessionId, handle.terminalId, output, false);
+          });
+
+          handle.onExit((exitStatus: TerminalExitStatus | null) => {
+            sessionStore.getState().updateTerminalExit(params.sessionId, handle.terminalId, exitStatus);
+          });
+
+          return handle;
+        },
+      };
+      client.setTerminalHandler(storeBridge);
+    }
+
+    // File handlers
+    if (scopedFileReadHandler) {
+      client.setFileReadHandler(scopedFileReadHandler);
+    }
+    if (scopedFileWriteHandler) {
+      client.setFileWriteHandler(scopedFileWriteHandler);
+    }
+
+    scopedCleanupFns.set(config.id, () => {
+      unsubStatus();
+      unsubSession();
+    });
+
+    // Connect and initialize
+    await client.connect(config.transport);
+    const mergedCaps = buildCapabilities(config.clientCapabilities, scopedFileReadHandler, scopedFileWriteHandler, scopedTerminalHandler);
+    await client.initialize(config.clientInfo, mergedCaps);
+
+    acpStore.getState().updateAgent(config.id, {
+      agentInfo: client.agentInfo,
+      capabilities: client.capabilities,
+      status: 'connected',
+    });
+  }
 
   let ready = false;
   const listeners = new Set<() => void>();
@@ -258,7 +254,7 @@ export function createAcpProvider({ agents, onFileRead, onFileWrite, onTerminal 
     if (!state.activeWorkspaceCwd || state.activeWorkspaceCwd === prev.activeWorkspaceCwd) return;
     const cwd = state.activeWorkspaceCwd;
     const ws = state.workspaces.get(cwd);
-    for (const [agentId, client] of clientRegistry) {
+    for (const [agentId, client] of scopedClientRegistry) {
       if (!client.capabilities?.sessionCapabilities?.list) continue;
       // Skip if this workspace already has sessions for this agent
       if (ws) {
@@ -293,16 +289,16 @@ export function createAcpProvider({ agents, onFileRead, onFileWrite, onTerminal 
   }
 
   async function removeAgent(agentId: string): Promise<void> {
-    const client = clientRegistry.get(agentId);
+    const client = scopedClientRegistry.get(agentId);
     if (client) {
       client.disconnect();
-      clientRegistry.delete(agentId);
+      scopedClientRegistry.delete(agentId);
     }
 
-    const cleanup = cleanupFns.get(agentId);
+    const cleanup = scopedCleanupFns.get(agentId);
     if (cleanup) {
       cleanup();
-      cleanupFns.delete(agentId);
+      scopedCleanupFns.delete(agentId);
     }
 
     acpStore.getState().removeAgent(agentId);
@@ -316,13 +312,14 @@ export function createAcpProvider({ agents, onFileRead, onFileWrite, onTerminal 
     },
     destroy() {
       unsubWorkspace();
-      for (const [, cleanup] of cleanupFns) cleanup();
-      cleanupFns.clear();
-      for (const [, client] of clientRegistry) client.disconnect();
-      clientRegistry.clear();
+      for (const [, cleanup] of scopedCleanupFns) cleanup();
+      scopedCleanupFns.clear();
+      for (const [, client] of scopedClientRegistry) client.disconnect();
+      scopedClientRegistry.clear();
       listeners.clear();
+      // handlers 自动随闭包释放，无需手动清空
     },
-    getClient: (agentId: string) => clientRegistry.get(agentId) ?? null,
+    getClient: (agentId: string) => scopedClientRegistry.get(agentId) ?? null,
     addAgent,
     removeAgent,
   };
