@@ -8,6 +8,7 @@ import {
   selectSession as coreSelectSession,
   closeSession as coreCloseSession,
   refreshSessions as coreRefreshSessions,
+  loadMoreSessions as coreLoadMoreSessions,
   acpStore,
 } from '@acp-components/core';
 import type { SessionId } from '@agentclientprotocol/sdk';
@@ -73,14 +74,32 @@ export function useSessions() {
     return coreRefreshSessions(client, agentId, cwd);
   }, [getClient]);
 
+  const loadMoreSessions = useCallback(async (agentId: string, cwd: string) => {
+    const client = getClient(agentId);
+    if (!client) return;
+    const cursor = acpStore.getState().workspaces.get(cwd)?.sessionListCursors.get(agentId);
+    if (!cursor) return;
+    return coreLoadMoreSessions(client, agentId, cwd, cursor);
+  }, [getClient]);
+
+  const sessionListCursors = useAcpStore(
+    useShallow((s) => {
+      if (!s.activeWorkspaceCwd) return [];
+      const cursors = s.workspaces.get(s.activeWorkspaceCwd)?.sessionListCursors;
+      return cursors ? Array.from(cursors.keys()) : [];
+    }),
+  );
+
   return {
     sessions,
     activeSessionId,
+    sessionListCursors,
     setActiveSession,
     selectSession,
     createSession,
     loadSession,
     closeSession,
     refreshSessions,
+    loadMoreSessions,
   };
 }

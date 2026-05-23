@@ -49,6 +49,14 @@ export async function closeSession(client: AcpClient, sessionId: SessionId): Pro
 export async function refreshSessions(client: AcpClient, agentId: string, cwd: string): Promise<void> {
   const res = await client.listSessions(undefined, cwd);
   acpStore.getState().setSessions(res.sessions, agentId, cwd);
+  if (res.nextCursor) {
+    acpStore.getState().appendSessions([], agentId, cwd, res.nextCursor);
+  }
+}
+
+export async function loadMoreSessions(client: AcpClient, agentId: string, cwd: string, cursor: string): Promise<void> {
+  const res = await client.listSessions(cursor, cwd);
+  acpStore.getState().appendSessions(res.sessions, agentId, cwd, res.nextCursor ?? null);
 }
 
 export async function setSessionConfigOption(

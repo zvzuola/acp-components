@@ -76,7 +76,7 @@ export interface AgentConnection {
   name: string;
   status: ConnectionStatus;
   agentInfo: Implementation | null;
-  capabilities: Record<string, unknown> | null;
+  capabilities: AgentCapabilities | null;
 }
 
 export interface WorkspaceState {
@@ -84,6 +84,7 @@ export interface WorkspaceState {
   label?: string;
   activeSessionId: SessionId | null;
   sessions: Map<SessionId, SessionMeta>;
+  sessionListCursors: Map<string, string>;
 }
 
 export interface PermissionRequest {

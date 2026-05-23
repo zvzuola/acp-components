@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useSessions } from '../../hooks/useSessions';
 import { useAcpStore } from '../../hooks/useAcpStore';
 import { useI18n } from '../../i18n';
@@ -12,7 +12,7 @@ const agentDotClass: Record<string, string> = {
 };
 
 export function SessionList() {
-  const { activeSessionId, setActiveSession, selectSession, createSession, closeSession } = useSessions();
+  const { activeSessionId, setActiveSession, selectSession, createSession, closeSession, sessionListCursors, loadMoreSessions } = useSessions();
   const agents = useAcpStore((s) => s.agents);
   const workspaces = useAcpStore((s) => s.workspaces);
   const activeWorkspaceCwd = useAcpStore((s) => s.activeWorkspaceCwd);
@@ -37,6 +37,26 @@ export function SessionList() {
   }, [sessions]);
 
   const agentList = Array.from(agents.values());
+
+  const hasMore = useMemo(() => {
+    return agentList.some((a) => sessionListCursors.includes(a.id));
+  }, [agentList, sessionListCursors]);
+
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const handleLoadMore = useCallback(async () => {
+    if (!activeWorkspaceCwd || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      for (const agent of agentList) {
+        if (sessionListCursors.includes(agent.id)) {
+          await loadMoreSessions(agent.id, activeWorkspaceCwd);
+        }
+      }
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [activeWorkspaceCwd, loadingMore, agentList, sessionListCursors, loadMoreSessions]);
 
   const formatTime = useCallback((dateStr?: string): string => {
     if (!dateStr) return '';
@@ -114,6 +134,17 @@ export function SessionList() {
             </div>
           );
         })}
+        {hasMore && (
+          <div className={styles.acpSessionLoadMore}>
+            <button
+              className={styles.acpSessionLoadMoreBtn}
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+            >
+              {loadingMore ? '...' : t('sessionList.loadMore')}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

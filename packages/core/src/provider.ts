@@ -99,15 +99,15 @@ function setupSessionUpdateHandler(client: AcpClient): () => void {
         });
         break;
       case 'tool_call_update': {
-        const updateData: Partial<ToolCallState> = {};
-        if (update.content) updateData['content'] = update.content;
-        if (update.status) updateData['status'] = update.status;
-        if (update.rawOutput) updateData['rawOutput'] = update.rawOutput;
-        if (update.title) updateData['title'] = update.title;
-        if (update.locations) updateData['locations'] = update.locations;
-        if (update.kind) updateData['kind'] = update.kind;
-        if (update.rawInput) updateData['rawInput'] = update.rawInput;
-        store.updateToolCall(sessionId, update.toolCallId, updateData);
+        const updateData: Record<string, unknown> = {};
+        if (update.content !== undefined) updateData['content'] = update.content;
+        if (update.status !== undefined) updateData['status'] = update.status;
+        if (update.rawOutput !== undefined) updateData['rawOutput'] = update.rawOutput;
+        if (update.title !== undefined) updateData['title'] = update.title;
+        if (update.locations !== undefined) updateData['locations'] = update.locations;
+        if (update.kind !== undefined) updateData['kind'] = update.kind;
+        if (update.rawInput !== undefined) updateData['rawInput'] = update.rawInput;
+        store.updateToolCall(sessionId, update.toolCallId, updateData as Partial<ToolCallState>);
         break;
       }
       case 'plan':
@@ -217,35 +217,6 @@ async function connectAgent(config: AgentConfig): Promise<void> {
     capabilities: client.capabilities,
     status: 'connected',
   });
-
-  // List sessions if supported
-  const agentCaps = client.capabilities;
-  if (agentCaps?.sessionCapabilities) {
-    const sessionCaps = agentCaps.sessionCapabilities as Record<string, unknown>;
-    if (sessionCaps.list) {
-      try {
-        const res = await client.listSessions();
-        // Group sessions by cwd so each workspace gets its own batch
-        const sessionsByCwd = new Map<string, typeof res.sessions>();
-        for (const s of res.sessions) {
-          const list = sessionsByCwd.get(s.cwd);
-          if (list) {
-            list.push(s);
-          } else {
-            sessionsByCwd.set(s.cwd, [s]);
-          }
-        }
-        for (const [cwd, sessions] of sessionsByCwd) {
-          acpStore.getState().setSessions(sessions, config.id, cwd);
-        }
-        for (const s of res.sessions) {
-          sessionStore.getState().ensureSession(s.sessionId);
-        }
-      } catch {
-        // listSessions is optional
-      }
-    }
-  }
 }
 
 export function createAcpProvider({ agents, onFileRead, onFileWrite, onTerminal }: MultiAgentProviderOptions): MultiAgentProviderInstance {
@@ -288,8 +259,7 @@ export function createAcpProvider({ agents, onFileRead, onFileWrite, onTerminal 
     const cwd = state.activeWorkspaceCwd;
     const ws = state.workspaces.get(cwd);
     for (const [agentId, client] of clientRegistry) {
-      const sessionCaps = client.capabilities?.sessionCapabilities as Record<string, unknown> | undefined;
-      if (!sessionCaps?.list) continue;
+      if (!client.capabilities?.sessionCapabilities?.list) continue;
       // Skip if this workspace already has sessions for this agent
       if (ws) {
         let hasSessions = false;
@@ -303,6 +273,9 @@ export function createAcpProvider({ agents, onFileRead, onFileWrite, onTerminal 
       }
       client.listSessions(undefined, cwd).then((res) => {
         acpStore.getState().setSessions(res.sessions, agentId, cwd);
+        if (res.nextCursor) {
+          acpStore.getState().appendSessions([], agentId, cwd, res.nextCursor);
+        }
       }).catch(() => {});
     }
   });

@@ -28,7 +28,10 @@ import {
   type ReleaseTerminalRequest,
   type WaitForTerminalExitRequest,
   type KillTerminalRequest,
+  type CloseSessionRequest,
+  type CloseSessionResponse,
 } from '@agentclientprotocol/sdk';
+import type { AgentCapabilities } from '@agentclientprotocol/sdk';
 import { StdioTransport, HttpTransport, WebSocketTransport } from '../transport';
 import type { AcpTransport } from '../transport';
 import type { ConnectionStatus, Implementation, TransportConfig, TerminalHandler } from '../types';
@@ -58,7 +61,7 @@ export class AcpClient {
   private transport: AcpTransport | null = null;
   private _status: ConnectionStatus = 'disconnected';
   private _agentInfo: Implementation | null = null;
-  private _capabilities: Record<string, unknown> | null = null;
+  private _capabilities: AgentCapabilities | null = null;
 
   private sessionUpdateHandlers = new Set<SessionUpdateHandler>();
   private permissionHandler: PermissionHandler | null = null;
@@ -76,7 +79,7 @@ export class AcpClient {
     return this._agentInfo;
   }
 
-  get capabilities(): Record<string, unknown> | null {
+  get capabilities(): AgentCapabilities | null {
     return this._capabilities;
   }
 
@@ -215,7 +218,7 @@ export class AcpClient {
 
     const res = await this.connection.initialize(req);
     this._agentInfo = res.agentInfo ?? null;
-    this._capabilities = res.agentCapabilities as Record<string, unknown> ?? null;
+    this._capabilities = res.agentCapabilities ?? null;
     this.setStatus('connected');
     return res;
   }
@@ -261,9 +264,10 @@ export class AcpClient {
     return this.connection.setSessionConfigOption(params);
   }
 
-  async closeSession(sessionId: string): Promise<void> {
+  async closeSession(sessionId: string): Promise<CloseSessionResponse> {
     if (!this.connection) throw new Error('Not connected');
-    await this.connection.cancel({ sessionId });
+    const params: CloseSessionRequest = { sessionId };
+    return this.connection.closeSession(params);
   }
 
   disconnect(): void {

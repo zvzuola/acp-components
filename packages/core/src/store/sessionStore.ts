@@ -276,13 +276,12 @@ export const sessionStore = createStore<SessionStoreState>((set) => ({
       if (!existing) return s;
       const toolCalls = new Map(data.pendingToolCalls);
 
-      let content = existing.content ?? [];
-      if (update.content) content = [...content, ...update.content];
-
-      let locations = existing.locations ?? [];
-      if (update.locations) locations = [...locations, ...update.locations];
-
-      const updated = { ...existing, ...update, content, locations };
+      const updated = {
+        ...existing,
+        ...update,
+        content: 'content' in update ? (update.content ?? []) : existing.content,
+        locations: 'locations' in update ? (update.locations ?? []) : existing.locations,
+      };
       toolCalls.set(id, updated);
 
       // Also update tool call on the attached message

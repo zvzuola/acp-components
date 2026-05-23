@@ -13,7 +13,7 @@ function findWorkspaceBySession(
 }
 
 function createWorkspace(cwd: string): WorkspaceState {
-  return { cwd, activeSessionId: null, sessions: new Map() };
+  return { cwd, activeSessionId: null, sessions: new Map(), sessionListCursors: new Map() };
 }
 
 interface AcpStoreState {
@@ -30,6 +30,7 @@ interface AcpStoreState {
   updateAgent: (id: string, update: Partial<AgentConnection>) => void;
 
   setSessions: (sessions: SessionInfo[], agentId: string, cwd: string) => void;
+  appendSessions: (sessions: SessionInfo[], agentId: string, cwd: string, nextCursor: string | null) => void;
   addSession: (session: SessionMeta) => void;
   removeSession: (id: SessionId) => void;
   updateSession: (id: SessionId, update: Partial<SessionMeta>) => void;
@@ -153,7 +154,35 @@ export const acpStore = createStore<AcpStoreState>((set) => ({
           loaded: false,
         });
       }
-      next.set(cwd, { ...ws, sessions: nextSessions });
+      const cursors = new Map(ws.sessionListCursors);
+      cursors.delete(agentId);
+      next.set(cwd, { ...ws, sessions: nextSessions, sessionListCursors: cursors });
+      return { workspaces: next };
+    }),
+
+  appendSessions: (sessions, agentId, cwd, nextCursor) =>
+    set((state) => {
+      const next = new Map(state.workspaces);
+      const ws = next.get(cwd);
+      if (!ws) return state;
+      const nextSessions = new Map(ws.sessions);
+      for (const s of sessions) {
+        nextSessions.set(s.sessionId, {
+          id: s.sessionId,
+          title: s.title ?? undefined,
+          cwd: s.cwd,
+          updatedAt: s.updatedAt ?? undefined,
+          agentId,
+          loaded: false,
+        });
+      }
+      const cursors = new Map(ws.sessionListCursors);
+      if (nextCursor) {
+        cursors.set(agentId, nextCursor);
+      } else {
+        cursors.delete(agentId);
+      }
+      next.set(cwd, { ...ws, sessions: nextSessions, sessionListCursors: cursors });
       return { workspaces: next };
     }),
 

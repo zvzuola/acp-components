@@ -143,8 +143,29 @@
   }
 }
 
-.acp-session-agent-group {
-  margin-bottom: 4px;
+.acp-session-load-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0;
+  margin-top: 4px;
+
+  &__btn {
+    background: var(--acp-color-bg-tertiary);
+    border: 1px solid var(--acp-color-border-subtle);
+    border-radius: var(--acp-radius-sm);
+    color: var(--acp-color-text-secondary);
+    font-size: 12px;
+    padding: 6px 16px;
+    cursor: pointer;
+    transition: background var(--acp-duration-fast), color var(--acp-duration-fast), border-color var(--acp-duration-fast);
+
+    &:hover {
+      background: var(--acp-color-bg-hover);
+      color: var(--acp-color-text-primary);
+      border-color: var(--acp-color-border);
+    }
+  }
 }
 
 .acp-session-agent-header {
