@@ -14,6 +14,7 @@ export interface MessageBubbleProps {
 }
 
 function renderContent(content: ContentBlock) {
+  if ('annotations' in content && content.annotations != null) return null;
   switch (content.type) {
     case 'text':
       return <Markdown>{(content as { text: string }).text}</Markdown>;
@@ -38,6 +39,17 @@ function renderContent(content: ContentBlock) {
           <span className={styles.acpMessageBubbleResourceName}>{link.name || link.uri}</span>
         </div>
       );
+    case 'image': {
+      const img = content as { data: string; mimeType: string; uri?: string | null };
+      const src = `data:${img.mimeType};base64,${img.data}`;
+      return (
+        <img
+          className={styles.acpMessageBubbleImage}
+          src={src}
+          alt={img.uri || 'image'}
+        />
+      );
+    }
     default:
       return null;
   }

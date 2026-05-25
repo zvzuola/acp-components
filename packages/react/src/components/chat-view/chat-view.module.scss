@@ -114,6 +114,14 @@
     color: var(--acp-color-text-muted);
     margin-top: 8px;
   }
+
+  &__image {
+    max-width: 100%;
+    max-height: 400px;
+    border-radius: var(--acp-radius-sm);
+    margin: 8px 0;
+    display: block;
+  }
 }
 
 @keyframes acp-message-in {

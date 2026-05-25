@@ -14,6 +14,9 @@ export const enUS = {
   'composer.sendAriaLabel': 'Send message',
   'composer.send': 'Send (Enter)',
   'composer.hint': 'Enter to send, / for commands',
+  'composer.attachFile': 'Attach file',
+  'composer.attachFileAriaLabel': 'Attach a file',
+  'composer.removeFileAriaLabel': 'Remove file',
 
   // ChatView
   'chat.emptyState': 'Select or create a session to begin',

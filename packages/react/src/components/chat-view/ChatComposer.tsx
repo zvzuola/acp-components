@@ -11,6 +11,11 @@ export interface ChatComposerProps {
   availableCommands?: AvailableCommand[];
 }
 
+interface AttachedFile {
+  file: File;
+  previewUrl: string | null;
+}
+
 function getCommandQuery(value: string, cursorPos: number): { query: string; slashIndex: number } | null {
   const beforeCursor = value.slice(0, cursorPos);
   const slashIdx = beforeCursor.lastIndexOf('/');
@@ -24,11 +29,63 @@ function getCommandQuery(value: string, cursorPos: number): { query: string; sla
   return { query: afterSlash, slashIndex: slashIdx };
 }
 
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve((reader.result as string).split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function buildContentBlocks(text: string, attachedFiles: AttachedFile[]): Promise<ContentBlock[]> {
+  const blocks: ContentBlock[] = [];
+
+  if (text.trim()) {
+    blocks.push({ type: 'text', text, _meta: null, annotations: null });
+  }
+
+  for (const af of attachedFiles) {
+    const { file } = af;
+    if (file.type.startsWith('image/')) {
+      const data = await fileToBase64(file);
+      blocks.push({
+        type: 'image',
+        data,
+        mimeType: file.type,
+        uri: file.name,
+        _meta: null,
+        annotations: null,
+      });
+    } else {
+      blocks.push({
+        type: 'resource_link',
+        uri: file.name,
+        name: file.name,
+        mimeType: file.type || undefined,
+        size: file.size,
+        _meta: null,
+        annotations: null,
+      });
+    }
+  }
+
+  return blocks;
+}
+
 export function ChatComposer({ sessionId, isStreaming, availableCommands }: ChatComposerProps) {
   const [value, setValue] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
+  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const { send, cancel } = usePrompt(sessionId);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useI18n();
 
   const [paletteSuppressed, setPaletteSuppressed] = useState(false);
@@ -41,7 +98,6 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands }: Chat
 
   const showPalette = commandState !== null && !paletteSuppressed;
 
-  // Filter commands by query
   const filteredCommands = useMemo(() => {
     if (!commandState || !commandState.query) return availableCommands ?? [];
     const q = commandState.query.toLowerCase();
@@ -82,14 +138,13 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands }: Chat
 
   const sendText = useCallback(
     async (text: string) => {
-      if (!text.trim() || !sessionId || isStreaming) return;
+      if ((!text.trim() && attachedFiles.length === 0) || !sessionId || isStreaming) return;
       setValue('');
-      const blocks: ContentBlock[] = [
-        { type: 'text', text, _meta: null, annotations: null },
-      ];
+      const blocks = await buildContentBlocks(text, attachedFiles);
+      setAttachedFiles([]);
       await send(blocks);
     },
-    [sessionId, isStreaming, send]
+    [sessionId, isStreaming, attachedFiles, send]
   );
 
   const handleSend = useCallback(async () => {
@@ -127,7 +182,6 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands }: Chat
               selectAndSendCommand(filteredCommands[activeIndex]);
               return;
             }
-            // No match — let Enter send the message (fall through)
             break;
           case 'Escape':
             e.preventDefault();
@@ -143,12 +197,10 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands }: Chat
         }
       }
 
-      // Ctrl+Enter: insert newline (default behavior)
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
         return;
       }
 
-      // Enter without palette: send
       if (e.key === 'Enter' && !showPalette) {
         e.preventDefault();
         handleSend();
@@ -161,15 +213,52 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands }: Chat
     cancel();
   }, [cancel]);
 
-  // Reset activeIndex when query changes
+  const handleAttachClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFilesChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+
+    const newEntries: AttachedFile[] = files.map((file) => ({
+      file,
+      previewUrl: file.type.startsWith('image/') ? null : null,
+    }));
+    setAttachedFiles((prev) => [...prev, ...newEntries]);
+
+    // Generate previews for image files asynchronously
+    for (const entry of newEntries) {
+      if (entry.file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          setAttachedFiles((prev) =>
+            prev.map((af) =>
+              af.file === entry.file ? { ...af, previewUrl: reader.result as string } : af
+            )
+          );
+        };
+        reader.readAsDataURL(entry.file);
+      }
+    }
+
+    // Reset input so the same file can be re-selected
+    e.target.value = '';
+  }, []);
+
+  const handleRemoveFile = useCallback((index: number) => {
+    setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
   const prevQuery = useRef(commandState?.query);
   if (commandState?.query !== prevQuery.current) {
     prevQuery.current = commandState?.query;
-    // Reset is async-safe since it runs during render
     if (activeIndex !== 0) {
       setActiveIndex(0);
     }
   }
+
+  const canSend = (value.trim().length > 0 || attachedFiles.length > 0) && !!sessionId;
 
   return (
     <div className={styles.acpChatComposer}>
@@ -186,42 +275,84 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands }: Chat
         />
       )}
       <div className={styles.acpChatComposerForm}>
-        <textarea
-          ref={textareaRef}
-          className={styles.acpChatComposerInput}
-          placeholder={t('composer.placeholder')}
-          value={value}
-          onChange={(e) => {
-            setValue(e.target.value);
-            setActiveIndex(0);
-            setPaletteSuppressed(false);
-          }}
-          onKeyDown={handleKeyDown}
-          onBlur={() => showPalette && closePalette()}
-          rows={1}
-          disabled={!sessionId}
-          aria-label={t('composer.ariaLabel')}
-        />
-        {isStreaming ? (
-          <button
-            className={styles.acpChatComposerCancel}
-            onClick={handleCancel}
-            aria-label={t('composer.cancelAriaLabel')}
-            title={t('composer.cancel')}
-          >
-            &#x25a0;
-          </button>
-        ) : (
-          <button
-            className={styles.acpChatComposerSend}
-            onClick={handleSend}
-            disabled={!value.trim() || !sessionId}
-            aria-label={t('composer.sendAriaLabel')}
-            title={t('composer.send')}
-          >
-            &#x2191;
-          </button>
-        )}
+        <div className={styles.acpChatComposerBody}>
+          {attachedFiles.length > 0 && (
+            <div className={styles.acpChatComposerFileList}>
+              {attachedFiles.map((af, i) => (
+                <div key={`${af.file.name}-${i}`} className={styles.acpChatComposerFileChip}>
+                  {af.previewUrl ? (
+                    <img src={af.previewUrl} alt={af.file.name} className={styles.acpChatComposerFileThumb} />
+                  ) : (
+                    <span className={styles.acpChatComposerFileThumb}>&#x1f4c4;</span>
+                  )}
+                  <span className={styles.acpChatComposerFileName}>{af.file.name}</span>
+                  <span className={styles.acpChatComposerFileSize}>{formatFileSize(af.file.size)}</span>
+                  <button
+                    className={styles.acpChatComposerFileRemove}
+                    onClick={() => handleRemoveFile(i)}
+                    aria-label={t('composer.removeFileAriaLabel')}
+                  >
+                    &#x2715;
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <textarea
+            ref={textareaRef}
+            className={styles.acpChatComposerInput}
+            placeholder={t('composer.placeholder')}
+            value={value}
+            onChange={(e) => {
+              setValue(e.target.value);
+              setActiveIndex(0);
+              setPaletteSuppressed(false);
+            }}
+            onKeyDown={handleKeyDown}
+            onBlur={() => showPalette && closePalette()}
+            rows={1}
+            disabled={!sessionId}
+            aria-label={t('composer.ariaLabel')}
+          />
+          <div className={styles.acpChatComposerActions}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              hidden
+              onChange={handleFilesChange}
+            />
+            <button
+              className={styles.acpChatComposerAttachBtn}
+              onClick={handleAttachClick}
+              disabled={!sessionId}
+              aria-label={t('composer.attachFileAriaLabel')}
+              title={t('composer.attachFile')}
+            >
+              &#x1f4ce;
+            </button>
+            {isStreaming ? (
+              <button
+                className={styles.acpChatComposerCancel}
+                onClick={handleCancel}
+                aria-label={t('composer.cancelAriaLabel')}
+                title={t('composer.cancel')}
+              >
+                &#x25a0;
+              </button>
+            ) : (
+              <button
+                className={styles.acpChatComposerSend}
+                onClick={handleSend}
+              disabled={!canSend}
+              aria-label={t('composer.sendAriaLabel')}
+              title={t('composer.send')}
+            >
+              &#x2191;
+            </button>
+          )}
+        </div>
+        </div>
       </div>
       <div className={styles.acpChatComposerHint}>{t('composer.hint')}</div>
     </div>

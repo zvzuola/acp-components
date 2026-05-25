@@ -27,7 +27,7 @@ const priorityClass: Record<string, string> = {
 };
 
 export function PlanView({ entries, isStreaming }: PlanViewProps) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const prevStreaming = useRef(isStreaming);
   const { t } = useI18n();
 

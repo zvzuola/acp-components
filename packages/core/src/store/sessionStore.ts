@@ -121,13 +121,16 @@ export const sessionStore = createStore<SessionStoreState>((set) => ({
             if (blocks.length > 0) {
               const lastBlock = blocks[blocks.length - 1];
               if (lastBlock.type === 'text' && block.type === 'text') {
-                return {
-                  ...m,
-                  parts: [
-                    ...parts.slice(0, -1),
-                    { ...last, content: [...blocks.slice(0, -1), { ...lastBlock, text: lastBlock.text + block.text }] },
-                  ],
-                };
+                const hasAnnotations = 'annotations' in block && block.annotations != null;
+                if (!hasAnnotations) {
+                  return {
+                    ...m,
+                    parts: [
+                      ...parts.slice(0, -1),
+                      { ...last, content: [...blocks.slice(0, -1), { ...lastBlock, text: lastBlock.text + block.text }] },
+                    ],
+                  };
+                }
               }
             }
             return {
@@ -167,13 +170,16 @@ export const sessionStore = createStore<SessionStoreState>((set) => ({
             if (blocks.length > 0) {
               const lastBlock = blocks[blocks.length - 1];
               if (lastBlock.type === 'text' && block.type === 'text') {
-                return {
-                  ...m,
-                  parts: [
-                    ...parts.slice(0, -1),
-                    { ...last, thought: [...blocks.slice(0, -1), { ...lastBlock, text: lastBlock.text + block.text }] },
-                  ],
-                };
+                const hasAnnotations = 'annotations' in block && block.annotations != null;
+                if (!hasAnnotations) {
+                  return {
+                    ...m,
+                    parts: [
+                      ...parts.slice(0, -1),
+                      { ...last, thought: [...blocks.slice(0, -1), { ...lastBlock, text: lastBlock.text + block.text }] },
+                    ],
+                  };
+                }
               }
             }
             return {

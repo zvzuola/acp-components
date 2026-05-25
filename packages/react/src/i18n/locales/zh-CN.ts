@@ -14,6 +14,9 @@ export const zhCN = {
   'composer.sendAriaLabel': '发送消息',
   'composer.send': '发送（Enter）',
   'composer.hint': 'Enter 发送，/ 触发命令',
+  'composer.attachFile': '添加文件',
+  'composer.attachFileAriaLabel': '添加文件',
+  'composer.removeFileAriaLabel': '移除文件',
 
   // ChatView
   'chat.emptyState': '选择或创建一个会话以开始',

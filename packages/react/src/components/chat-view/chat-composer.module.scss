@@ -8,18 +8,33 @@
 
   &__form {
     display: flex;
+    flex-direction: column;
     gap: 8px;
-    align-items: flex-end;
     position: relative;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--acp-color-border);
+    border-radius: var(--acp-radius-md);
+    background: var(--acp-color-bg-input);
+    overflow: hidden;
+    transition: border-color var(--acp-duration-fast) var(--acp-ease-out),
+                box-shadow var(--acp-duration-fast) var(--acp-ease-out);
+
+    &:focus-within {
+      border-color: var(--acp-color-accent);
+      box-shadow: 0 0 0 3px var(--acp-color-accent-muted);
+    }
   }
 
   &__input {
     flex: 1;
     resize: none;
-    border: 1px solid var(--acp-color-border);
-    border-radius: var(--acp-radius-md);
+    border: none;
     padding: 10px 14px;
-    background: var(--acp-color-bg-input);
+    background: transparent;
     color: var(--acp-color-text-primary);
     font-family: var(--acp-font-sans);
     font-size: 14px;
@@ -27,13 +42,6 @@
     min-height: 42px;
     max-height: 200px;
     outline: none;
-    transition: border-color var(--acp-duration-fast) var(--acp-ease-out),
-                box-shadow var(--acp-duration-fast) var(--acp-ease-out);
-
-    &:focus {
-      border-color: var(--acp-color-accent);
-      box-shadow: 0 0 0 3px var(--acp-color-accent-muted);
-    }
 
     &::placeholder {
       color: var(--acp-color-text-muted);
@@ -45,19 +53,122 @@
     }
   }
 
+  &__fileList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 14px 0 14px;
+  }
+
+  &__fileChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--acp-color-border);
+    border-radius: var(--acp-radius-sm);
+    padding: 2px 4px 2px 6px;
+    background: var(--acp-color-bg-glass);
+    font-size: 12px;
+    color: var(--acp-color-text-secondary);
+    max-width: 200px;
+  }
+
+  &__fileThumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 2px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  &__fileName {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__fileSize {
+    color: var(--acp-color-text-muted);
+    flex-shrink: 0;
+  }
+
+  &__fileRemove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border: none;
+    border-radius: 3px;
+    background: transparent;
+    color: var(--acp-color-text-muted);
+    cursor: pointer;
+    flex-shrink: 0;
+    font-size: 12px;
+    line-height: 1;
+    padding: 0;
+    transition: color var(--acp-duration-fast) var(--acp-ease-out),
+                background var(--acp-duration-fast) var(--acp-ease-out);
+
+    &:hover {
+      color: var(--acp-color-error);
+      background: var(--acp-color-error-muted);
+    }
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  &__attachBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--acp-color-border);
+    border-radius: var(--acp-radius-md);
+    background: transparent;
+    color: var(--acp-color-text-secondary);
+    cursor: pointer;
+    flex-shrink: 0;
+    font-size: 16px;
+    padding: 0;
+    transition: border-color var(--acp-duration-fast) var(--acp-ease-out),
+                color var(--acp-duration-fast) var(--acp-ease-out),
+                background var(--acp-duration-fast) var(--acp-ease-out);
+
+    &:hover {
+      border-color: var(--acp-color-accent);
+      color: var(--acp-color-accent);
+      background: var(--acp-color-accent-muted);
+    }
+
+    &:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+  }
+
   &__send {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 42px;
-    height: 42px;
+    width: 32px;
+    height: 32px;
     border: none;
     border-radius: var(--acp-radius-md);
     background: var(--acp-color-accent);
     color: var(--acp-color-text-inverse);
     cursor: pointer;
     flex-shrink: 0;
-    font-size: 18px;
+    font-size: 16px;
     transition: background var(--acp-duration-fast) var(--acp-ease-out),
                 transform var(--acp-duration-fast) var(--acp-ease-out);
 
@@ -81,15 +192,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 42px;
-    height: 42px;
+    width: 32px;
+    height: 32px;
     border: 1px solid var(--acp-color-border);
     border-radius: var(--acp-radius-md);
     background: transparent;
     color: var(--acp-color-text-secondary);
     cursor: pointer;
     flex-shrink: 0;
-    font-size: 14px;
+    font-size: 12px;
     transition: border-color var(--acp-duration-fast) var(--acp-ease-out),
                 color var(--acp-duration-fast) var(--acp-ease-out);
 
