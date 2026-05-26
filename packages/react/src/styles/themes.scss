@@ -67,6 +67,12 @@
   --acp-color-info: #58a6ff;
   --acp-color-info-muted: rgba(88, 166, 255, 0.12);
 
+  // ── Message bubbles ───────────────────────────────────────────────────
+  --acp-color-user-bubble: #161b22;
+  --acp-color-user-text: #e6edf3;
+  --acp-color-agent-bubble: transparent;
+  --acp-color-agent-text: #e6edf3;
+
   // ── Surface ───────────────────────────────────────────────────────────
   --acp-color-knob: #ffffff;
   --acp-color-knob-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);

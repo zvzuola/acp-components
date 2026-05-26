@@ -27,12 +27,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
-  &__controls {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
 }
 
 // ── Message List ────────────────────────────────────────────────────────
@@ -49,7 +43,7 @@
 .acp-round {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 24px;
 }
 
 // ── Message Bubble ──────────────────────────────────────────────────────
@@ -57,16 +51,6 @@
   display: flex;
   width: 100%;
   animation: acp-message-in 0.25s var(--acp-ease-out);
-
-  &--user {
-    .acp-message-bubble__content {
-      background: var(--acp-color-bg-secondary);
-      border: 1px solid var(--acp-color-border);
-      border-radius: var(--acp-radius-md);
-      padding: 12px 18px;
-      align-self: flex-end;
-    }
-  }
 
   &--agent {
     .acp-message-bubble__content {
@@ -188,6 +172,16 @@
 // ── Plan Wrapper ─────────────────────────────────────────────────────────
 .acp-plan-wrapper {
   margin: 0 20px;
+}
+
+// ── Footer ──────────────────────────────────────────────────────────────
+.acp-chat-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 20px 20px;
+  background: var(--acp-color-bg-glass);
 }
 
 // ── Empty State ─────────────────────────────────────────────────────────

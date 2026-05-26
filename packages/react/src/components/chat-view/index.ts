@@ -1,5 +1,7 @@
 export { ChatView } from './ChatView';
 export { MessageBubble } from './MessageBubble';
+export { UserMessage } from './UserMessage';
+export { UserMessageActions } from './UserMessageActions';
 export { ChatComposer } from './ChatComposer';
 export { ToolCallCard } from './ToolCallCard';
 export { StreamingIndicator } from './StreamingIndicator';

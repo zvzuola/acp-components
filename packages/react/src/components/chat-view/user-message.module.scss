@@ -1,0 +1,102 @@
+.acp-user-message {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  width: 100%;
+  position: relative;
+
+  &:hover .acp-user-message__actions {
+    opacity: 1;
+  }
+}
+
+.acp-user-message__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  padding-top: 4px;
+  opacity: 0;
+  transition: opacity var(--acp-duration-fast) var(--acp-ease-out);
+}
+
+.acp-user-message__action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: var(--acp-color-bg-glass);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--acp-color-border-subtle);
+  border-radius: var(--acp-radius-xs);
+  color: var(--acp-color-text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0;
+
+  &:hover {
+    color: var(--acp-color-text-primary);
+    background: var(--acp-color-bg-hover);
+  }
+
+  &--copied {
+    color: var(--acp-color-success);
+  }
+}
+
+.acp-user-message__bubble {
+  background: var(--acp-color-user-bubble);
+  color: var(--acp-color-user-text);
+  border: 1px solid var(--acp-color-border);
+  border-radius: var(--acp-radius-md);
+  padding: 12px 18px;
+  max-width: 85%;
+  font-size: 14px;
+  word-wrap: break-word;
+}
+
+.acp-user-message__attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--acp-color-border-subtle);
+}
+
+.acp-user-message__attachment {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--acp-color-text-secondary);
+  background: var(--acp-color-bg-tertiary);
+  border: 1px solid var(--acp-color-border-subtle);
+  border-radius: var(--acp-radius-sm);
+  padding: 4px 10px;
+
+  &--image {
+    padding: 4px;
+    max-width: 200px;
+
+    img {
+      max-width: 100%;
+      max-height: 40px;
+      border-radius: var(--acp-radius-xs);
+      display: block;
+    }
+  }
+}
+
+.acp-user-message__stop-reason {
+  font-size: 11px;
+  color: var(--acp-color-text-muted);
+  margin-top: 8px;
+  text-align: right;
+  width: 100%;
+}

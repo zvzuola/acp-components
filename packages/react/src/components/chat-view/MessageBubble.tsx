@@ -25,9 +25,6 @@ function renderContent(content: ContentBlock) {
           <span>&#x1f4c4;</span>
           <div>
             <div className={styles.acpMessageBubbleResourceName}>{res.resource.uri}</div>
-            {res.resource.text && (
-              <pre className={styles.acpMessageBubbleResourceText}>{res.resource.text.slice(0, 500)}</pre>
-            )}
           </div>
         </div>
       );
@@ -80,8 +77,6 @@ function renderPart(part: MessagePart, partIndex: number, isStreaming?: boolean,
 }
 
 export function MessageBubble({ messages, isStreaming = false, onNavigateFile }: MessageBubbleProps) {
-  const role = messages[0]?.role ?? 'user';
-  const isUser = role === 'user';
   const stopReason = messages.reduceRight<string | undefined>(
     (acc, m) => acc ?? m.stopReason, undefined
   );
@@ -91,7 +86,7 @@ export function MessageBubble({ messages, isStreaming = false, onNavigateFile }:
   const thoughtStillStreaming = isStreaming && lastPart?.type === 'thought';
 
   return (
-    <div className={`${styles.acpMessageBubble} ${isUser ? styles.acpMessageBubbleUser : styles.acpMessageBubbleAgent}`}>
+    <div className={`${styles.acpMessageBubble} ${styles.acpMessageBubbleAgent}`}>
       <div className={styles.acpMessageBubbleContent}>
         {messages.map((msg) => (
           <React.Fragment key={msg.id}>

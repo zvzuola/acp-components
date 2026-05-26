@@ -1,9 +1,10 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import { useSession } from '../../hooks/useSession';
 import { useSessions } from '../../hooks/useSessions';
 import type { SessionId } from '@agentclientprotocol/sdk';
 import type { Message } from '@acp-components/core';
 import { MessageBubble } from './MessageBubble';
+import { UserMessage } from './UserMessage';
 import { ChatComposer } from './ChatComposer';
 import { StreamingIndicator } from './StreamingIndicator';
 import { PlanView } from './PlanView';
@@ -57,7 +58,13 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const { t } = useI18n();
 
+  const [editText, setEditText] = useState<string | undefined>(undefined);
+
   const rounds = useMemo(() => groupMessagesIntoRounds(messages), [messages]);
+
+  const handleUserMessageEdit = useCallback((text: string) => {
+    setEditText(text);
+  }, []);
 
   useEffect(() => {
     if (listRef.current) {
@@ -82,10 +89,6 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
     <div className={styles.acpChatView}>
       <div className={styles.acpChatHeader}>
         <span className={styles.acpChatHeaderTitle}>{sessionTitle || t('chat.title')}</span>
-        <div className={styles.acpChatHeaderControls}>
-          <SessionConfigPanel sessionId={sessionId} />
-          <UsageBar sessionId={sessionId} />
-        </div>
       </div>
       <div className={styles.acpMessageList} ref={listRef} role="log" aria-live="polite" aria-label="Messages">
         {rounds.map((round, i) => {
@@ -93,7 +96,7 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
           return (
             <div key={round.userMessage?.id ?? round.agentMessages[0]?.id ?? i} className={styles.acpRound}>
               {round.userMessage && (
-                <MessageBubble messages={[round.userMessage]} onNavigateFile={onNavigateFile} />
+                <UserMessage message={round.userMessage} onEdit={handleUserMessageEdit} />
               )}
               {round.agentMessages.length > 0 && (
                 <MessageBubble messages={round.agentMessages} isStreaming={isLastRound && isStreaming} onNavigateFile={onNavigateFile} />
@@ -108,7 +111,11 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
           <PlanView entries={plan} isStreaming={isStreaming} />
         </div>
       )}
-      <ChatComposer sessionId={sessionId} isStreaming={isStreaming} availableCommands={availableCommands} />
+      <ChatComposer sessionId={sessionId} isStreaming={isStreaming} availableCommands={availableCommands} editText={editText} onEditTextConsumed={() => setEditText(undefined)} />
+      <div className={styles.acpChatFooter}>
+        <SessionConfigPanel sessionId={sessionId} />
+        <UsageBar sessionId={sessionId} />
+      </div>
     </div>
   );
 }

@@ -13,7 +13,7 @@ export const enUS = {
   'composer.cancel': 'Cancel',
   'composer.sendAriaLabel': 'Send message',
   'composer.send': 'Send (Enter)',
-  'composer.hint': 'Enter to send, / for commands',
+
   'composer.attachFile': 'Attach file',
   'composer.attachFileAriaLabel': 'Attach a file',
   'composer.removeFileAriaLabel': 'Remove file',
@@ -90,4 +90,9 @@ export const enUS = {
   'workspace.removeWorkspace': 'Remove workspace',
   'workspace.noWorkspaces': 'No workspaces',
   'workspace.selectWorkspace': 'Select a workspace',
+
+  // UserMessage
+  'userMessage.copy': 'Copy',
+  'userMessage.copied': 'Copied',
+  'userMessage.edit': 'Edit',
 };

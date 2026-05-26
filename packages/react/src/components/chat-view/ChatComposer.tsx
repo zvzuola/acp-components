@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { usePrompt } from '../../hooks/usePrompt';
 import type { SessionId, ContentBlock, AvailableCommand } from '@agentclientprotocol/sdk';
 import { CommandPalette } from '../command-palette';
@@ -9,6 +9,8 @@ export interface ChatComposerProps {
   sessionId: SessionId | null;
   isStreaming: boolean;
   availableCommands?: AvailableCommand[];
+  editText?: string;
+  onEditTextConsumed?: () => void;
 }
 
 interface AttachedFile {
@@ -79,7 +81,7 @@ async function buildContentBlocks(text: string, attachedFiles: AttachedFile[]): 
   return blocks;
 }
 
-export function ChatComposer({ sessionId, isStreaming, availableCommands }: ChatComposerProps) {
+export function ChatComposer({ sessionId, isStreaming, availableCommands, editText, onEditTextConsumed }: ChatComposerProps) {
   const [value, setValue] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
@@ -260,6 +262,20 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands }: Chat
 
   const canSend = (value.trim().length > 0 || attachedFiles.length > 0) && !!sessionId;
 
+  useEffect(() => {
+    if (editText == null) return;
+    setValue(editText);
+    onEditTextConsumed?.();
+    setTimeout(() => {
+      const ta = textareaRef.current;
+      if (ta) {
+        ta.focus();
+        ta.setSelectionRange(editText.length, editText.length);
+      }
+    }, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editText]);
+
   return (
     <div className={styles.acpChatComposer}>
       {showPalette && (
@@ -354,7 +370,7 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands }: Chat
         </div>
         </div>
       </div>
-      <div className={styles.acpChatComposerHint}>{t('composer.hint')}</div>
+
     </div>
   );
 }

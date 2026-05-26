@@ -13,7 +13,7 @@ export const zhCN = {
   'composer.cancel': '取消',
   'composer.sendAriaLabel': '发送消息',
   'composer.send': '发送（Enter）',
-  'composer.hint': 'Enter 发送，/ 触发命令',
+
   'composer.attachFile': '添加文件',
   'composer.attachFileAriaLabel': '添加文件',
   'composer.removeFileAriaLabel': '移除文件',
@@ -90,4 +90,9 @@ export const zhCN = {
   'workspace.removeWorkspace': '移除工作区',
   'workspace.noWorkspaces': '暂无工作区',
   'workspace.selectWorkspace': '选择工作区',
+
+  // UserMessage
+  'userMessage.copy': '复制',
+  'userMessage.copied': '已复制',
+  'userMessage.edit': '编辑',
 };
