@@ -99,8 +99,12 @@ export function SessionList() {
                   className={styles.acpSessionAgentHeaderAdd}
                   onClick={async () => {
                     if (!activeWorkspaceCwd) return;
-                    const id = await createSession(agent.id, activeWorkspaceCwd);
-                    setActiveSession(id);
+                    try {
+                      const id = await createSession(agent.id, activeWorkspaceCwd);
+                      setActiveSession(id);
+                    } catch (e) {
+                      console.error('Failed to create session:', e);
+                    }
                   }}
                   aria-label={t('sessionList.newSession')}
                   title={t('sessionList.newSession')}

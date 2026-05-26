@@ -218,6 +218,8 @@ export function createAcpProvider({ agents, onFileRead, onFileWrite, onTerminal 
       capabilities: client.capabilities,
       status: 'connected',
     });
+
+    console.log(`Agent ${config.id} connected successfully.`);
   }
 
   let ready = false;
@@ -247,6 +249,8 @@ export function createAcpProvider({ agents, onFileRead, onFileWrite, onTerminal 
   )).then(() => {
     ready = true;
     notify();
+  }).catch((err) => {
+    console.error('Error during agents connection:', err);
   });
 
   // Auto-refresh sessions when workspace changes (skip if already loaded)

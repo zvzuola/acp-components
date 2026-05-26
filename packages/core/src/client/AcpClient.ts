@@ -124,7 +124,22 @@ export class AcpClient {
     this.transport = createTransport(config);
     this.setStatus('connecting');
 
-    const stream = await this.transport.connect();
+    this.transport.onClose?.(() => {
+      this.setStatus('disconnected');
+    });
+
+    this.transport.onError?.((_err) => {
+      this.setStatus('error');
+    });
+
+    let stream: Awaited<ReturnType<AcpTransport['connect']>>;
+    try {
+      stream = await this.transport.connect();
+    } catch (err) {
+      this.setStatus('error');
+      this.transport = null;
+      throw err;
+    }
 
     const client: Client = {
       sessionUpdate: (params: SessionNotification) => {
@@ -197,14 +212,6 @@ export class AcpClient {
       (_agent: Agent) => client,
       stream,
     );
-
-    this.transport.onClose?.(() => {
-      this.setStatus('disconnected');
-    });
-
-    this.transport.onError?.((_err) => {
-      this.setStatus('error');
-    });
   }
 
   async initialize(clientInfo?: Implementation, clientCapabilities?: ClientCapabilities): Promise<InitializeResponse> {

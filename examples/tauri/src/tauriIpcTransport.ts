@@ -1,8 +1,16 @@
 import type { AcpTransport, Stream, AnyMessage } from '@acp-components/core';
 
 interface TauriIpcOptions {
+  agentId: string;
   command: string;
   args?: string[];
+}
+
+/** Event payload from Rust after multi-agent refactor. */
+interface AgentEventPayload {
+  agent_id: string;
+  data?: string;
+  message?: string;
 }
 
 /**
@@ -28,10 +36,12 @@ export class TauriIpcTransport implements AcpTransport {
     const { listen } = await import('@tauri-apps/api/event');
 
     const textEncoder = new TextEncoder();
+    const agentId = this.options.agentId;
 
     // Start the agent via Tauri command
     await invoke('start_agent', {
       args: {
+        agent_id: agentId,
         command: this.options.command,
         args: this.options.args ?? [],
       },
@@ -40,27 +50,34 @@ export class TauriIpcTransport implements AcpTransport {
     // Build ReadableStream from Tauri events (message-level, like WebSocket transport)
     const readable = new ReadableStream<AnyMessage>({
       start: async (controller) => {
-        const unlistenOutput = await listen<string>('agent-output', (event) => {
+        const unlistenOutput = await listen<AgentEventPayload>('agent-output', (event) => {
+          if (event.payload.agent_id !== agentId) return;
           try {
-            const msg = JSON.parse(event.payload) as AnyMessage;
+            const msg = JSON.parse(event.payload.data!) as AnyMessage;
+
+            console.log(`[${agentId} stdout]`, msg);
+
             controller.enqueue(msg);
           } catch {
             // Skip non-JSON lines (e.g. agent startup logs)
           }
         });
 
-        const unlistenStderr = await listen<string>('agent-stderr', (event) => {
-          console.error('[agent stderr]', event.payload);
+        const unlistenStderr = await listen<AgentEventPayload>('agent-stderr', (event) => {
+          if (event.payload.agent_id !== agentId) return;
+          console.error(`[${agentId} stderr]`, event.payload.data);
         });
 
-        const unlistenClosed = await listen('agent-closed', () => {
+        const unlistenClosed = await listen<AgentEventPayload>('agent-closed', (event) => {
+          if (event.payload.agent_id !== agentId) return;
           controller.close();
           for (const h of this.closeHandlers) h();
         });
 
-        const unlistenError = await listen<string>('agent-error', (event) => {
+        const unlistenError = await listen<AgentEventPayload>('agent-error', (event) => {
+          if (event.payload.agent_id !== agentId) return;
           for (const h of this.errorHandlers) {
-            h(new Error(event.payload));
+            h(new Error(event.payload.message ?? 'Unknown agent error'));
           }
         });
 
@@ -80,14 +97,22 @@ export class TauriIpcTransport implements AcpTransport {
     // Build WritableStream that sends JSON lines via Tauri invoke
     const writable = new WritableStream<AnyMessage>({
       write: async (msg) => {
+        console.log(`[${agentId} stdin]`, msg);
         const { invoke } = await import('@tauri-apps/api/core');
         const line = JSON.stringify(msg) + '\n';
         const data = Array.from(textEncoder.encode(line));
-        await invoke('write_to_agent', { data });
+        await invoke('write_to_agent', {
+          args: {
+            agent_id: agentId,
+            data,
+          },
+        });
       },
       close: async () => {
         const { invoke } = await import('@tauri-apps/api/core');
-        await invoke('kill_agent');
+        await invoke('kill_agent', {
+          args: { agent_id: agentId },
+        });
       },
     });
 
@@ -99,7 +124,9 @@ export class TauriIpcTransport implements AcpTransport {
     this.unlisten = null;
 
     import('@tauri-apps/api/core')
-      .then(({ invoke }) => invoke('kill_agent'))
+      .then(({ invoke }) => invoke('kill_agent', {
+        args: { agent_id: this.options.agentId },
+      }))
       .catch(() => {});
   }
 

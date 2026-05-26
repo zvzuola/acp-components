@@ -5,7 +5,6 @@ import { ProjectOpener } from '@acp-components/react';
 import { SessionList } from '@acp-components/react';
 import { ChatView } from '@acp-components/react';
 import { PermissionDialog } from '@acp-components/react';
-import { ConnectionStatus } from '@acp-components/react';
 import { I18nProvider, useI18n } from '@acp-components/react';
 import { useAcpStore } from '@acp-components/react';
 import { TauriIpcTransport } from './tauriIpcTransport';
@@ -60,6 +59,7 @@ function LocaleSwitcher() {
 const transportConfig = {
   type: 'custom' as const,
   transport: new TauriIpcTransport({
+    agentId: 'default',
     command: 'opencode',
     args: ['acp'],
   }),
@@ -83,18 +83,13 @@ function AppInner() {
         sidebar={
           <>
             <ProjectOpener onBrowse={handleBrowse} />
-            <SessionList />
+            <div style={{ flex: 1, overflow: "hidden" }}>
+              <SessionList />
+            </div>
             <LocaleSwitcher />
           </>
         }
-        main={
-          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <ConnectionStatus />
-            <div style={{ flex: 1, minHeight: 0 }}>
-              <ChatView sessionId={activeSessionId} />
-            </div>
-          </div>
-        }
+        main={<ChatView sessionId={activeSessionId} />}
       />
       <PermissionDialog sessionId={activeSessionId} />
     </>
