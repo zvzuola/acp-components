@@ -20,11 +20,13 @@ function renderContent(content: ContentBlock) {
       return <Markdown>{(content as { text: string }).text}</Markdown>;
     case 'resource':
       const res = content as { resource: { uri: string; text?: string; mimeType?: string } };
+      const rawName = res.resource.uri.split('/').pop() || res.resource.uri;
+      const fileName = decodeURIComponent(rawName);
       return (
         <div className={styles.acpMessageBubbleResource}>
           <span>&#x1f4c4;</span>
           <div>
-            <div className={styles.acpMessageBubbleResourceName}>{res.resource.uri}</div>
+            <div className={styles.acpMessageBubbleResourceName}>{fileName}</div>
           </div>
         </div>
       );

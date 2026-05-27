@@ -51,10 +51,12 @@ function renderAttachment(block: ContentBlock) {
     }
     case 'resource': {
       const res = block as { resource: { uri: string; text?: string; mimeType?: string } };
+      const rawName = res.resource.uri.split('/').pop() || res.resource.uri;
+      const fileName = decodeURIComponent(rawName);
       return (
         <div key={res.resource.uri} className={styles.acpUserMessageAttachment}>
           <span>{'📄'}</span>
-          <span>{res.resource.uri}</span>
+          <span>{fileName}</span>
         </div>
       );
     }

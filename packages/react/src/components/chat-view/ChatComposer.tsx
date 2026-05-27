@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { usePrompt } from '../../hooks/usePrompt';
-import type { SessionId, ContentBlock, AvailableCommand } from '@agentclientprotocol/sdk';
+import { useAcpStore } from '../../hooks/useAcpStore';
+import type { SessionId, ContentBlock, AvailableCommand, PromptCapabilities } from '@agentclientprotocol/sdk';
 import { CommandPalette } from '../command-palette';
 import { useI18n } from '../../i18n';
 import styles from './chat-composer.module.scss';
@@ -46,12 +47,12 @@ async function fileToBase64(file: File): Promise<string> {
   });
 }
 
-async function buildContentBlocks(text: string, attachedFiles: AttachedFile[]): Promise<ContentBlock[]> {
+async function buildContentBlocks(
+  text: string,
+  attachedFiles: AttachedFile[],
+  promptCapabilities?: PromptCapabilities,
+): Promise<ContentBlock[]> {
   const blocks: ContentBlock[] = [];
-
-  if (text.trim()) {
-    blocks.push({ type: 'text', text, _meta: null, annotations: null });
-  }
 
   for (const af of attachedFiles) {
     const { file } = af;
@@ -61,14 +62,26 @@ async function buildContentBlocks(text: string, attachedFiles: AttachedFile[]): 
         type: 'image',
         data,
         mimeType: file.type,
-        uri: file.name,
+        uri: `file://${file.name}`,
+        _meta: null,
+        annotations: null,
+      });
+    } else if (promptCapabilities?.embeddedContext) {
+      const data = await fileToBase64(file);
+      blocks.push({
+        type: 'resource',
+        resource: {
+          blob: data,
+          uri: `file://${file.name}`,
+          mimeType: file.type || undefined,
+        },
         _meta: null,
         annotations: null,
       });
     } else {
       blocks.push({
         type: 'resource_link',
-        uri: file.name,
+        uri: `file://${file.name}`,
         name: file.name,
         mimeType: file.type || undefined,
         size: file.size,
@@ -76,6 +89,10 @@ async function buildContentBlocks(text: string, attachedFiles: AttachedFile[]): 
         annotations: null,
       });
     }
+  }
+
+  if (text.trim()) {
+    blocks.push({ type: 'text', text, _meta: null, annotations: null });
   }
 
   return blocks;
@@ -86,6 +103,17 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands, editTe
   const [activeIndex, setActiveIndex] = useState(0);
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const { send, cancel } = usePrompt(sessionId);
+  const promptCapabilities = useAcpStore((s) => {
+    if (!sessionId) return undefined;
+    for (const [, ws] of s.workspaces) {
+      const meta = ws.sessions.get(sessionId);
+      if (meta) {
+        const agent = s.agents.get(meta.agentId);
+        return agent?.capabilities?.promptCapabilities;
+      }
+    }
+    return undefined;
+  });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useI18n();
@@ -142,11 +170,11 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands, editTe
     async (text: string) => {
       if ((!text.trim() && attachedFiles.length === 0) || !sessionId || isStreaming) return;
       setValue('');
-      const blocks = await buildContentBlocks(text, attachedFiles);
+      const blocks = await buildContentBlocks(text, attachedFiles, promptCapabilities);
       setAttachedFiles([]);
       await send(blocks);
     },
-    [sessionId, isStreaming, attachedFiles, send]
+    [sessionId, isStreaming, attachedFiles, send, promptCapabilities]
   );
 
   const handleSend = useCallback(async () => {
@@ -360,14 +388,14 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands, editTe
               <button
                 className={styles.acpChatComposerSend}
                 onClick={handleSend}
-              disabled={!canSend}
-              aria-label={t('composer.sendAriaLabel')}
-              title={t('composer.send')}
-            >
-              &#x2191;
-            </button>
-          )}
-        </div>
+                disabled={!canSend}
+                aria-label={t('composer.sendAriaLabel')}
+                title={t('composer.send')}
+              >
+                &#x2191;
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
