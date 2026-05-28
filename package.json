@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "pnpm --filter @acp-components/demo dev",
     "dev:server": "pnpm --filter @acp-components/server dev",
+    "dev:server-codex": "cross-env ACP_AGENT=npx ACP_AGENT_ARGS=@zed-industries/codex-acp@latest pnpm --filter @acp-components/server dev",
     "dev:all": "pnpm run dev:server & pnpm run dev",
     "dev:tauri": "pnpm --filter @acp-components/tauri tauri dev",
     "build:tauri": "pnpm --filter @acp-components/tauri tauri build",
@@ -16,5 +17,8 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0"
   }
 }

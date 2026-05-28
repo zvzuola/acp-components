@@ -2,6 +2,10 @@ import { createStore } from 'zustand/vanilla';
 import type { SessionMeta, AgentConnection, WorkspaceState } from '../types';
 import type { SessionId, SessionInfo } from '@agentclientprotocol/sdk';
 
+interface PendingAuth {
+  agentId: string;
+}
+
 function findWorkspaceBySession(
   workspaces: Map<string, WorkspaceState>,
   sessionId: SessionId,
@@ -20,6 +24,7 @@ interface AcpStoreState {
   agents: Map<string, AgentConnection>;
   workspaces: Map<string, WorkspaceState>;
   activeWorkspaceCwd: string | null;
+  pendingAuth: PendingAuth | null;
 
   addWorkspace: (cwd: string) => void;
   removeWorkspace: (cwd: string) => void;
@@ -35,12 +40,16 @@ interface AcpStoreState {
   removeSession: (id: SessionId) => void;
   updateSession: (id: SessionId, update: Partial<SessionMeta>) => void;
   setActiveSession: (id: SessionId | null) => void;
+
+  setAuthRequired: (agentId: string) => void;
+  clearAuthRequired: () => void;
 }
 
 export const acpStore = createStore<AcpStoreState>((set) => ({
   agents: new Map(),
   workspaces: new Map(),
   activeWorkspaceCwd: null,
+  pendingAuth: null,
 
   // --- Workspace management ---
 
@@ -247,4 +256,7 @@ export const acpStore = createStore<AcpStoreState>((set) => ({
       }
       return { workspaces: next };
     }),
+
+  setAuthRequired: (agentId) => set({ pendingAuth: { agentId } }),
+  clearAuthRequired: () => set({ pendingAuth: null }),
 }));

@@ -12,6 +12,7 @@ import {
   acpStore,
 } from '@acp-components/core';
 import type { SessionId } from '@agentclientprotocol/sdk';
+import { RequestError } from '@agentclientprotocol/sdk';
 import type { AcpClient, SessionMeta } from '@acp-components/core';
 
 export function useSessions() {
@@ -47,7 +48,14 @@ export function useSessions() {
   const createSession = useCallback(async (agentId: string, cwd: string) => {
     const client = getClient(agentId);
     if (!client) throw new Error(`Agent ${agentId} not found`);
-    return coreCreateSession(client, agentId, cwd);
+    try {
+      return await coreCreateSession(client, agentId, cwd);
+    } catch (err) {
+      if (err instanceof RequestError && err.code === -32000) {
+        acpStore.getState().setAuthRequired(agentId);
+      }
+      throw err;
+    }
   }, [getClient]);
 
   const loadSession = useCallback(async (sessionId: SessionId, cwd: string) => {

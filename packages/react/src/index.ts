@@ -20,6 +20,7 @@ export { DiffView } from './components/diff-view';
 export type { DiffViewProps } from './components/diff-view/DiffView';
 export { PermissionDialog } from './components/permission-dialog';
 export type { PermissionDialogProps } from './components/permission-dialog/PermissionDialog';
+export { LoginDialog } from './components/login-dialog';
 export { ConnectionStatus, UsageBar } from './components/status-bar';
 export type { UsageBarProps } from './components/status-bar/UsageBar';
 export { SessionConfigPanel } from './components/session-config-panel';

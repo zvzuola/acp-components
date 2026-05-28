@@ -16,6 +16,7 @@ import type {
   WaitForTerminalExitResponse,
   TerminalExitStatus,
   PlanEntry,
+  AuthMethod,
 } from '@agentclientprotocol/sdk';
 import type { AcpTransport } from '../transport/types';
 
@@ -77,6 +78,7 @@ export interface AgentConnection {
   status: ConnectionStatus;
   agentInfo: Implementation | null;
   capabilities: AgentCapabilities | null;
+  authMethods: AuthMethod[];
 }
 
 export interface WorkspaceState {
@@ -120,4 +122,4 @@ export interface TerminalHandler {
   create(params: CreateTerminalRequest): Promise<TerminalHandle>;
 }
 
-export type { ContentBlock, SessionId, SessionInfo, SessionUpdate, StopReason, ToolCall, ToolCallUpdate, ToolCallContent, Implementation, AgentCapabilities, PermissionOption, ClientCapabilities, CreateTerminalRequest, TerminalOutputResponse, WaitForTerminalExitResponse, TerminalExitStatus, PlanEntry };
+export type { ContentBlock, SessionId, SessionInfo, SessionUpdate, StopReason, ToolCall, ToolCallUpdate, ToolCallContent, Implementation, AgentCapabilities, PermissionOption, ClientCapabilities, CreateTerminalRequest, TerminalOutputResponse, WaitForTerminalExitResponse, TerminalExitStatus, PlanEntry, AuthMethod };

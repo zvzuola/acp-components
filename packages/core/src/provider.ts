@@ -211,12 +211,13 @@ export function createAcpProvider({ agents, onFileRead, onFileWrite, onTerminal 
     // Connect and initialize
     await client.connect(config.transport);
     const mergedCaps = buildCapabilities(config.clientCapabilities, scopedFileReadHandler, scopedFileWriteHandler, scopedTerminalHandler);
-    await client.initialize(config.clientInfo, mergedCaps);
+    const initRes = await client.initialize(config.clientInfo, mergedCaps);
 
     acpStore.getState().updateAgent(config.id, {
       agentInfo: client.agentInfo,
       capabilities: client.capabilities,
       status: 'connected',
+      authMethods: initRes.authMethods ?? [],
     });
 
     console.log(`Agent ${config.id} connected successfully.`);
@@ -237,6 +238,7 @@ export function createAcpProvider({ agents, onFileRead, onFileWrite, onTerminal 
       status: 'connecting',
       agentInfo: null,
       capabilities: null,
+      authMethods: [],
     });
   }
 
@@ -287,6 +289,7 @@ export function createAcpProvider({ agents, onFileRead, onFileWrite, onTerminal 
       status: 'connecting',
       agentInfo: null,
       capabilities: null,
+      authMethods: [],
     });
 
     await connectAgent(config);

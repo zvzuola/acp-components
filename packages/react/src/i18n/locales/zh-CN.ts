@@ -95,4 +95,12 @@ export const zhCN = {
   'userMessage.copy': '复制',
   'userMessage.copied': '已复制',
   'userMessage.edit': '编辑',
+
+  // LoginDialog
+  'login.ariaLabel': '需要登录',
+  'login.title': '需要登录',
+  'login.description': '创建会话前需要先登录，请选择认证方式：',
+  'login.authenticating': '认证中...',
+  'login.cancel': '取消',
+  'login.error': '认证失败，请重试。',
 };

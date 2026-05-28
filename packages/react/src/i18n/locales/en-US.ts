@@ -95,4 +95,12 @@ export const enUS = {
   'userMessage.copy': 'Copy',
   'userMessage.copied': 'Copied',
   'userMessage.edit': 'Edit',
+
+  // LoginDialog
+  'login.ariaLabel': 'Login required',
+  'login.title': 'Login Required',
+  'login.description': 'You need to log in before creating a session. Please select an authentication method:',
+  'login.authenticating': 'Authenticating...',
+  'login.cancel': 'Cancel',
+  'login.error': 'Authentication failed. Please try again.',
 };

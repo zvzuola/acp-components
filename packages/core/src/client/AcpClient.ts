@@ -30,6 +30,8 @@ import {
   type KillTerminalRequest,
   type CloseSessionRequest,
   type CloseSessionResponse,
+  type AuthenticateRequest,
+  type AuthenticateResponse,
 } from '@agentclientprotocol/sdk';
 import type { AgentCapabilities } from '@agentclientprotocol/sdk';
 import { StdioTransport, HttpTransport, WebSocketTransport } from '../transport';
@@ -275,6 +277,12 @@ export class AcpClient {
     if (!this.connection) throw new Error('Not connected');
     const params: CloseSessionRequest = { sessionId };
     return this.connection.closeSession(params);
+  }
+
+  async authenticate(methodId: string): Promise<AuthenticateResponse> {
+    if (!this.connection) throw new Error('Not connected');
+    const params: AuthenticateRequest = { methodId };
+    return this.connection.authenticate(params);
   }
 
   disconnect(): void {

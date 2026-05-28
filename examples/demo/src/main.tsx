@@ -5,6 +5,7 @@ import { ProjectOpener } from '@acp-components/react';
 import { SessionList } from '@acp-components/react';
 import { ChatView } from '@acp-components/react';
 import { PermissionDialog } from '@acp-components/react';
+import { LoginDialog } from '@acp-components/react';
 import { I18nProvider, useI18n } from '@acp-components/react';
 import { useAcpStore } from '@acp-components/react';
 
@@ -83,6 +84,7 @@ function AppInner() {
         main={<ChatView sessionId={activeSessionId} />}
       />
       <PermissionDialog sessionId={activeSessionId} />
+      <LoginDialog />
     </>
   );
 }

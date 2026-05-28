@@ -1,0 +1,141 @@
+.acp-login-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--acp-color-bg-overlay);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: acp-overlay-in 0.15s var(--acp-ease-out);
+}
+
+.acp-login-dialog {
+  background: var(--acp-color-bg-primary);
+  border: 1px solid var(--acp-color-border);
+  border-radius: var(--acp-radius-xl);
+  box-shadow: var(--acp-shadow-lg);
+  padding: 28px;
+  max-width: 440px;
+  width: 90%;
+  animation: acp-dialog-in 0.25s var(--acp-ease-spring);
+}
+
+.acp-login-dialog-title {
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+
+.acp-login-dialog-desc {
+  font-size: 13px;
+  color: var(--acp-color-text-secondary);
+  margin-bottom: 18px;
+  line-height: 1.6;
+}
+
+.acp-login-dialog-error {
+  font-size: 12px;
+  color: var(--acp-color-error);
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: var(--acp-color-error-muted);
+  border-radius: var(--acp-radius-sm);
+}
+
+.acp-login-dialog-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.acp-login-dialog-method {
+  background: var(--acp-color-bg-secondary);
+  border: 1px solid var(--acp-color-border-subtle);
+  border-radius: var(--acp-radius-md);
+  padding: 14px 16px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: background var(--acp-duration-fast) var(--acp-ease-out),
+              border-color var(--acp-duration-fast) var(--acp-ease-out),
+              transform var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover:not(:disabled) {
+    background: var(--acp-color-bg-hover);
+    border-color: var(--acp-color-accent);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.acp-login-dialog-method-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--acp-color-text-primary);
+}
+
+.acp-login-dialog-method-desc {
+  font-size: 12px;
+  color: var(--acp-color-text-secondary);
+  line-height: 1.5;
+}
+
+.acp-login-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.acp-login-dialog-cancel-btn {
+  padding: 9px 20px;
+  border-radius: var(--acp-radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--acp-color-border);
+  color: var(--acp-color-text-primary);
+  transition: background var(--acp-duration-fast) var(--acp-ease-out),
+              color var(--acp-duration-fast) var(--acp-ease-out),
+              transform var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover:not(:disabled) {
+    background: var(--acp-color-bg-hover);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+@keyframes acp-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes acp-dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}

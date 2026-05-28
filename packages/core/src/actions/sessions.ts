@@ -75,3 +75,8 @@ export async function setSessionConfigOption(
     }
   }
 }
+
+export async function authenticate(client: AcpClient, methodId: string): Promise<void> {
+  await client.authenticate(methodId);
+  acpStore.getState().clearAuthRequired();
+}
