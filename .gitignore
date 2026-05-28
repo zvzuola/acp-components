@@ -3,3 +3,4 @@ dist
 *.tsbuildinfo
 .vite
 examples/tauri/src-tauri/target
+.DS_Store

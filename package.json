@@ -13,7 +13,10 @@
     "build:core": "pnpm --filter @acp-components/core build",
     "build:react": "pnpm --filter @acp-components/react build",
     "test": "pnpm --filter @acp-components/core test && pnpm --filter @acp-components/react test",
-    "lint": "eslint packages/*/src --ext .ts,.tsx"
+    "lint": "eslint packages/*/src --ext .ts,.tsx",
+    "publish:core": "pnpm --filter @acp-components/core publish --access public",
+    "publish:react": "pnpm --filter @acp-components/react publish --access public",
+    "publish:all": "pnpm publish:core && pnpm publish:react"
   },
   "engines": {
     "node": ">=18"
