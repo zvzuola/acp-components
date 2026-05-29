@@ -13,11 +13,13 @@ You can use the data layer alone to build UI component libraries with Vue, Svelt
 - **Multi-Workspace** — Organize sessions by working directory (cwd); switch between workspaces seamlessly
 - **Framework-Agnostic Core** — Zustand vanilla stores with zero React dependency; works with Vue, Svelte, Solid, or vanilla JS
 - **Multi-Transport** — Stdio, HTTP, WebSocket, and custom transports per agent; ships with a Tauri IPC transport example
-- **Rich UI Components** — Session list (grouped by agent), chat view (with round grouping), diff view, terminal view, permission dialog, plan view, thought view, command palette, workspace switcher, and more — 15+ components
+- **Rich UI Components** — Session list (grouped by agent), chat view (with round grouping), diff view, terminal view, permission dialog, plan view, thought view, command palette, workspace switcher, login dialog, and more — 15+ components
 - **Streaming UX** — Real-time content and thought streaming with animated indicators, live tool call status, and token usage tracking
 - **Session Management** — Full CRUD: create, load, switch, and close sessions scoped by workspace and agent
 - **Tool Call Visualization** — Track agent tool invocations with status, input/output, file locations, and diffs
+- **Authentication** — Built-in auth flow with `LoginDialog` component, env_var and terminal-based auth methods, and programmatic `authenticate`/`authenticateWithEnv` actions
 - **Permission Handling** — Promise-based permission flow with built-in modal dialog for approving or rejecting tool call requests
+- **Terminal Integration** — Embedded terminal output display with lifecycle management via `onTerminal` handler and `useTerminals` hook
 - **Theming** — Dark and light themes via CSS custom properties (`--acp-*` design tokens); extensible via `data-acp-theme` attribute
 - **Internationalization** — Built-in i18n support (en-US, zh-CN) via i18next, with custom locale extension
 - **Desktop Ready** — Includes Tauri and stdio transport examples for native desktop applications
@@ -59,8 +61,9 @@ import {
   SessionList,
   ChatView,
   PermissionDialog,
+  LoginDialog,
 } from '@acp-components/react';
-import { useAcpStore, useSessions } from '@acp-components/react';
+import { useAcpStore } from '@acp-components/react';
 
 function App() {
   const activeSessionId = useAcpStore((s) => {
@@ -91,6 +94,7 @@ function App() {
           main={<ChatView sessionId={activeSessionId} />}
         />
         <PermissionDialog sessionId={activeSessionId} />
+        <LoginDialog />
       </AcpProvider>
     </I18nProvider>
   );
@@ -162,12 +166,13 @@ Each agent in the `agents` array gets its own transport configuration:
 
 | Component | Description |
 |-----------|-------------|
-| `AcpProvider` | Top-level provider: connects to multiple agents in parallel, manages agent lifecycle, wires session updates to stores, renders a loading spinner until all agents are ready. Props: `agents`, `theme`, `defaultCwd`, `onFileRead`, `onFileWrite` |
+| `AcpProvider` | Top-level provider: connects to multiple agents in parallel, manages agent lifecycle, wires session updates to stores, renders a loading spinner until all agents are ready. Props: `agents`, `theme`, `defaultCwd`, `onFileRead`, `onFileWrite`, `onTerminal` |
 | `Workbench` | Three-panel layout (sidebar, main, panel) using CSS Grid |
 | `ProjectOpener` | Editable workspace directory display with dropdown to switch between active workspaces |
 | `SessionList` | Sidebar session list grouped by agent within the active workspace, with create / select / delete actions per agent |
 | `ChatView` | Main chat area: groups messages into user/agent rounds, renders plan, usage bar, and config panel. Props: `sessionId`, `onNavigateFile` |
 | `MessageBubble` | Renders message parts (content blocks, thought blocks, tool calls) with Markdown via `react-markdown` |
+| `Markdown` | Reusable Markdown renderer with syntax-highlighted code blocks and GFM support |
 | `ChatComposer` | Text input with slash-command palette integration and send / cancel controls |
 | `StreamingIndicator` | Animated typing indicator shown during agent streaming |
 | `ToolCallCard` | Displays tool call name, status, input/output, file locations |
@@ -175,6 +180,7 @@ Each agent in the `agents` array gets its own transport configuration:
 | `PlanView` | Displays the agent's plan entries during streaming |
 | `DiffView` | Side-by-side diff viewer for file changes |
 | `PermissionDialog` | Modal for approving / rejecting tool permission requests |
+| `LoginDialog` | Modal for agent authentication: supports env_var and terminal-based auth methods, env var form input, 5-minute timeout |
 | `TerminalView` | Embedded terminal output display |
 | `ConnectionStatus` | Per-agent connection state indicator with agent name and version |
 | `UsageBar` | Token usage progress bar showing context window consumption |
@@ -193,182 +199,11 @@ Each agent in the `agents` array gets its own transport configuration:
 | `usePrompt(sessionId)` | `send(blocks)` and `cancel()` for sending / canceling prompts (auto-resolves the correct agent client) |
 | `useToolCalls(sessionId)` | Pending and completed tool calls for a session |
 | `usePermission(sessionId)` | Current permission request with `respond(optionId)` and `deny()` actions |
+| `useTerminals(sessionId)` | Terminal states for a session |
 | `useConnectionStatus(agentId)` | Per-agent connection status, agent info (name, version) |
 | `useAllAgentStatuses()` | Aggregate status across all agents: individual statuses plus overall status |
 | `useAcpContext()` | Raw access to `getClient(agentId)`, agents list, workspaces, and workspace management actions from React context |
 | `useI18n()` | Access to `t()` translation function and `i18n` instance |
-
-## Architecture
-
-### Multi-Agent & Multi-Workspace Model
-
-The component library supports connecting to multiple ACP agents simultaneously and organizing sessions by workspace (working directory):
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│                      acpStore (Global State)                  │
-│                                                              │
-│  agents: Map<agentId, AgentConnection>                       │
-│  ┌──────────┬──────────┬──────────┐                         │
-│  │ craft    │ ask      │ code     │   (parallel connections) │
-│  │ (ws://)  │ (stdio)  │ (http)   │                         │
-│  └──────────┴──────────┴──────────┘                         │
-│                                                              │
-│  workspaces: Map<cwd, WorkspaceState>                        │
-│  ┌─────────────────────────────────────┐                    │
-│  │ /projects/app                       │                    │
-│  │  ├─ craft → [session-1, session-2]  │                    │
-│  │  └─ ask   → [session-3]             │                    │
-│  ├─────────────────────────────────────┤                    │
-│  │ /projects/lib                       │                    │
-│  │  └─ code  → [session-4]             │                    │
-│  └─────────────────────────────────────┘                    │
-│                                                              │
-│  activeWorkspaceCwd: "/projects/app"                         │
-└──────────────────────────────────────────────────────────────┘
-```
-
-- **Workspace** — Identified by `cwd` (current working directory). Each workspace holds sessions from different agents. Switching workspaces filters the session list to that directory's context.
-- **Agent** — An independent ACP connection with its own transport, client info, capabilities, and status. Agents connect in parallel when the provider initializes.
-- **Session** — Belongs to a specific workspace + agent pair. The `SessionMeta` carries `agentId` and `cwd` for routing.
-
-### Package Layering
-
-```
-┌──────────────────────────────────────────────────────┐
-│               Application Layer                       │
-│  Vite Demo / Tauri Desktop / Custom Apps              │
-└────────────────────┬─────────────────────────────────┘
-                     │
-┌────────────────────▼─────────────────────────────────┐
-│          UI Layer: @acp-components/react               │
-│  ┌────────────────────────────────────────────────┐  │
-│  │  Components (15+)                              │  │
-│  │  Workbench  ChatView  SessionList  DiffView    │  │
-│  │  ProjectOpener  PermissionDialog  ...          │  │
-│  ├────────────────────────────────────────────────┤  │
-│  │  Hooks (useSyncExternalStore)                  │  │
-│  │  useAcpProvider  useSessions  usePrompt  ...   │  │
-│  ├────────────────────────────────────────────────┤  │
-│  │  AcpContext + I18nProvider                     │  │
-│  │  (multi-agent: getClient(agentId), agents[])   │  │
-│  ├────────────────────────────────────────────────┤  │
-│  │  Theme System (CSS Custom Properties)          │  │
-│  │  --acp-color-*  --acp-shadow-*  --acp-radius-*│  │
-│  └────────────────────────────────────────────────┘  │
-└────────────────────┬─────────────────────────────────┘
-                     │  depends on
-┌────────────────────▼─────────────────────────────────┐
-│        Data Layer: @acp-components/core               │
-│  ┌────────────────────────────────────────────────┐  │
-│  │  Multi-Agent Provider                           │  │
-│  │  createAcpProvider({ agents, onFileRead, ... })│  │
-│  │  → parallel connect → initialize → ready       │  │
-│  │  addAgent / removeAgent / getClient              │  │
-│  ├────────────────────────────────────────────────┤  │
-│  │  AcpClient (per agent)                          │  │
-│  │  connect / initialize / prompt / cancel         │  │
-│  │  session CRUD / setSessionConfigOption          │  │
-│  │  onSessionUpdate / setPermissionHandler         │  │
-│  ├────────────────────────────────────────────────┤  │
-│  │  Transport Layer (per agent)                    │  │
-│  │  StdioTransport │ HttpTransport                 │  │
-│  │  WebSocketTransport │ Custom (AcpTransport)     │  │
-│  ├────────────────────────────────────────────────┤  │
-│  │  State Management (vanilla Zustand)             │  │
-│  │  acpStore — agents, workspaces, sessions        │  │
-│  │  sessionStore — per-session data                │  │
-│  ├────────────────────────────────────────────────┤  │
-│  │  Actions (imperative, agent-aware)              │  │
-│  │  sessions / prompt / permission                 │  │
-│  └────────────────────────────────────────────────┘  │
-└────────────────────┬─────────────────────────────────┘
-                     │  built on
-┌────────────────────▼─────────────────────────────────┐
-│       @agentclientprotocol/sdk  (ACP Protocol)        │
-│  ClientSideConnection / NDJSON streaming / handshake  │
-└──────────────────────────────────────────────────────┘
-```
-
-### Data Flow
-
-ACP supports bidirectional communication between Client and Agent. Within the frontend, state management follows a unidirectional cycle:
-
-```
-Agent (sessionUpdate via NDJSON stream)
-    ↓ Transport.readable
-AcpClient.onSessionUpdate event (per agent)
-    ↓
-createAcpProvider dispatches to stores
-    ↓
-acpStore / sessionStore (Zustand vanilla)
-    ↓ useSyncExternalStore
-React Hooks → Components (re-render)
-    ↓ user action
-Actions (operate on client + stores, route to correct agent)
-    ↓ ACP protocol messages
-AcpClient.prompt() / cancel() → Transport.writable → Agent
-```
-
-**SessionUpdate dispatch mapping:**
-
-| SessionUpdate Type | Store Action |
-|---|---|
-| `agent_message_chunk` | `sessionStore.appendContent()` |
-| `user_message_chunk` | `sessionStore.appendContent()` |
-| `agent_thought_chunk` | `sessionStore.appendThought()` |
-| `tool_call` | `sessionStore.upsertToolCall()` |
-| `tool_call_update` | `sessionStore.updateToolCall()` |
-| `plan` | `sessionStore.setPlan()` |
-| `usage_update` | `sessionStore.setUsage()` |
-| `config_option_update` | `sessionStore.setConfigOptions()` |
-| `available_commands_update` | `sessionStore.setAvailableCommands()` |
-| `session_info_update` | `acpStore.updateSession()` |
-
-### State Management
-
-Two vanilla Zustand stores (no React dependency):
-
-- **`acpStore`** — Global state:
-  - `agents: Map<agentId, AgentConnection>` — all connected agents with status, info, capabilities
-  - `workspaces: Map<cwd, WorkspaceState>` — workspaces each containing their own `sessions` (Map of `SessionMeta`) and `activeSessionId`
-  - `activeWorkspaceCwd: string | null` — currently selected workspace
-- **`sessionStore`** — Per-session data keyed by `SessionId`: `messages[]`, `isStreaming`, `pendingToolCalls` (Map), `stopReason`, `pendingPermissions[]`, `plan[]`, `usage`, `configOptions[]`, `availableCommands[]`
-
-### Workspace Lifecycle
-
-```
-User opens project dir → addWorkspace(cwd) → setActiveWorkspace(cwd)
-    → Provider auto-fetches sessions from all agents for that cwd
-    → SessionList renders sessions grouped by agent
-
-User switches workspace → setActiveWorkspace(otherCwd)
-    → Provider fetches sessions for new cwd (cached if already loaded)
-    → activeSessionId resets to null for workspace switch
-
-User closes workspace → removeWorkspace(cwd)
-    → All sessions in that workspace are cleaned up
-    → Active workspace falls back to next available or null
-```
-
-### Permission Flow
-
-Agent tool call requests are Promise-wrapped by the provider and exposed to the UI:
-
-```
-Agent → requestPermission(params)
-    ↓
-AcpClient.permissionHandler = () => new Promise(...)
-    ↓
-sessionStore.addPermissionRequest(sessionId, req)
-    ↓
-PermissionDialog displays the request
-    ↓
-User clicks Allow → respondToPermission(id, optionId)
-    │     └→ req.resolve(optionId) → Promise resolved
-User clicks Deny  → denyPermission(id)
-          └→ req.reject() → Promise resolved
-```
 
 ## Theming
 
@@ -455,56 +290,6 @@ await provider.addAgent({ id: 'analyze', name: 'Analyze', transport: { type: 'we
 await provider.removeAgent('analyze');
 ```
 
-## Project Structure
-
-```
-acp-components/
-├── packages/
-│   ├── core/                    # @acp-components/core (framework-agnostic)
-│   │   └── src/
-│   │       ├── client/          # AcpClient — wraps ACP ClientSideConnection (per agent)
-│   │       ├── transport/       # StdioTransport, HttpTransport, WebSocketTransport
-│   │       ├── store/           # acpStore (agents, workspaces, sessions), sessionStore (vanilla Zustand)
-│   │       ├── actions/         # sessions.ts, prompt.ts, permission.ts (agent-aware)
-│   │       ├── types/           # Shared TypeScript types (AgentConfig, WorkspaceState, AgentConnection, etc.)
-│   │       ├── provider.ts      # createAcpProvider() — multi-agent lifecycle orchestrator
-│   │       └── index.ts
-│   └── react/                   # @acp-components/react (React UI)
-│       └── src/
-│           ├── components/
-│           │   ├── workbench/    # AcpProvider, Workbench, ProjectOpener
-│           │   ├── chat-view/    # ChatView, MessageBubble, ChatComposer,
-│           │   │                  ToolCallCard, StreamingIndicator, ThoughtView, PlanView
-│           │   ├── session-list/ # Agent-grouped session list
-│           │   ├── session-config-panel/
-│           │   ├── diff-view/
-│           │   ├── terminal-view/
-│           │   ├── permission-dialog/
-│           │   ├── status-bar/   # ConnectionStatus, UsageBar
-│           │   ├── command-palette/
-│           │   ├── workspace-dialog/
-│           │   ├── workspace-list/
-│           │   └── project-switcher/
-│           ├── hooks/            # useAcpProvider, useAcpStore, useSessionStore,
-│           │                      useSessions, useSession, usePrompt,
-│           │                      useToolCalls, usePermission, useConnectionStatus,
-│           │                      useAllAgentStatuses
-│           ├── context/          # AcpContext (multi-agent aware)
-│           ├── i18n/             # I18nProvider, useI18n, en-US / zh-CN locales
-│           ├── styles/           # themes.scss, styles.css
-│           └── index.ts
-├── examples/
-│   ├── demo/                    # Vite browser demo (WebSocket transport)
-│   ├── server/                  # WebSocket ↔ stdio bridge server
-│   └── tauri/                   # Tauri desktop app (custom TauriIpcTransport)
-├── docs/
-│   ├── ARCHITECTURE.md          # Detailed architecture documentation
-│   └── DETAILED_DESIGN.md       # Detailed design specs
-├── package.json                 # Root workspace config
-├── pnpm-workspace.yaml
-└── tsconfig.json
-```
-
 ## Development
 
 ### Prerequisites
@@ -535,6 +320,9 @@ pnpm test
 ```bash
 # Terminal 1 — Start the bridge server (WebSocket ↔ stdio proxy)
 pnpm dev:server
+
+# Or use Codex agent instead of opencode
+pnpm dev:server-codex
 
 # Terminal 2 — Start the Vite dev server
 pnpm dev
@@ -601,6 +389,33 @@ await addAgent({
 await removeAgent('new-agent');
 ```
 
+### Terminal Integration
+
+Control how agents create and manage terminals:
+
+```tsx
+<AcpProvider
+  agents={[...]}
+  onTerminal={{
+    create: async (params) => {
+      // params: { sessionId, command, args?, cwd? }
+      const proc = spawn(params.command, params.args ?? [], { cwd: params.cwd ?? undefined });
+      return {
+        terminalId: generateId(),
+        getOutput: async () => ({ output: allOutput }),
+        waitForExit: async () => new Promise((resolve) => proc.on('exit', resolve)),
+        kill: async () => proc.kill(),
+        release: async () => {},
+        onOutputChange: (fn) => proc.stdout.on('data', fn),
+        onExit: (fn) => proc.on('exit', fn),
+      };
+    },
+  }}
+>
+```
+
+Terminal states are accessible via the `useTerminals(sessionId)` hook and rendered with the `TerminalView` component.
+
 ### File System Integration
 
 Control how agents read and write files:
@@ -644,7 +459,7 @@ workspaces.forEach(ws => console.log(ws.cwd, ws.sessions.size));
 | State Management | Zustand v5 (vanilla store, no React dependency) |
 | UI Framework | React 18 / 19 |
 | Internationalization | i18next + react-i18next |
-| Markdown Rendering | react-markdown |
+| Markdown Rendering | react-markdown + remark-gfm |
 | Styling | SCSS Modules + CSS Custom Properties |
 | Build Tool | Vite 6 (library mode) |
 | Type System | TypeScript 5.6 (strict mode) |
