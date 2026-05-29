@@ -61,9 +61,12 @@ function createTransport(config: TransportConfig): AcpTransport {
 export class AcpClient {
   private connection: ClientSideConnection | null = null;
   private transport: AcpTransport | null = null;
+  private _transportConfig: TransportConfig | null = null;
   private _status: ConnectionStatus = 'disconnected';
   private _agentInfo: Implementation | null = null;
   private _capabilities: AgentCapabilities | null = null;
+  private _clientInfo: Implementation | undefined = undefined;
+  private _clientCapabilities: ClientCapabilities | undefined = undefined;
 
   private sessionUpdateHandlers = new Set<SessionUpdateHandler>();
   private permissionHandler: PermissionHandler | null = null;
@@ -72,6 +75,7 @@ export class AcpClient {
   private terminalHandler: TerminalHandler | null = null;
   private terminalHandles = new Map<string, import('../types').TerminalHandle>();
   private statusHandlers = new Set<(status: ConnectionStatus) => void>();
+  private closeHandlers = new Set<() => void>();
 
   get status(): ConnectionStatus {
     return this._status;
@@ -85,6 +89,10 @@ export class AcpClient {
     return this._capabilities;
   }
 
+  get signal(): AbortSignal | undefined {
+    return this.connection?.signal;
+  }
+
   private setStatus(status: ConnectionStatus): void {
     this._status = status;
     for (const h of this.statusHandlers) h(status);
@@ -93,6 +101,11 @@ export class AcpClient {
   onStatusChange(handler: (status: ConnectionStatus) => void): () => void {
     this.statusHandlers.add(handler);
     return () => this.statusHandlers.delete(handler);
+  }
+
+  onClose(handler: () => void): () => void {
+    this.closeHandlers.add(handler);
+    return () => this.closeHandlers.delete(handler);
   }
 
   onSessionUpdate(handler: SessionUpdateHandler): () => void {
@@ -123,6 +136,7 @@ export class AcpClient {
     if (this.transport || this.connection) {
       this.disconnect();
     }
+    this._transportConfig = config;
     this.transport = createTransport(config);
     this.setStatus('connecting');
 
@@ -214,10 +228,23 @@ export class AcpClient {
       (_agent: Agent) => client,
       stream,
     );
+
+    this.connection.closed.then(() => {
+      this.setStatus('disconnected');
+      for (const h of this.closeHandlers) h();
+      this.closeHandlers.clear();
+    }).catch(() => {
+      this.setStatus('disconnected');
+      for (const h of this.closeHandlers) h();
+      this.closeHandlers.clear();
+    });
   }
 
   async initialize(clientInfo?: Implementation, clientCapabilities?: ClientCapabilities): Promise<InitializeResponse> {
     if (!this.connection) throw new Error('Not connected');
+
+    this._clientInfo = clientInfo;
+    this._clientCapabilities = clientCapabilities;
 
     const req: InitializeRequest = {
       protocolVersion: 1,
@@ -290,9 +317,27 @@ export class AcpClient {
       try { handle.release(); } catch { /* best effort */ }
     }
     this.terminalHandles.clear();
+
     this.transport?.disconnect();
+    // connection.closed handler fires async → setStatus + closeHandlers + clear
     this.connection = null;
     this.transport = null;
-    this.setStatus('disconnected');
+  }
+
+  async reconnectWithEnv(additionalEnv: Record<string, string>): Promise<InitializeResponse> {
+    if (!this._transportConfig) throw new Error('Not connected');
+    this.disconnect();
+    // Reset status so connect() allows reconnection
+    this._status = 'disconnected';
+
+    // Merge additional env vars into transport config
+    const config = { ...this._transportConfig };
+    if (config.type === 'stdio') {
+      config.env = { ...config.env, ...additionalEnv };
+    }
+    this._transportConfig = config;
+
+    await this.connect(config);
+    return this.initialize(this._clientInfo, this._clientCapabilities);
   }
 }

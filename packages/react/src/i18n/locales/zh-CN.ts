@@ -103,4 +103,8 @@ export const zhCN = {
   'login.authenticating': '认证中...',
   'login.cancel': '取消',
   'login.error': '认证失败，请重试。',
+  'login.authenticate': '认证',
+  'login.envVarOptional': '（可选）',
+  'login.envVarSecretPlaceholder': '请输入{label}',
+  'login.methodTerminal': '终端认证',
 };

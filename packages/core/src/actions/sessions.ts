@@ -80,3 +80,20 @@ export async function authenticate(client: AcpClient, methodId: string): Promise
   await client.authenticate(methodId);
   acpStore.getState().clearAuthRequired();
 }
+
+export async function authenticateWithEnv(
+  client: AcpClient,
+  agentId: string,
+  methodId: string,
+  envVars: Record<string, string>,
+): Promise<void> {
+  const initRes = await client.reconnectWithEnv(envVars);
+  acpStore.getState().updateAgent(agentId, {
+    status: 'connected',
+    agentInfo: client.agentInfo,
+    capabilities: client.capabilities,
+    authMethods: initRes.authMethods ?? [],
+  });
+  await client.authenticate(methodId);
+  acpStore.getState().clearAuthRequired();
+}

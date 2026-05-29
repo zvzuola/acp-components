@@ -103,4 +103,8 @@ export const enUS = {
   'login.authenticating': 'Authenticating...',
   'login.cancel': 'Cancel',
   'login.error': 'Authentication failed. Please try again.',
+  'login.authenticate': 'Authenticate',
+  'login.envVarOptional': '(optional)',
+  'login.envVarSecretPlaceholder': 'Enter {label}',
+  'login.methodTerminal': 'Terminal authentication',
 };

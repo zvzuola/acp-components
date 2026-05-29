@@ -112,9 +112,13 @@ function buildCapabilities(
       ...(fileWriteHandler ? { writeTextFile: true } : {}),
     },
     ...(terminalHandler ? { terminal: true } : {}),
+    auth: {
+      ...clientCapabilities?.auth,
+      ...(terminalHandler ? { terminal: true } : {}),
+    },
   };
   const hasFsCaps = caps.fs?.readTextFile || caps.fs?.writeTextFile;
-  return hasFsCaps || caps.terminal || caps.auth ? caps : undefined;
+  return hasFsCaps || caps.terminal || caps.auth?.terminal ? caps : undefined;
 }
 
 export function createAcpProvider({ agents, onFileRead, onFileWrite, onTerminal }: MultiAgentProviderOptions): MultiAgentProviderInstance {
