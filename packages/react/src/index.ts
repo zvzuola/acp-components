@@ -41,6 +41,7 @@ export { useToolCalls } from './hooks/useToolCalls';
 export { usePermission } from './hooks/usePermission';
 export { useConnectionStatus, useAllAgentStatuses } from './hooks/useConnectionStatus';
 export { useTerminals } from './hooks/useTerminals';
+export { useExtensions } from './hooks/useExtensions';
 export { AcpContext, useAcpContext } from './context/AcpContext';
 export type { AcpContextValue } from './context/AcpContext';
 

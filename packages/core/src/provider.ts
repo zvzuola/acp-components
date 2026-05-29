@@ -1,5 +1,5 @@
 import { AcpClient } from './client/AcpClient';
-import type { FileReadHandler, FileWriteHandler } from './client/AcpClient';
+import type { FileReadHandler, FileWriteHandler, ExtMethodHandler, ExtNotificationHandler } from './client/AcpClient';
 import { acpStore } from './store/acpStore';
 import { sessionStore } from './store/sessionStore';
 import type { ToolCallState, TerminalHandler, TerminalState } from './types';
@@ -19,6 +19,8 @@ export interface MultiAgentProviderOptions {
   onFileRead?: FileReadHandler;
   onFileWrite?: FileWriteHandler;
   onTerminal?: TerminalHandler;
+  onExtMethod?: ExtMethodHandler;
+  onExtNotification?: ExtNotificationHandler;
 }
 
 export interface MultiAgentProviderInstance {
@@ -121,11 +123,13 @@ function buildCapabilities(
   return hasFsCaps || caps.terminal || caps.auth?.terminal ? caps : undefined;
 }
 
-export function createAcpProvider({ agents, onFileRead, onFileWrite, onTerminal }: MultiAgentProviderOptions): MultiAgentProviderInstance {
+export function createAcpProvider({ agents, onFileRead, onFileWrite, onTerminal, onExtMethod, onExtNotification }: MultiAgentProviderOptions): MultiAgentProviderInstance {
   // Scoped state — each provider instance has its own isolated handlers and registries
   const scopedFileReadHandler = onFileRead;
   const scopedFileWriteHandler = onFileWrite;
   const scopedTerminalHandler = onTerminal;
+  const scopedExtMethodHandler = onExtMethod;
+  const scopedExtNotificationHandler = onExtNotification;
   const scopedClientRegistry = new Map<string, AcpClient>();
   const scopedCleanupFns = new Map<string, () => void>();
   let permissionIdCounter = 0;
@@ -205,6 +209,14 @@ export function createAcpProvider({ agents, onFileRead, onFileWrite, onTerminal 
     }
     if (scopedFileWriteHandler) {
       client.setFileWriteHandler(scopedFileWriteHandler);
+    }
+
+    // Extension handlers
+    if (scopedExtMethodHandler) {
+      client.setExtMethodHandler(scopedExtMethodHandler);
+    }
+    if (scopedExtNotificationHandler) {
+      client.setExtNotificationHandler(scopedExtNotificationHandler);
     }
 
     scopedCleanupFns.set(config.id, () => {

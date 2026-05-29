@@ -3,7 +3,7 @@ import { AcpContext } from '../../context/AcpContext';
 import { useAcpProvider } from '../../hooks/useAcpProvider';
 import { acpStore } from '@acp-components/core';
 import type { AgentConfig, TerminalHandler } from '@acp-components/core';
-import type { FileReadHandler, FileWriteHandler } from '@acp-components/core';
+import type { FileReadHandler, FileWriteHandler, ExtMethodHandler, ExtNotificationHandler } from '@acp-components/core';
 import { useI18n } from '../../i18n';
 import styles from './loading.module.scss';
 
@@ -14,11 +14,13 @@ export interface AcpProviderProps {
   onFileRead?: FileReadHandler;
   onFileWrite?: FileWriteHandler;
   onTerminal?: TerminalHandler;
+  onExtMethod?: ExtMethodHandler;
+  onExtNotification?: ExtNotificationHandler;
   defaultCwd?: string;
 }
 
-export function AcpProvider({ agents, theme = 'dark', children, onFileRead, onFileWrite, onTerminal, defaultCwd = '' }: AcpProviderProps) {
-  const provider = useAcpProvider({ agents, onFileRead, onFileWrite, onTerminal });
+export function AcpProvider({ agents, theme = 'dark', children, onFileRead, onFileWrite, onTerminal, onExtMethod, onExtNotification, defaultCwd = '' }: AcpProviderProps) {
+  const provider = useAcpProvider({ agents, onFileRead, onFileWrite, onTerminal, onExtMethod, onExtNotification });
   const { t } = useI18n();
 
   const contextValue = useMemo(() => ({

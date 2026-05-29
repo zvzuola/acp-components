@@ -42,6 +42,8 @@ export type SessionUpdateHandler = (update: SessionNotification) => void;
 export type PermissionHandler = (request: RequestPermissionRequest) => Promise<RequestPermissionResponse>;
 export type FileReadHandler = (request: ReadTextFileRequest) => Promise<ReadTextFileResponse>;
 export type FileWriteHandler = (request: WriteTextFileRequest) => Promise<WriteTextFileResponse>;
+export type ExtMethodHandler = (method: string, params: Record<string, unknown>) => Promise<Record<string, unknown>>;
+export type ExtNotificationHandler = (method: string, params: Record<string, unknown>) => void;
 
 function createTransport(config: TransportConfig): AcpTransport {
   switch (config.type) {
@@ -74,6 +76,8 @@ export class AcpClient {
   private fileWriteHandler: FileWriteHandler | null = null;
   private terminalHandler: TerminalHandler | null = null;
   private terminalHandles = new Map<string, import('../types').TerminalHandle>();
+  private extMethodHandler: ExtMethodHandler | null = null;
+  private extNotificationHandler: ExtNotificationHandler | null = null;
   private statusHandlers = new Set<(status: ConnectionStatus) => void>();
   private closeHandlers = new Set<() => void>();
 
@@ -127,6 +131,14 @@ export class AcpClient {
 
   setTerminalHandler(handler: TerminalHandler): void {
     this.terminalHandler = handler;
+  }
+
+  setExtMethodHandler(handler: ExtMethodHandler): void {
+    this.extMethodHandler = handler;
+  }
+
+  setExtNotificationHandler(handler: ExtNotificationHandler): void {
+    this.extNotificationHandler = handler;
   }
 
   async connect(config: TransportConfig): Promise<void> {
@@ -222,6 +234,18 @@ export class AcpClient {
         }
         return Promise.reject(new Error(`terminal ${params.terminalId} not found`));
       },
+      extMethod: (method: string, params: Record<string, unknown>) => {
+        if (this.extMethodHandler) {
+          return this.extMethodHandler(method, params);
+        }
+        return Promise.reject(new Error(`extension method ${method} not supported`));
+      },
+      extNotification: (method: string, params: Record<string, unknown>) => {
+        if (this.extNotificationHandler) {
+          this.extNotificationHandler(method, params);
+        }
+        return Promise.resolve();
+      },
     };
 
     this.connection = new ClientSideConnection(
@@ -310,6 +334,16 @@ export class AcpClient {
     if (!this.connection) throw new Error('Not connected');
     const params: AuthenticateRequest = { methodId };
     return this.connection.authenticate(params);
+  }
+
+  async extMethod(method: string, params: Record<string, unknown>): Promise<Record<string, unknown>> {
+    if (!this.connection) throw new Error('Not connected');
+    return this.connection.extMethod(method, params);
+  }
+
+  async extNotification(method: string, params: Record<string, unknown>): Promise<void> {
+    if (!this.connection) throw new Error('Not connected');
+    return this.connection.extNotification(method, params);
   }
 
   disconnect(): void {

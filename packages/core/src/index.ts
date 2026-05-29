@@ -1,5 +1,5 @@
 export { AcpClient } from './client/AcpClient';
-export type { FileReadHandler, FileWriteHandler, SessionUpdateHandler, PermissionHandler } from './client/AcpClient';
+export type { FileReadHandler, FileWriteHandler, SessionUpdateHandler, PermissionHandler, ExtMethodHandler, ExtNotificationHandler } from './client/AcpClient';
 export { StdioTransport, HttpTransport, WebSocketTransport } from './transport';
 export type { AcpTransport, Stream, AnyMessage } from './transport';
 export { acpStore } from './store/acpStore';
@@ -9,6 +9,7 @@ export type { MultiAgentProviderOptions, MultiAgentProviderInstance } from './pr
 export { createSession, loadSession, selectSession, closeSession, refreshSessions, loadMoreSessions, setSessionConfigOption, authenticate, authenticateWithEnv } from './actions/sessions';
 export { sendPrompt, cancelPrompt } from './actions/prompt';
 export { respondToPermission, denyPermission } from './actions/permission';
+export { callExtMethod, sendExtNotification } from './actions/extensions';
 export type {
   ConnectionStatus,
   Session,
