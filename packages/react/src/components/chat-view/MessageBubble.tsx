@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Message, MessagePart } from '@acp-components/core';
 import type { ContentBlock } from '@agentclientprotocol/sdk';
+import { useI18n } from '../../i18n';
 import { Markdown } from '../markdown';
 import { ToolCallCard } from './ToolCallCard';
 import { ThoughtView } from './ThoughtView';
@@ -79,10 +80,7 @@ function renderPart(part: MessagePart, partIndex: number, isStreaming?: boolean,
 }
 
 export function MessageBubble({ messages, isStreaming = false, onNavigateFile }: MessageBubbleProps) {
-  const stopReason = messages.reduceRight<string | undefined>(
-    (acc, m) => acc ?? m.stopReason, undefined
-  );
-
+  const { t } = useI18n();
   const lastMsg = messages[messages.length - 1];
   const lastPart = lastMsg?.parts[lastMsg.parts.length - 1];
   const thoughtStillStreaming = isStreaming && lastPart?.type === 'thought';
@@ -96,13 +94,13 @@ export function MessageBubble({ messages, isStreaming = false, onNavigateFile }:
               const isStreamingThought = msg === lastMsg && j === lastMsg.parts.length - 1 && thoughtStillStreaming;
               return renderPart(part, j, isStreamingThought, onNavigateFile);
             })}
+            {msg.stopReason && (
+              <div className={styles.acpMessageBubbleStopReason}>
+                {t(`stopReason.${msg.stopReason}`)}
+              </div>
+            )}
           </React.Fragment>
         ))}
-        {stopReason && (
-          <div className={styles.acpMessageBubbleStopReason}>
-            {stopReason}
-          </div>
-        )}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import type { Message } from '@acp-components/core';
 import type { ContentBlock } from '@agentclientprotocol/sdk';
+import { useI18n } from '../../i18n';
 import { Markdown } from '../markdown';
 import { UserMessageActions } from './UserMessageActions';
 import styles from './user-message.module.scss';
@@ -75,6 +76,7 @@ function renderAttachment(block: ContentBlock) {
 }
 
 export const UserMessage = React.memo(function UserMessage({ message, onEdit }: UserMessageProps) {
+  const { t } = useI18n();
   const { textBlocks, attachmentBlocks, textContent } = useMemo(
     () => parseContent(message),
     [message]
@@ -97,7 +99,7 @@ export const UserMessage = React.memo(function UserMessage({ message, onEdit }: 
         <UserMessageActions textContent={textContent} onEdit={onEdit} />
       )}
       {message.stopReason && (
-        <div className={styles.acpUserMessageStopReason}>{message.stopReason}</div>
+        <div className={styles.acpUserMessageStopReason}>{t(`stopReason.${message.stopReason}`)}</div>
       )}
     </div>
   );

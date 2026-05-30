@@ -98,6 +98,13 @@ export const zhCN = {
   'userMessage.copied': '已复制',
   'userMessage.edit': '编辑',
 
+  // StopReason
+  'stopReason.end_turn': '回复完毕',
+  'stopReason.max_tokens': '已达到 Token 上限',
+  'stopReason.max_turn_requests': '已达到最大轮次',
+  'stopReason.refusal': '请求被拒绝',
+  'stopReason.cancelled': '已取消',
+
   // LoginDialog
   'login.ariaLabel': '需要登录',
   'login.title': '需要登录',

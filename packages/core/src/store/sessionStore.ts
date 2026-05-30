@@ -7,7 +7,6 @@ interface SessionData {
   messages: Message[];
   isStreaming: boolean;
   pendingToolCalls: Map<string, ToolCallState>;
-  stopReason: StopReason | null;
   pendingPermissions: PermissionRequest[];
   plan: PlanEntry[];
   usage: UsageUpdate | null;
@@ -28,7 +27,7 @@ interface SessionStoreState {
   appendContent: (sessionId: SessionId, messageId: string, role: Message['role'], block: ContentBlock) => void;
   appendThought: (sessionId: SessionId, messageId: string, role: Message['role'], block: ContentBlock) => void;
   setIsStreaming: (sessionId: SessionId, v: boolean) => void;
-  setStopReason: (sessionId: SessionId, r: StopReason | null) => void;
+  setStopReason: (sessionId: SessionId, r: StopReason) => void;
   upsertToolCall: (sessionId: SessionId, tc: ToolCallState) => void;
   updateToolCall: (sessionId: SessionId, id: string, update: Partial<ToolCallState>) => void;
   addPermissionRequest: (sessionId: SessionId, req: PermissionRequest) => void;
@@ -49,7 +48,6 @@ function createSessionData(): SessionData {
     messages: [],
     isStreaming: false,
     pendingToolCalls: new Map(),
-    stopReason: null,
     pendingPermissions: [],
     plan: [],
     usage: null,
@@ -215,9 +213,12 @@ export const sessionStore = createStore<SessionStoreState>((set) => ({
   setStopReason: (sessionId, r) =>
     set((s) => {
       const data = s.sessions.get(sessionId);
-      if (!data) return s;
+      if (!data || data.messages.length === 0) return s;
       const next = new Map(s.sessions);
-      next.set(sessionId, { ...data, stopReason: r });
+      const messages = [...data.messages];
+      const lastIdx = messages.length - 1;
+      messages[lastIdx] = { ...messages[lastIdx], stopReason: r };
+      next.set(sessionId, { ...data, messages });
       return { sessions: next };
     }),
 

@@ -98,6 +98,13 @@ export const enUS = {
   'userMessage.copied': 'Copied',
   'userMessage.edit': 'Edit',
 
+  // StopReason
+  'stopReason.end_turn': 'Reply complete',
+  'stopReason.max_tokens': 'Reached token limit',
+  'stopReason.max_turn_requests': 'Reached max turns',
+  'stopReason.refusal': 'Request refused',
+  'stopReason.cancelled': 'Cancelled',
+
   // LoginDialog
   'login.ariaLabel': 'Login required',
   'login.title': 'Login Required',

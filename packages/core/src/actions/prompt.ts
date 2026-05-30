@@ -20,10 +20,11 @@ export async function sendPrompt(client: AcpClient, sessionId: SessionId, conten
 
   try {
     const res = await client.prompt(sessionId, contentBlocks);
-    store.setStopReason(sessionId, res.stopReason);
+    if (res.stopReason && res.stopReason !== 'end_turn') {
+      store.setStopReason(sessionId, res.stopReason);
+    }
     return res;
   } catch (err) {
-    store.setStopReason(sessionId, 'cancelled');
     throw err;
   } finally {
     store.setIsStreaming(sessionId, false);
