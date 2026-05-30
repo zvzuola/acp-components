@@ -46,6 +46,8 @@ export const zhCN = {
   'sessionList.defaultSessionTitle': '新会话',
   'sessionList.emptyState': '暂无会话，点击 + 开始',
   'sessionList.loadMore': '加载更多',
+  'sessionList.statusRunning': '运行中',
+  'sessionList.statusNeedsAction': '待操作',
 
   // Time
   'time.justNow': '刚刚',

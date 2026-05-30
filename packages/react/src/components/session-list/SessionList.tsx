@@ -1,8 +1,67 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { useStore } from 'zustand/react';
+import { sessionStore } from '@acp-components/core';
 import { useSessions } from '../../hooks/useSessions';
 import { useAcpStore } from '../../hooks/useAcpStore';
 import { useI18n } from '../../i18n';
+import type { SessionMeta } from '@acp-components/core';
+import type { SessionId } from '@agentclientprotocol/sdk';
 import styles from './session-list.module.scss';
+
+type SessionStatusType = 'running' | 'needs-action' | null;
+
+function useSessionStatus(sessionId: SessionId): SessionStatusType {
+  const ref = useRef<SessionStatusType>(null);
+  const status = useStore(sessionStore, (s) => {
+    const data = s.sessions.get(sessionId);
+    if (!data) return null;
+    let next: SessionStatusType = null;
+    if (data.pendingPermissions.length > 0) next = 'needs-action';
+    else if (data.isStreaming) next = 'running';
+    if (next === ref.current) return ref.current;
+    ref.current = next;
+    return next;
+  });
+  return status;
+}
+
+function SessionItem({ session, isActive, onSelect, onClose, formatTime }: {
+  session: SessionMeta;
+  isActive: boolean;
+  onSelect: (id: SessionId) => void;
+  onClose: (id: SessionId) => void;
+  formatTime: (dateStr?: string) => string;
+}) {
+  const { t } = useI18n();
+  const status = useSessionStatus(session.id);
+
+  return (
+    <div
+      className={`${styles.acpSessionItem}${isActive ? ` ${styles.acpSessionItemActive}` : ''}`}
+      onClick={() => { if (!isActive) onSelect(session.id); }}
+      role="option"
+      aria-selected={isActive}
+    >
+      <span className={`${styles.acpSessionItemIcon}${status ? ` ${styles[`acpSessionItemIcon${status === 'running' ? 'Running' : 'NeedsAction'}`]}` : ''}`} title={status ? (status === 'running' ? t('sessionList.statusRunning') : t('sessionList.statusNeedsAction')) : undefined}>
+        {status === 'running' ? <span className={styles.acpSessionItemSpinner} /> : status === 'needs-action' ? '!' : '\u{1F4AC}'}
+      </span>
+      <div className={styles.acpSessionItemContent}>
+        <div className={styles.acpSessionItemTitle}>
+          {session.title || t('sessionList.defaultSessionTitle')}
+        </div>
+        <div className={styles.acpSessionItemMeta}>{formatTime(session.updatedAt)}</div>
+      </div>
+      <button
+        className={styles.acpSessionItemDelete}
+        onClick={(e) => { e.stopPropagation(); onClose(session.id); }}
+        aria-label={t('sessionList.closeSession')}
+        title={t('sessionList.closeSession')}
+      >
+        &#x2715;
+      </button>
+    </div>
+  );
+}
 
 const agentDotClass: Record<string, string> = {
   connected: styles.acpSessionAgentHeaderDotConnected,
@@ -113,27 +172,14 @@ export function SessionList() {
                 </button>
               </div>
               {agentSess.map((s) => (
-                <div
+                <SessionItem
                   key={s.id}
-                  className={`${styles.acpSessionItem}${activeSessionId === s.id ? ` ${styles.acpSessionItemActive}` : ''}`}
-                  onClick={() => { if (activeSessionId !== s.id) selectSession(s.id); }}
-                  role="option"
-                  aria-selected={activeSessionId === s.id}
-                >
-                  <span className={styles.acpSessionItemIcon}>&#x1f4ac;</span>
-                  <div className={styles.acpSessionItemContent}>
-                    <div className={styles.acpSessionItemTitle}>{s.title || t('sessionList.defaultSessionTitle')}</div>
-                    <div className={styles.acpSessionItemMeta}>{formatTime(s.updatedAt)}</div>
-                  </div>
-                  <button
-                    className={styles.acpSessionItemDelete}
-                    onClick={(e) => { e.stopPropagation(); closeSession(s.id); }}
-                    aria-label={t('sessionList.closeSession')}
-                    title={t('sessionList.closeSession')}
-                  >
-                    &#x2715;
-                  </button>
-                </div>
+                  session={s}
+                  isActive={activeSessionId === s.id}
+                  onSelect={selectSession}
+                  onClose={closeSession}
+                  formatTime={formatTime}
+                />
               ))}
             </div>
           );

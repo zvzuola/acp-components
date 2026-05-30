@@ -46,6 +46,8 @@ export const enUS = {
   'sessionList.defaultSessionTitle': 'New Session',
   'sessionList.emptyState': 'No sessions yet. Click + to start.',
   'sessionList.loadMore': 'Load more',
+  'sessionList.statusRunning': 'Running',
+  'sessionList.statusNeedsAction': 'Needs action',
 
   // Time
   'time.justNow': 'Just now',

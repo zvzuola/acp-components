@@ -90,6 +90,28 @@
     flex-shrink: 0;
     font-size: 14px;
     opacity: 0.7;
+
+    &--running {
+      opacity: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    &--needs-action {
+      color: var(--acp-color-warning);
+      opacity: 1;
+      font-weight: bold;
+    }
+  }
+
+  &__spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--acp-color-border-subtle);
+    border-top-color: var(--acp-color-success);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
   }
 
   &__content {
@@ -140,6 +162,15 @@
   &__name {
     font-weight: 600;
     color: var(--acp-color-text-primary);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 
