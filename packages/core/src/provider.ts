@@ -33,6 +33,36 @@ export interface MultiAgentProviderInstance {
 }
 
 function setupSessionUpdateHandler(client: AcpClient): () => void {
+  // 追踪每个 session+role 的当前 messageId
+  // 只有连续的同类型 chunk 才复用，中间插入其他类型消息时清除缓存
+  const lastMsgIdBySession = new Map<string, Record<string, string>>();
+
+  function resolveMsgId(sessionId: string, role: string, messageId?: string): string {
+    // 如果 chunk 自带 messageId，直接使用并更新缓存
+    if (messageId) {
+      if (!lastMsgIdBySession.has(sessionId)) lastMsgIdBySession.set(sessionId, {});
+      lastMsgIdBySession.get(sessionId)![role] = messageId;
+      return messageId;
+    }
+
+    // 尝试从缓存复用
+    const tracked = lastMsgIdBySession.get(sessionId)?.[role];
+    if (tracked) return tracked;
+
+    // 缓存中没有，生成新 ID 并缓存
+    const newId = generateMsgId();
+    if (!lastMsgIdBySession.has(sessionId)) lastMsgIdBySession.set(sessionId, {});
+    lastMsgIdBySession.get(sessionId)![role] = newId;
+    return newId;
+  }
+
+  function clearMsgIdCache(sessionId: string, ...roles: string[]) {
+    const cache = lastMsgIdBySession.get(sessionId);
+    if (!cache) return;
+    for (const role of roles) delete cache[role];
+    if (Object.keys(cache).length === 0) lastMsgIdBySession.delete(sessionId);
+  }
+
   return client.onSessionUpdate((notification) => {
     const { sessionId, update } = notification;
     const store = sessionStore.getState();
@@ -40,20 +70,32 @@ function setupSessionUpdateHandler(client: AcpClient): () => void {
 
     switch (update.sessionUpdate) {
       case 'agent_message_chunk':
-      case 'user_message_chunk':
+        // agent 消息打断 user/thought 的连续性
+        clearMsgIdCache(sessionId, 'user', 'thought');
         if ('content' in update && update.content) {
-          const msgId = (update as { messageId?: string }).messageId || generateMsgId();
-          const role = update.sessionUpdate === 'user_message_chunk' ? 'user' as const : 'agent' as const;
-          store.appendContent(sessionId, msgId, role, update.content);
+          const msgId = resolveMsgId(sessionId, 'agent', (update as { messageId?: string }).messageId);
+          store.appendContent(sessionId, msgId, 'agent', update.content);
+        }
+        break;
+      case 'user_message_chunk':
+        // user 消息打断 agent/thought 的连续性
+        clearMsgIdCache(sessionId, 'agent', 'thought');
+        if ('content' in update && update.content) {
+          const msgId = resolveMsgId(sessionId, 'user', (update as { messageId?: string }).messageId);
+          store.appendContent(sessionId, msgId, 'user', update.content);
         }
         break;
       case 'agent_thought_chunk':
+        // thought 消息打断 user/agent 的连续性
+        clearMsgIdCache(sessionId, 'user', 'agent');
         if ('content' in update && update.content) {
-          const msgId = (update as { messageId?: string }).messageId || generateMsgId();
+          const msgId = resolveMsgId(sessionId, 'thought', (update as { messageId?: string }).messageId);
           store.appendThought(sessionId, msgId, 'agent', update.content);
         }
         break;
       case 'tool_call':
+        // 打断所有角色的连续性
+        clearMsgIdCache(sessionId, 'user', 'agent', 'thought');
         store.upsertToolCall(sessionId, {
           toolCallId: update.toolCallId,
           title: update.title,
@@ -65,19 +107,24 @@ function setupSessionUpdateHandler(client: AcpClient): () => void {
           rawOutput: update.rawOutput,
         });
         break;
-      case 'tool_call_update': {
-        const updateData: Record<string, unknown> = {};
-        if (update.content !== undefined) updateData['content'] = update.content;
-        if (update.status !== undefined) updateData['status'] = update.status;
-        if (update.rawOutput !== undefined) updateData['rawOutput'] = update.rawOutput;
-        if (update.title !== undefined) updateData['title'] = update.title;
-        if (update.locations !== undefined) updateData['locations'] = update.locations;
-        if (update.kind !== undefined) updateData['kind'] = update.kind;
-        if (update.rawInput !== undefined) updateData['rawInput'] = update.rawInput;
-        store.updateToolCall(sessionId, update.toolCallId, updateData as Partial<ToolCallState>);
+      case 'tool_call_update':
+        // 打断所有角色的连续性
+        clearMsgIdCache(sessionId, 'user', 'agent', 'thought');
+        {
+          const updateData: Record<string, unknown> = {};
+          if (update.content !== undefined) updateData['content'] = update.content;
+          if (update.status !== undefined) updateData['status'] = update.status;
+          if (update.rawOutput !== undefined) updateData['rawOutput'] = update.rawOutput;
+          if (update.title) updateData['title'] = update.title;
+          if (update.locations !== undefined) updateData['locations'] = update.locations;
+          if (update.kind !== undefined) updateData['kind'] = update.kind;
+          if (update.rawInput !== undefined) updateData['rawInput'] = update.rawInput;
+          store.updateToolCall(sessionId, update.toolCallId, updateData as Partial<ToolCallState>);
+        }
         break;
-      }
       case 'plan':
+        // 打断所有角色的连续性
+        clearMsgIdCache(sessionId, 'user', 'agent', 'thought');
         store.setPlan(sessionId, update.entries);
         break;
       case 'session_info_update': {
@@ -294,7 +341,7 @@ export function createAcpProvider({ agents, onFileRead, onFileWrite, onTerminal,
         if (res.nextCursor) {
           acpStore.getState().appendSessions([], agentId, cwd, res.nextCursor);
         }
-      }).catch(() => {});
+      }).catch(() => { });
     }
   });
 

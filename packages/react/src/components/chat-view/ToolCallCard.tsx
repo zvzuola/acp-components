@@ -89,7 +89,7 @@ export function ToolCallCard({ toolCall, onNavigate }: ToolCallCardProps) {
           &#x25b6;
         </span>
       </button>
-      {hasLocations && (
+      {expanded && hasLocations && (
         <div className={styles.acpToolCallLocations}>
           {toolCall.locations!.map((loc, i) => (
             <LocationChip key={`${loc.path}:${loc.line ?? ''}-${i}`} loc={loc} onNavigate={onNavigate} />
