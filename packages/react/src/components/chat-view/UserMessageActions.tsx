@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { CopyOutlined, CheckOutlined, EditOutlined } from '@ant-design/icons';
 import { useI18n } from '../../i18n';
 import styles from './user-message.module.scss';
 
@@ -38,7 +39,7 @@ export function UserMessageActions({ textContent, onEdit }: UserMessageActionsPr
         aria-label={t('userMessage.copy')}
         title={t('userMessage.copy')}
       >
-        {copied ? '✓' : '⎘'}
+        {copied ? <CheckOutlined /> : <CopyOutlined />}
       </button>
       <button
         className={styles.acpUserMessageActionBtn}
@@ -46,7 +47,7 @@ export function UserMessageActions({ textContent, onEdit }: UserMessageActionsPr
         aria-label={t('userMessage.edit')}
         title={t('userMessage.edit')}
       >
-        {'✎'}
+        <EditOutlined />
       </button>
     </div>
   );

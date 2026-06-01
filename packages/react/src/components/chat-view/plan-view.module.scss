@@ -34,6 +34,9 @@
   }
 
   &__chevron {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: var(--acp-color-text-muted);
     font-size: 10px;
     transition: transform var(--acp-duration-fast) var(--acp-ease-spring);

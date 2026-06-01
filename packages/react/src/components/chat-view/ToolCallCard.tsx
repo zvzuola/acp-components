@@ -1,4 +1,17 @@
 import React, { useMemo, useState } from 'react';
+import {
+  FileTextOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  InboxOutlined,
+  SearchOutlined,
+  ThunderboltOutlined,
+  BulbOutlined,
+  GlobalOutlined,
+  SyncOutlined,
+  ToolOutlined,
+  RightOutlined,
+} from '@ant-design/icons';
 import { useStore } from 'zustand/react';
 import type { ToolCallState, TerminalState } from '@acp-components/core';
 import { sessionStore } from '@acp-components/core';
@@ -20,16 +33,16 @@ const statusClass: Record<string, string> = {
   failed: styles.acpToolCallStatusFailed,
 };
 
-const kindIcon: Record<string, string> = {
-  read: '📄',
-  edit: '✏️',
-  delete: '🗑️',
-  move: '📦',
-  search: '🔍',
-  execute: '⚡',
-  think: '💭',
-  fetch: '🌐',
-  switch_mode: '🔄',
+const kindIcon: Record<string, React.ReactNode> = {
+  read: <FileTextOutlined />,
+  edit: <EditOutlined />,
+  delete: <DeleteOutlined />,
+  move: <InboxOutlined />,
+  search: <SearchOutlined />,
+  execute: <ThunderboltOutlined />,
+  think: <BulbOutlined />,
+  fetch: <GlobalOutlined />,
+  switch_mode: <SyncOutlined />,
 };
 
 function LocationChip({ loc, onNavigate }: { loc: ToolCallLocation; onNavigate?: ToolCallCardProps['onNavigate'] }) {
@@ -55,7 +68,7 @@ function LocationChip({ loc, onNavigate }: { loc: ToolCallLocation; onNavigate?:
         }
       }}
     >
-      <span className={styles.acpToolCallLocationIcon}>&#x1f4c4;</span>
+      <span className={styles.acpToolCallLocationIcon}><FileTextOutlined /></span>
       <span className={styles.acpToolCallLocationPath}>
         {basename}
         {loc.line != null && <span className={styles.acpToolCallLocationLine}>:{loc.line}</span>}
@@ -81,12 +94,12 @@ export function ToolCallCard({ toolCall, onNavigate }: ToolCallCardProps) {
         <span className={`${styles.acpToolCallStatus} ${statusClass[String(toolCall.status)] || ''}`} />
         {toolCall.kind && (
           <span className={styles.acpToolCallKind} title={toolCall.kind}>
-            {kindIcon[toolCall.kind] || '🔧'}
+            {kindIcon[toolCall.kind] || <ToolOutlined />}
           </span>
         )}
         <span className={styles.acpToolCallName}>{toolCall.title}</span>
         <span className={`${styles.acpToolCallChevron}${expanded ? ` ${styles.acpToolCallChevronOpen}` : ''}`}>
-          &#x25b6;
+          <RightOutlined />
         </span>
       </button>
       {expanded && hasLocations && (

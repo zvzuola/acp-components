@@ -1,4 +1,11 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import {
+  FileTextOutlined,
+  CloseOutlined,
+  PaperClipOutlined,
+  PauseOutlined,
+  ArrowUpOutlined,
+} from '@ant-design/icons';
 import { usePrompt } from '../../hooks/usePrompt';
 import { useAcpStore } from '../../hooks/useAcpStore';
 import type { SessionId, ContentBlock, AvailableCommand, PromptCapabilities } from '@agentclientprotocol/sdk';
@@ -327,7 +334,7 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands, editTe
                   {af.previewUrl ? (
                     <img src={af.previewUrl} alt={af.file.name} className={styles.acpChatComposerFileThumb} />
                   ) : (
-                    <span className={styles.acpChatComposerFileThumb}>&#x1f4c4;</span>
+                    <span className={styles.acpChatComposerFileThumb}><FileTextOutlined /></span>
                   )}
                   <span className={styles.acpChatComposerFileName}>{af.file.name}</span>
                   <span className={styles.acpChatComposerFileSize}>{formatFileSize(af.file.size)}</span>
@@ -336,7 +343,7 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands, editTe
                     onClick={() => handleRemoveFile(i)}
                     aria-label={t('composer.removeFileAriaLabel')}
                   >
-                    &#x2715;
+                    <CloseOutlined />
                   </button>
                 </div>
               ))}
@@ -373,7 +380,7 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands, editTe
               aria-label={t('composer.attachFileAriaLabel')}
               title={t('composer.attachFile')}
             >
-              &#x1f4ce;
+              <PaperClipOutlined />
             </button>
             {isStreaming ? (
               <button
@@ -382,7 +389,7 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands, editTe
                 aria-label={t('composer.cancelAriaLabel')}
                 title={t('composer.cancel')}
               >
-                &#x25a0;
+                <PauseOutlined />
               </button>
             ) : (
               <button
@@ -392,7 +399,7 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands, editTe
                 aria-label={t('composer.sendAriaLabel')}
                 title={t('composer.send')}
               >
-                &#x2191;
+                <ArrowUpOutlined />
               </button>
             )}
           </div>

@@ -282,10 +282,6 @@
   color: var(--acp-color-text-muted);
   transition: transform var(--acp-duration-fast) var(--acp-ease-out);
 
-  &::before {
-    content: '\25B6'; /* ▶ right triangle */
-  }
-
   &--expanded {
     transform: rotate(90deg);
   }

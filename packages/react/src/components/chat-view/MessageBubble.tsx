@@ -1,4 +1,5 @@
 import React from 'react';
+import { FileTextOutlined, LinkOutlined } from '@ant-design/icons';
 import type { Message, MessagePart } from '@acp-components/core';
 import type { ContentBlock } from '@agentclientprotocol/sdk';
 import { useI18n } from '../../i18n';
@@ -25,7 +26,7 @@ function renderContent(content: ContentBlock) {
       const fileName = decodeURIComponent(rawName);
       return (
         <div className={styles.acpMessageBubbleResource}>
-          <span>&#x1f4c4;</span>
+          <span><FileTextOutlined /></span>
           <div>
             <div className={styles.acpMessageBubbleResourceName}>{fileName}</div>
           </div>
@@ -35,7 +36,7 @@ function renderContent(content: ContentBlock) {
       const link = content as { uri: string; name: string };
       return (
         <div className={styles.acpMessageBubbleResource}>
-          <span>&#x1f517;</span>
+          <span><LinkOutlined /></span>
           <span className={styles.acpMessageBubbleResourceName}>{link.name || link.uri}</span>
         </div>
       );

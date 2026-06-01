@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { RightOutlined } from '@ant-design/icons';
 import type { ContentBlock } from '@agentclientprotocol/sdk';
 import { Markdown } from '../markdown';
 import { useI18n } from '../../i18n';
@@ -47,7 +48,7 @@ export function ThoughtView({ thought, isStreaming }: ThoughtViewProps) {
         aria-expanded={expanded}
       >
         <span className={`${styles.acpThoughtViewChevron}${expanded ? ` ${styles.acpThoughtViewChevronOpen}` : ''}`}>
-          &#x25b6;
+          <RightOutlined />
         </span>
         <span className={styles.acpThoughtViewLabel}>
           {isStreaming ? t('thought.thinking') : t('thought.title')}

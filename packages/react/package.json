@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@acp-components/core": "workspace:*",
+    "@ant-design/icons": "^6.2.5",
     "i18next": "^26.1.0",
     "react-i18next": "^17.0.7",
     "react-markdown": "^10.1.0",

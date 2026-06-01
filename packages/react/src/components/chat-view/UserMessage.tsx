@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { FileTextOutlined, LinkOutlined } from '@ant-design/icons';
 import type { Message } from '@acp-components/core';
 import type { ContentBlock } from '@agentclientprotocol/sdk';
 import { useI18n } from '../../i18n';
@@ -56,7 +57,7 @@ function renderAttachment(block: ContentBlock) {
       const fileName = decodeURIComponent(rawName);
       return (
         <div key={res.resource.uri} className={styles.acpUserMessageAttachment}>
-          <span>{'📄'}</span>
+          <span><FileTextOutlined /></span>
           <span>{fileName}</span>
         </div>
       );
@@ -65,7 +66,7 @@ function renderAttachment(block: ContentBlock) {
       const link = block as { uri: string; name: string };
       return (
         <div key={link.uri} className={styles.acpUserMessageAttachment}>
-          <span>{'🔗'}</span>
+          <span><LinkOutlined /></span>
           <span>{link.name || link.uri}</span>
         </div>
       );

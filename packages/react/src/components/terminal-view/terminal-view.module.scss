@@ -121,7 +121,10 @@
 
   &__chevron {
     flex-shrink: 0;
-    font-size: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
     color: var(--acp-color-text-muted);
   }
 

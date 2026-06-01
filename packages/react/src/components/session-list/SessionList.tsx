@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { CloseOutlined, MessageOutlined, FolderOutlined, PlusOutlined, RightOutlined } from '@ant-design/icons';
 import { useStore } from 'zustand/react';
 import { sessionStore } from '@acp-components/core';
 import { useSessions } from '../../hooks/useSessions';
@@ -80,7 +81,7 @@ function SessionItem({ session, isActive }: {
       aria-selected={isActive}
     >
       <span className={`${styles.acpSessionItemIcon}${status ? ` ${styles[`acpSessionItemIcon${status === 'running' ? 'Running' : 'NeedsAction'}`]}` : ''}`} title={status ? (status === 'running' ? t('sessionList.statusRunning') : t('sessionList.statusNeedsAction')) : undefined}>
-        {status === 'running' ? <span className={styles.acpSessionItemSpinner} /> : status === 'needs-action' ? '!' : '\u{1F4AC}'}
+        {status === 'running' ? <span className={styles.acpSessionItemSpinner} /> : status === 'needs-action' ? '!' : <MessageOutlined />}
       </span>
       <div className={styles.acpSessionItemContent}>
         <div className={styles.acpSessionItemTitle}>
@@ -94,7 +95,7 @@ function SessionItem({ session, isActive }: {
         aria-label={t('sessionList.closeSession')}
         title={t('sessionList.closeSession')}
       >
-        &#x2715;
+        <CloseOutlined />
       </button>
     </div>
   );
@@ -150,7 +151,7 @@ function AgentGroup({ agentId, agentName, agentStatus, sessions, cwd }: {
           role="button"
           tabIndex={0}
         >
-          <span className={`${styles.acpSessionGroupChevron}${collapsed ? '' : ` ${styles.acpSessionGroupChevronExpanded}`}`} />
+          <span className={`${styles.acpSessionGroupChevron}${collapsed ? '' : ` ${styles.acpSessionGroupChevronExpanded}`}`}><RightOutlined /></span>
           <span className={`${styles.acpSessionAgentHeaderDot} ${agentDotClass[agentStatus] || ''}`} />
           {agentName}
         </span>
@@ -167,7 +168,7 @@ function AgentGroup({ agentId, agentName, agentStatus, sessions, cwd }: {
           aria-label={t('sessionList.newSession')}
           title={t('sessionList.newSession')}
         >
-          +
+          <PlusOutlined />
         </button>
       </div>
       {!collapsed && (
@@ -236,8 +237,8 @@ function WorkspaceGroup({ cwd, workspace, isWorkspaceActive }: {
         title={cwd}
       >
         <span className={styles.acpSessionWorkspaceHeaderLeft}>
-          <span className={`${styles.acpSessionGroupChevron}${collapsed ? '' : ` ${styles.acpSessionGroupChevronExpanded}`}`} />
-          <span className={styles.acpSessionWorkspaceHeaderFolder}>{'\u{1F4C1}'}</span>
+          <span className={`${styles.acpSessionGroupChevron}${collapsed ? '' : ` ${styles.acpSessionGroupChevronExpanded}`}`}><RightOutlined /></span>
+          <span className={styles.acpSessionWorkspaceHeaderFolder}><FolderOutlined /></span>
           <span className={styles.acpSessionWorkspaceHeaderName}>{getWorkspaceName(cwd)}</span>
         </span>
         {sessionCount > 0 && (
@@ -347,7 +348,7 @@ export function SessionList({ onBrowse }: SessionListProps) {
             aria-label={t('sessionList.addWorkspace')}
             title={t('sessionList.addWorkspace')}
           >
-            +
+            <PlusOutlined />
           </button>
         )}
       </div>

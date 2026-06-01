@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { RightOutlined, DownOutlined } from '@ant-design/icons';
 import type { SessionId, TerminalState } from '@acp-components/core';
 import { useTerminals } from '../../hooks/useTerminals';
 import { useI18n } from '../../i18n';
@@ -68,7 +69,7 @@ function TerminalItem({ terminal, t }: { terminal: TerminalState; t: (key: strin
           <span className={styles.acpTerminalItemLabel}>{t('terminal.command')}</span>
           {terminal.command}{terminal.args ? ` ${terminal.args.join(' ')}` : ''}
         </span>
-        <span className={styles.acpTerminalChevron}>{collapsed ? '▶' : '▼'}</span>
+        <span className={styles.acpTerminalChevron}>{collapsed ? <RightOutlined /> : <DownOutlined />}</span>
       </button>
       {!collapsed && (
         <pre className={styles.acpTerminalItemOutput}>

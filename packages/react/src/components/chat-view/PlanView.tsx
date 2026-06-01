@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { CheckCircleOutlined, SyncOutlined, CheckCircleFilled, RightOutlined } from '@ant-design/icons';
 import type { PlanEntry } from '@agentclientprotocol/sdk';
 import { useI18n } from '../../i18n';
 import styles from './plan-view.module.scss';
@@ -8,10 +9,10 @@ export interface PlanViewProps {
   isStreaming: boolean;
 }
 
-const statusIcon: Record<string, string> = {
-  pending: '○',
-  in_progress: '◐',
-  completed: '◉',
+const statusIcon: Record<string, React.ReactNode> = {
+  pending: <CheckCircleOutlined />,
+  in_progress: <SyncOutlined spin />,
+  completed: <CheckCircleFilled />,
 };
 
 const statusClass: Record<string, string> = {
@@ -53,7 +54,7 @@ export function PlanView({ entries, isStreaming }: PlanViewProps) {
         aria-expanded={expanded}
       >
         <span className={`${styles.acpPlanViewChevron}${expanded ? ` ${styles.acpPlanViewChevronOpen}` : ''}`}>
-          &#x25b6;
+          <RightOutlined />
         </span>
         <span className={styles.acpPlanViewLabel}>
           {isStreaming ? t('plan.planning') : t('plan.title')}
