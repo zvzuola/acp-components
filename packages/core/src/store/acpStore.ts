@@ -6,7 +6,7 @@ interface PendingAuth {
   agentId: string;
 }
 
-function findWorkspaceBySession(
+export function findWorkspaceBySession(
   workspaces: Map<string, WorkspaceState>,
   sessionId: SessionId,
 ): string | null {
@@ -17,18 +17,17 @@ function findWorkspaceBySession(
 }
 
 function createWorkspace(cwd: string): WorkspaceState {
-  return { cwd, activeSessionId: null, sessions: new Map(), sessionListCursors: new Map() };
+  return { cwd, sessions: new Map(), sessionListCursors: new Map() };
 }
 
 interface AcpStoreState {
   agents: Map<string, AgentConnection>;
   workspaces: Map<string, WorkspaceState>;
-  activeWorkspaceCwd: string | null;
+  activeSessionId: SessionId | null;
   pendingAuth: PendingAuth | null;
 
   addWorkspace: (cwd: string) => void;
   removeWorkspace: (cwd: string) => void;
-  setActiveWorkspace: (cwd: string) => void;
 
   addAgent: (agent: AgentConnection) => void;
   removeAgent: (id: string) => void;
@@ -48,7 +47,7 @@ interface AcpStoreState {
 export const acpStore = createStore<AcpStoreState>((set) => ({
   agents: new Map(),
   workspaces: new Map(),
-  activeWorkspaceCwd: null,
+  activeSessionId: null,
   pendingAuth: null,
 
   // --- Workspace management ---
@@ -63,36 +62,22 @@ export const acpStore = createStore<AcpStoreState>((set) => ({
 
   removeWorkspace: (cwd) =>
     set((state) => {
+      const ws = state.workspaces.get(cwd);
+      if (!ws) return state;
+
+      // If the global active session belongs to this workspace, clear it
+      let activeSessionId = state.activeSessionId;
+      if (activeSessionId && ws.sessions.has(activeSessionId)) {
+        activeSessionId = null;
+      }
+
       const next = new Map(state.workspaces);
       next.delete(cwd);
-      if (state.activeWorkspaceCwd !== cwd) {
-        return { workspaces: next };
-      }
-      const remaining = Array.from(next.keys());
-      if (remaining.length > 0) {
-        const first = remaining[0];
-        return {
-          workspaces: next,
-          activeWorkspaceCwd: first,
-        };
-      }
-      return {
-        workspaces: next,
-        activeWorkspaceCwd: null,
-      };
-    }),
 
-  setActiveWorkspace: (cwd) =>
-    set((state) => {
-      if (state.activeWorkspaceCwd === cwd) return state;
-      const next = new Map(state.workspaces);
-      if (!next.has(cwd)) {
-        next.set(cwd, createWorkspace(cwd));
+      if (activeSessionId !== state.activeSessionId) {
+        return { workspaces: next, activeSessionId: null };
       }
-      return {
-        workspaces: next,
-        activeWorkspaceCwd: cwd,
-      };
+      return { workspaces: next };
     }),
 
   // --- Agent management ---
@@ -120,16 +105,27 @@ export const acpStore = createStore<AcpStoreState>((set) => ({
           }
         }
         if (changed) {
-          let activeId = ws.activeSessionId;
-          if (activeId && !nextSessions.has(activeId)) {
-            activeId = null;
-          }
-          nextWorkspaces.set(cwd, { ...ws, sessions: nextSessions, activeSessionId: activeId });
+          nextWorkspaces.set(cwd, { ...ws, sessions: nextSessions });
         }
       }
+
+      // If the global active session was removed, clear it
+      let activeSessionId = state.activeSessionId;
+      if (activeSessionId) {
+        let found = false;
+        for (const [, ws] of nextWorkspaces) {
+          if (ws.sessions.has(activeSessionId)) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) activeSessionId = null;
+      }
+
       return {
         agents: next,
         workspaces: nextWorkspaces,
+        ...(activeSessionId !== state.activeSessionId ? { activeSessionId: null } : {}),
       };
     }),
 
@@ -214,11 +210,11 @@ export const acpStore = createStore<AcpStoreState>((set) => ({
       const ws = next.get(cwd)!;
       const nextSessions = new Map(ws.sessions);
       nextSessions.delete(id);
-      next.set(cwd, {
-        ...ws,
-        sessions: nextSessions,
-        activeSessionId: ws.activeSessionId === id ? null : ws.activeSessionId,
-      });
+      next.set(cwd, { ...ws, sessions: nextSessions });
+
+      if (state.activeSessionId === id) {
+        return { workspaces: next, activeSessionId: null };
+      }
       return { workspaces: next };
     }),
 
@@ -238,23 +234,17 @@ export const acpStore = createStore<AcpStoreState>((set) => ({
 
   setActiveSession: (id) =>
     set((state) => {
+      if (state.activeSessionId === id) return state;
+
       if (id === null) {
-        if (!state.activeWorkspaceCwd) return state;
-        const next = new Map(state.workspaces);
-        const ws = next.get(state.activeWorkspaceCwd);
-        if (!ws || ws.activeSessionId === null) return state;
-        next.set(state.activeWorkspaceCwd, { ...ws, activeSessionId: null });
-        return { workspaces: next };
+        return { activeSessionId: null };
       }
+
+      // Validate session exists in some workspace
       const cwd = findWorkspaceBySession(state.workspaces, id);
       if (!cwd) return state;
-      const next = new Map(state.workspaces);
-      const ws = next.get(cwd);
-      if (ws && ws.activeSessionId === id) return state;
-      if (ws) {
-        next.set(cwd, { ...ws, activeSessionId: id });
-      }
-      return { workspaces: next };
+
+      return { activeSessionId: id };
     }),
 
   setAuthRequired: (agentId) => set({ pendingAuth: { agentId } }),

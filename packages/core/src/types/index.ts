@@ -84,7 +84,6 @@ export interface AgentConnection {
 export interface WorkspaceState {
   cwd: string;
   label?: string;
-  activeSessionId: SessionId | null;
   sessions: Map<SessionId, SessionMeta>;
   sessionListCursors: Map<string, string>;
 }

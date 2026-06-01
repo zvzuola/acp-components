@@ -49,7 +49,7 @@ flowchart TB
 
 | Store | 负责内容 |
 | --- | --- |
-| `acpStore` | 所有 Agent 连接状态（`agents: Map`）、工作区状态（`workspaces: Map<cwd, WorkspaceState>`）、各工作区的会话列表及当前活跃会话、当前活跃工作区 |
+| `acpStore` | 所有 Agent 连接状态（`agents: Map`）、工作区状态（`workspaces: Map<cwd, WorkspaceState>`）、各工作区的会话列表、全局活跃会话（`activeSessionId`） |
 | `sessionStore` | 单会话消息、流式状态、工具调用、权限队列、计划、用量、配置项、命令 |
 
 `acpStore` 采用两级嵌套结构：
@@ -62,13 +62,12 @@ acpStore
 ├── workspaces: Map<cwd, WorkspaceState>      # 所有工作区
 │   ├── "/proj/app" → {
 │   │   sessions: Map<SessionId, SessionMeta>, # 该工作区下各 Agent 的会话
-│   │   activeSessionId: string | null
 │   │ }
 │   └── "/proj/lib" → { ... }
-└── activeWorkspaceCwd: string | null         # 当前活跃工作区
+└── activeSessionId: SessionId | null         # 全局活跃会话（工作区通过 SessionMeta.cwd 反查）
 ```
 
-这样可以让导航状态和高频会话状态分离，也方便未来接入 Vue / Svelte / Solid 等非 React 适配层。
+活跃工作区由 `activeSessionId` 反查 `SessionMeta.cwd` 得到，不再维护独立的 `activeWorkspaceCwd` 字段。这样可以让导航状态和高频会话状态分离，也方便未来接入 Vue / Svelte / Solid 等非 React 适配层。
 
 ## 4. 核心接口
 
@@ -147,7 +146,7 @@ Agent 推送的 `sessionUpdate` 统一在 core provider 层转换为 store actio
 
 ### 5.1 SessionList 按 Agent 分组
 
-SessionList 从 `acpStore` 获取当前活跃工作区的会话，按 `agentId` 分组渲染。每个 Agent 组显示其连接状态（绿/黄/红点）、Agent 名称，以及该 Agent 下的会话列表。用户可对每个 Agent 创建新会话。
+SessionList 以树状结构展示所有工作区及其会话，每个工作区下按 `agentId` 分组。每个 Agent 组显示其连接状态（绿/黄/红点）、Agent 名称，以及该 Agent 下的会话列表。用户可对每个 Agent 创建新会话。活跃会话所在的工作区会自动高亮并展开。
 
 ## 6. 数据流
 

@@ -25,13 +25,6 @@ export const zhCN = {
   // Workbench
   'workbench.ariaLabel': 'ACP 工作台',
 
-  // ProjectOpener
-  'projectOpener.noProject': '未打开项目',
-  'projectOpener.placeholder': '/路径/到/项目',
-  'projectOpener.ariaLabel': '项目目录',
-  'projectOpener.browseAriaLabel': '浏览项目',
-  'projectOpener.browse': '浏览...',
-
   // PermissionDialog
   'permission.ariaLabel': '需要授权',
   'permission.title': '需要授权',
@@ -40,7 +33,7 @@ export const zhCN = {
   'permission.allow': '允许',
 
   // SessionList
-  'sessionList.title': '会话列表',
+  'sessionList.title': '工作区',
   'sessionList.newSession': '新建会话',
   'sessionList.closeSession': '关闭会话',
   'sessionList.defaultSessionTitle': '新会话',
@@ -48,6 +41,10 @@ export const zhCN = {
   'sessionList.loadMore': '加载更多',
   'sessionList.statusRunning': '运行中',
   'sessionList.statusNeedsAction': '待操作',
+  'sessionList.workspaceEmpty': '此工作区暂无会话',
+  'sessionList.addWorkspace': '添加工作区',
+  'sessionList.addWorkspacePlaceholder': '请输入工作区路径',
+  'sessionList.addWorkspaceAriaLabel': '工作区目录路径',
 
   // Time
   'time.justNow': '刚刚',

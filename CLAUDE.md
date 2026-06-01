@@ -61,8 +61,8 @@ Application Layer (Vite Demo / Tauri / Custom Apps)
 ```
 acpStore (global):
   agents: Map<agentId, AgentConnection>        — per-agent status, info, capabilities
-  workspaces: Map<cwd, WorkspaceState>          — per-workspace sessions + activeSessionId
-  activeWorkspaceCwd: string | null
+  workspaces: Map<cwd, WorkspaceState>          — per-workspace sessions
+  activeSessionId: SessionId | null             — global active session (workspace derived via SessionMeta.cwd)
 
 sessionStore (per-session, keyed by SessionId):
   messages[], isStreaming, pendingToolCalls (Map), stopReason,
@@ -72,6 +72,7 @@ sessionStore (per-session, keyed by SessionId):
 - **Agent** = independent ACP connection (transport + status + capabilities). Connected in parallel.
 - **Workspace** = directory (cwd). Holds sessions from multiple agents.
 - **Session** = belongs to workspace + agent pair (`SessionMeta.agentId` + `SessionMeta.cwd`).
+- **Active Workspace** = derived from `activeSessionId` by looking up `SessionMeta.cwd` in workspaces.
 
 ### Data Flow (Unidirectional)
 
@@ -100,7 +101,7 @@ SessionUpdate dispatch mapping (in `provider.ts:setupSessionUpdateHandler`):
 |------|------|
 | `packages/core/src/provider.ts` | `createAcpProvider()` — multi-agent lifecycle orchestrator, session update dispatch, auto-refresh on workspace switch |
 | `packages/core/src/client/AcpClient.ts` | Per-agent wrapper around `ClientSideConnection`. Owns transport lifecycle, handlers (permission/file/terminal), and ACP method calls |
-| `packages/core/src/store/acpStore.ts` | Global Zustand store: agents, workspaces (sessions per workspace), activeWorkspaceCwd |
+| `packages/core/src/store/acpStore.ts` | Global Zustand store: agents, workspaces (sessions per workspace), activeSessionId |
 | `packages/core/src/store/sessionStore.ts` | Per-session Zustand store: messages, streaming, tool calls, plan, usage, config, commands, terminal |
 | `packages/core/src/actions/` | `sessions.ts`, `prompt.ts`, `permission.ts` — imperative actions that route to the correct AcpClient via `clientRegistry` |
 | `packages/core/src/types/index.ts` | All shared types: `AgentConfig`, `TransportConfig`, `WorkspaceState`, `AgentConnection`, `PermissionRequest`, `TerminalState`, etc. |

@@ -26,11 +26,9 @@ export function AcpProvider({ agents, theme = 'dark', children, onFileRead, onFi
   const contextValue = useMemo(() => ({
     getClient: provider.getClient,
     agents: provider.agents,
-    activeWorkspaceCwd: provider.activeWorkspaceCwd,
     workspaces: provider.workspaces,
     addAgent: provider.addAgent,
     removeAgent: provider.removeAgent,
-    setActiveWorkspace: provider.setActiveWorkspace,
     addWorkspace: provider.addWorkspace,
     removeWorkspace: provider.removeWorkspace,
     isReady: provider.isReady,
@@ -39,7 +37,7 @@ export function AcpProvider({ agents, theme = 'dark', children, onFileRead, onFi
   // Sync defaultCwd to store once on mount
   React.useEffect(() => {
     if (defaultCwd) {
-      acpStore.getState().setActiveWorkspace(defaultCwd);
+      acpStore.getState().addWorkspace(defaultCwd);
     }
   }, [defaultCwd]);
 

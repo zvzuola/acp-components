@@ -3,7 +3,6 @@ import { useStore } from 'zustand/react';
 import { useShallow } from 'zustand/shallow';
 import { createAcpProvider, acpStore } from '@acp-components/core';
 import type { MultiAgentProviderOptions, MultiAgentProviderInstance, AgentConfig } from '@acp-components/core';
-import { useAcpStore } from './useAcpStore';
 
 export function useAcpProvider(options: MultiAgentProviderOptions) {
   const providerRef = useRef<MultiAgentProviderInstance | null>(null);
@@ -29,7 +28,6 @@ export function useAcpProvider(options: MultiAgentProviderOptions) {
 
   const agents = useStore(acpStore, useShallow((s) => Array.from(s.agents.values())));
   const workspaces = useStore(acpStore, useShallow((s) => Array.from(s.workspaces.values())));
-  const activeWorkspaceCwd = useAcpStore((s) => s.activeWorkspaceCwd);
 
   const getClient = useCallback((agentId: string) => {
     return providerRef.current?.getClient(agentId) ?? null;
@@ -41,10 +39,6 @@ export function useAcpProvider(options: MultiAgentProviderOptions) {
 
   const removeAgent = useCallback(async (agentId: string) => {
     await providerRef.current?.removeAgent(agentId);
-  }, []);
-
-  const setActiveWorkspace = useCallback((cwd: string) => {
-    acpStore.getState().setActiveWorkspace(cwd);
   }, []);
 
   const addWorkspace = useCallback((cwd: string) => {
@@ -59,10 +53,8 @@ export function useAcpProvider(options: MultiAgentProviderOptions) {
     getClient,
     agents,
     workspaces,
-    activeWorkspaceCwd,
     addAgent,
     removeAgent,
-    setActiveWorkspace,
     addWorkspace,
     removeWorkspace,
     isReady: ready,

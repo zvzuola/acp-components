@@ -4,12 +4,10 @@ import type { AcpClient, AgentConfig, AgentConnection, WorkspaceState } from '@a
 export interface AcpContextValue {
   getClient(agentId: string): AcpClient | null;
   agents: AgentConnection[];
-  activeWorkspaceCwd: string | null;
   workspaces: WorkspaceState[];
   addAgent(config: AgentConfig): Promise<void>;
   removeAgent(agentId: string): Promise<void>;
   isReady: boolean;
-  setActiveWorkspace: (cwd: string) => void;
   addWorkspace: (cwd: string) => void;
   removeWorkspace: (cwd: string) => void;
 }

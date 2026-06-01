@@ -25,13 +25,6 @@ export const enUS = {
   // Workbench
   'workbench.ariaLabel': 'ACP Workbench',
 
-  // ProjectOpener
-  'projectOpener.noProject': 'No project opened',
-  'projectOpener.placeholder': '/path/to/project',
-  'projectOpener.ariaLabel': 'Project directory',
-  'projectOpener.browseAriaLabel': 'Browse for project',
-  'projectOpener.browse': 'Browse...',
-
   // PermissionDialog
   'permission.ariaLabel': 'Permission required',
   'permission.title': 'Permission Required',
@@ -40,7 +33,7 @@ export const enUS = {
   'permission.allow': 'Allow',
 
   // SessionList
-  'sessionList.title': 'Sessions',
+  'sessionList.title': 'Workspaces',
   'sessionList.newSession': 'New session',
   'sessionList.closeSession': 'Close session',
   'sessionList.defaultSessionTitle': 'New Session',
@@ -48,6 +41,10 @@ export const enUS = {
   'sessionList.loadMore': 'Load more',
   'sessionList.statusRunning': 'Running',
   'sessionList.statusNeedsAction': 'Needs action',
+  'sessionList.workspaceEmpty': 'No sessions in this workspace',
+  'sessionList.addWorkspace': 'Add workspace',
+  'sessionList.addWorkspacePlaceholder': 'Enter workspace path',
+  'sessionList.addWorkspaceAriaLabel': 'Workspace directory path',
 
   // Time
   'time.justNow': 'Just now',

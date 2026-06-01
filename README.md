@@ -13,7 +13,7 @@ You can use the data layer alone to build UI component libraries with Vue, Svelt
 - **Multi-Workspace** — Organize sessions by working directory (cwd); switch between workspaces seamlessly
 - **Framework-Agnostic Core** — Zustand vanilla stores with zero React dependency; works with Vue, Svelte, Solid, or vanilla JS
 - **Multi-Transport** — Stdio, HTTP, WebSocket, and custom transports per agent; ships with a Tauri IPC transport example
-- **Rich UI Components** — Session list (grouped by agent), chat view (with round grouping), diff view, terminal view, permission dialog, plan view, thought view, command palette, workspace switcher, login dialog, and more — 15+ components
+- **Rich UI Components** — Workspace & session list (grouped by directory then agent), chat view (with round grouping), diff view, terminal view, permission dialog, plan view, thought view, command palette, login dialog, and more — 15+ components
 - **Streaming UX** — Real-time content and thought streaming with animated indicators, live tool call status, and token usage tracking
 - **Session Management** — Full CRUD: create, load, switch, and close sessions scoped by workspace and agent
 - **Tool Call Visualization** — Track agent tool invocations with status, input/output, file locations, and diffs
@@ -57,7 +57,6 @@ import {
   I18nProvider,
   AcpProvider,
   Workbench,
-  ProjectOpener,
   SessionList,
   ChatView,
   PermissionDialog,
@@ -66,10 +65,7 @@ import {
 import { useAcpStore } from '@acp-components/react';
 
 function App() {
-  const activeSessionId = useAcpStore((s) => {
-    if (!s.activeWorkspaceCwd) return null;
-    return s.workspaces.get(s.activeWorkspaceCwd)?.activeSessionId ?? null;
-  });
+  const activeSessionId = useAcpStore((s) => s.activeSessionId);
 
   return (
     <I18nProvider>
@@ -87,8 +83,7 @@ function App() {
         <Workbench
           sidebar={
             <>
-              <ProjectOpener />
-              <SessionList />
+              <SessionList onBrowse={async () => prompt('Enter workspace path:')} />
             </>
           }
           main={<ChatView sessionId={activeSessionId} />}
@@ -168,8 +163,7 @@ Each agent in the `agents` array gets its own transport configuration:
 |-----------|-------------|
 | `AcpProvider` | Top-level provider: connects to multiple agents in parallel, manages agent lifecycle, wires session updates to stores, renders a loading spinner until all agents are ready. Props: `agents`, `theme`, `defaultCwd`, `onFileRead`, `onFileWrite`, `onTerminal` |
 | `Workbench` | Three-panel layout (sidebar, main, panel) using CSS Grid |
-| `ProjectOpener` | Editable workspace directory display with dropdown to switch between active workspaces |
-| `SessionList` | Sidebar session list grouped by agent within the active workspace, with create / select / delete actions per agent |
+| `SessionList` | Sidebar workspace & session list: workspaces grouped by directory, sessions grouped by agent within each workspace, with add workspace / create / select / delete actions |
 | `ChatView` | Main chat area: groups messages into user/agent rounds, renders plan, usage bar, and config panel. Props: `sessionId`, `onNavigateFile` |
 | `MessageBubble` | Renders message parts (content blocks, thought blocks, tool calls) with Markdown via `react-markdown` |
 | `Markdown` | Reusable Markdown renderer with syntax-highlighted code blocks and GFM support |
@@ -194,7 +188,7 @@ Each agent in the `agents` array gets its own transport configuration:
 | `useAcpProvider(opts)` | Creates and manages the multi-agent ACP provider lifecycle (connect all agents → initialize → ready) |
 | `useAcpStore(selector)` | Subscribe to the global `acpStore` (Zustand vanilla store via `useSyncExternalStore`) |
 | `useSessionStore(sessionId, selector)` | Subscribe to per-session `sessionStore` |
-| `useSessions()` | Workspace-scoped session CRUD: list, create, select, close, refresh for the active workspace; returns `activeSessionId` |
+| `useSessions()` | Session CRUD: list all sessions across workspaces, create, select, close, refresh; returns global `activeSessionId` |
 | `useSession(sessionId)` | All data for one session: messages, streaming state, tool calls, permissions, plan, usage, config options, available commands |
 | `usePrompt(sessionId)` | `send(blocks)` and `cancel()` for sending / canceling prompts (auto-resolves the correct agent client) |
 | `useToolCalls(sessionId)` | Pending and completed tool calls for a session |
@@ -439,13 +433,10 @@ Control how agents read and write files:
 Programmatically manage workspaces:
 
 ```tsx
-const { addWorkspace, setActiveWorkspace, removeWorkspace, workspaces } = useAcpContext();
+const { addWorkspace, removeWorkspace, workspaces } = useAcpContext();
 
 // Add a workspace
 addWorkspace('/path/to/project');
-
-// Switch to it
-setActiveWorkspace('/path/to/project');
 
 // List all workspaces
 workspaces.forEach(ws => console.log(ws.cwd, ws.sessions.size));

@@ -1,6 +1,6 @@
 import type { SessionId } from '@agentclientprotocol/sdk';
 import type { AcpClient } from '../client/AcpClient';
-import { acpStore } from '../store/acpStore';
+import { acpStore, findWorkspaceBySession } from '../store/acpStore';
 import { sessionStore } from '../store/sessionStore';
 import type { SessionMeta } from '../types';
 
@@ -26,7 +26,7 @@ export async function loadSession(client: AcpClient, sessionId: SessionId, cwd: 
 
 export async function selectSession(client: AcpClient, sessionId: SessionId): Promise<void> {
   const acp = acpStore.getState();
-  const cwd = acp.activeWorkspaceCwd;
+  const cwd = findWorkspaceBySession(acp.workspaces, sessionId);
   if (!cwd) return;
   const ws = acp.workspaces.get(cwd);
   const meta = ws?.sessions.get(sessionId);

@@ -15,7 +15,7 @@
 - **多工作区支持** — 按工作目录（cwd）组织会话，可无缝切换工作区
 - **框架无关核心** — Zustand vanilla stores，零 React 依赖；支持 Vue、Svelte、Solid 或纯 JS
 - **多传输协议** — 每个 Agent 可独立配置 Stdio、HTTP、WebSocket 及自定义传输；附带 Tauri IPC 传输示例
-- **丰富的 UI 组件** — 会话列表（按 Agent 分组）、聊天视图（回合分组）、Diff 视图、终端视图、权限弹窗、计划视图、思考视图、命令面板、工作区切换器、登录弹窗等 15+ 组件
+- **丰富的 UI 组件** — 工作区与会话列表（按目录和 Agent 分组）、聊天视图（回合分组）、Diff 视图、终端视图、权限弹窗、计划视图、思考视图、命令面板、登录弹窗等 15+ 组件
 - **流式交互体验** — 实时内容与思考过程流式展示，动画指示器，工具调用状态跟踪，Token 用量统计
 - **会话管理** — 完整 CRUD：创建、加载、切换、关闭会话，按工作区和 Agent 维度管理
 - **工具调用可视化** — 追踪 Agent 工具调用，展示状态、输入/输出、文件定位和差异对比
@@ -59,7 +59,6 @@ import {
   I18nProvider,
   AcpProvider,
   Workbench,
-  ProjectOpener,
   SessionList,
   ChatView,
   PermissionDialog,
@@ -68,10 +67,7 @@ import {
 import { useAcpStore } from '@acp-components/react';
 
 function App() {
-  const activeSessionId = useAcpStore((s) => {
-    if (!s.activeWorkspaceCwd) return null;
-    return s.workspaces.get(s.activeWorkspaceCwd)?.activeSessionId ?? null;
-  });
+  const activeSessionId = useAcpStore((s) => s.activeSessionId);
 
   return (
     <I18nProvider>
@@ -89,8 +85,7 @@ function App() {
         <Workbench
           sidebar={
             <>
-              <ProjectOpener />
-              <SessionList />
+              <SessionList onBrowse={async () => prompt('输入工作区路径:')} />
             </>
           }
           main={<ChatView sessionId={activeSessionId} />}
@@ -170,8 +165,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
 |-----------|-------------|
 | `AcpProvider` | 顶层 Provider：并行连接多个 Agent，管理 Agent 生命周期，将会话更新分发到 stores，所有 Agent 就绪前显示加载动画。Props：`agents`、`theme`、`defaultCwd`、`onFileRead`、`onFileWrite`、`onTerminal` |
 | `Workbench` | 三栏布局（侧边栏、主区域、面板），基于 CSS Grid |
-| `ProjectOpener` | 可编辑的工作区目录展示，带下拉菜单用于切换活跃工作区 |
-| `SessionList` | 侧边栏会话列表，在当前工作区内按 Agent 分组展示，每个 Agent 有独立的创建/选择/删除操作 |
+| `SessionList` | 侧边栏工作区与会话列表：按工作区目录分组，工作区内按 Agent 分组展示会话，支持添加工作区/创建/选择/删除操作 |
 | `ChatView` | 主聊天区域：将消息分组为用户/Agent 回合，渲染计划、用量条和配置面板。Props：`sessionId`、`onNavigateFile` |
 | `MessageBubble` | 渲染消息内容（内容块、思考块、工具调用），通过 `react-markdown` 支持 Markdown |
 | `Markdown` | 可复用的 Markdown 渲染器，支持语法高亮代码块和 GFM |
@@ -196,7 +190,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
 | `useAcpProvider(opts)` | 创建并管理多 Agent 的 ACP provider 生命周期（连接所有 Agent → 初始化 → 就绪） |
 | `useAcpStore(selector)` | 订阅全局 `acpStore`（Zustand vanilla store，通过 `useSyncExternalStore`） |
 | `useSessionStore(sessionId, selector)` | 订阅单个会话的 `sessionStore` |
-| `useSessions()` | 当前工作区的会话 CRUD：列出、创建、选择、关闭、刷新；返回 `activeSessionId` |
+| `useSessions()` | 会话 CRUD：跨工作区列出所有会话、创建、选择、关闭、刷新；返回全局 `activeSessionId` |
 | `useSession(sessionId)` | 单个会话的全部数据：消息、流式状态、工具调用、权限、计划、用量、配置项、可用命令 |
 | `usePrompt(sessionId)` | 发送消息 `send(blocks)` 和取消 `cancel()`（自动路由到正确的 Agent client） |
 | `useToolCalls(sessionId)` | 某会话的等待中和已完成的工具调用 |
@@ -441,13 +435,10 @@ await removeAgent('new-agent');
 通过编程方式管理工作区：
 
 ```tsx
-const { addWorkspace, setActiveWorkspace, removeWorkspace, workspaces } = useAcpContext();
+const { addWorkspace, removeWorkspace, workspaces } = useAcpContext();
 
 // 添加工作区
 addWorkspace('/path/to/project');
-
-// 切换至该工作区
-setActiveWorkspace('/path/to/project');
 
 // 列出所有工作区
 workspaces.forEach(ws => console.log(ws.cwd, ws.sessions.size));

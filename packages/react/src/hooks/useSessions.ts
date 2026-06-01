@@ -17,17 +17,18 @@ import type { AcpClient, SessionMeta } from '@acp-components/core';
 
 export function useSessions() {
   const { getClient } = useAcpContext();
-  const activeWorkspaceCwd = useAcpStore((s) => s.activeWorkspaceCwd);
-  const workspaces = useAcpStore((s) => s.workspaces);
-  const activeSessionId = useAcpStore((s) =>
-    s.activeWorkspaceCwd ? s.workspaces.get(s.activeWorkspaceCwd)?.activeSessionId ?? null : null,
-  );
+  const activeSessionId = useAcpStore((s) => s.activeSessionId);
   const setActiveSession = useAcpStore((s) => s.setActiveSession);
 
   const sessions = useAcpStore(
     useShallow((s) => {
-      if (!s.activeWorkspaceCwd) return [] as SessionMeta[];
-      return Array.from(s.workspaces.get(s.activeWorkspaceCwd)?.sessions.values() ?? []);
+      const all: SessionMeta[] = [];
+      for (const ws of s.workspaces.values()) {
+        for (const meta of ws.sessions.values()) {
+          all.push(meta);
+        }
+      }
+      return all;
     }),
   );
 
@@ -35,11 +36,6 @@ export function useSessions() {
     const state = acpStore.getState();
     for (const [, ws] of state.workspaces) {
       const meta = ws.sessions.get(sessionId);
-      if (meta) return getClient(meta.agentId);
-    }
-    // Fallback: try current workspace
-    if (state.activeWorkspaceCwd) {
-      const meta = state.workspaces.get(state.activeWorkspaceCwd)?.sessions.get(sessionId);
       if (meta) return getClient(meta.agentId);
     }
     return null;
@@ -92,9 +88,13 @@ export function useSessions() {
 
   const sessionListCursors = useAcpStore(
     useShallow((s) => {
-      if (!s.activeWorkspaceCwd) return [];
-      const cursors = s.workspaces.get(s.activeWorkspaceCwd)?.sessionListCursors;
-      return cursors ? Array.from(cursors.keys()) : [];
+      const all: string[] = [];
+      for (const ws of s.workspaces.values()) {
+        for (const key of ws.sessionListCursors.keys()) {
+          if (!all.includes(key)) all.push(key);
+        }
+      }
+      return all;
     }),
   );
 

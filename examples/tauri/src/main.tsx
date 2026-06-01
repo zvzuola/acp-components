@@ -1,7 +1,6 @@
 import ReactDOM from 'react-dom/client';
 import { AcpProvider } from '@acp-components/react';
 import { Workbench } from '@acp-components/react';
-import { ProjectOpener } from '@acp-components/react';
 import { SessionList } from '@acp-components/react';
 import { ChatView } from '@acp-components/react';
 import { PermissionDialog } from '@acp-components/react';
@@ -69,9 +68,7 @@ const transportConfig = {
 const terminalHandler = new TauriTerminalHandler();
 
 function AppInner() {
-  const activeSessionId = useAcpStore((s) =>
-    s.activeWorkspaceCwd ? s.workspaces.get(s.activeWorkspaceCwd)?.activeSessionId ?? null : null,
-  );
+  const activeSessionId = useAcpStore((s) => s.activeSessionId);
 
   const handleBrowse = async () => {
     const { open } = await import('@tauri-apps/plugin-dialog');
@@ -83,9 +80,8 @@ function AppInner() {
       <Workbench
         sidebar={
           <>
-            <ProjectOpener onBrowse={handleBrowse} />
             <div style={{ flex: 1, overflow: "hidden" }}>
-              <SessionList />
+              <SessionList onBrowse={handleBrowse} />
             </div>
             <LocaleSwitcher />
           </>

@@ -1,7 +1,6 @@
 import ReactDOM from 'react-dom/client';
 import { AcpProvider } from '@acp-components/react';
 import { Workbench } from '@acp-components/react';
-import { ProjectOpener } from '@acp-components/react';
 import { SessionList } from '@acp-components/react';
 import { ChatView } from '@acp-components/react';
 import { PermissionDialog } from '@acp-components/react';
@@ -59,13 +58,10 @@ function LocaleSwitcher() {
 //   transport: { type: 'stdio', command: 'opencode', args: ['acp'] }
 
 function AppInner() {
-  const activeSessionId = useAcpStore((s) =>
-    s.activeWorkspaceCwd ? s.workspaces.get(s.activeWorkspaceCwd)?.activeSessionId ?? null : null,
-  );
-  const activeWorkspaceCwd = useAcpStore((s) => s.activeWorkspaceCwd);
+  const activeSessionId = useAcpStore((s) => s.activeSessionId);
 
   const handleBrowse = async () => {
-    const path = window.prompt('Enter project directory path:', activeWorkspaceCwd || '/path/to/project');
+    const path = window.prompt('Enter project directory path:', '/path/to/project');
     return path?.trim() || null;
   };
 
@@ -74,9 +70,8 @@ function AppInner() {
       <Workbench
         sidebar={
           <>
-            <ProjectOpener onBrowse={handleBrowse} />
             <div style={{ flex: 1, overflow: "hidden" }}>
-              <SessionList />
+              <SessionList onBrowse={handleBrowse} />
             </div>
             <LocaleSwitcher />
           </>

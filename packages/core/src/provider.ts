@@ -293,6 +293,33 @@ export function createAcpProvider({ agents, onFileRead, onFileWrite, onTerminal,
     for (const fn of listeners) fn();
   }
 
+  // Auto-refresh sessions when new workspaces are added
+  const knownCwds = new Set<string>();
+
+  function refreshWorkspaceSessions(cwd: string): void {
+    const ws = acpStore.getState().workspaces.get(cwd);
+    for (const [agentId, client] of scopedClientRegistry) {
+      if (!client.capabilities?.sessionCapabilities?.list) continue;
+      // Skip if this workspace already has sessions for this agent
+      if (ws) {
+        let hasSessions = false;
+        for (const s of ws.sessions.values()) {
+          if (s.agentId === agentId) {
+            hasSessions = true;
+            break;
+          }
+        }
+        if (hasSessions) continue;
+      }
+      client.listSessions(undefined, cwd).then((res) => {
+        acpStore.getState().setSessions(res.sessions, agentId, cwd);
+        if (res.nextCursor) {
+          acpStore.getState().appendSessions([], agentId, cwd, res.nextCursor);
+        }
+      }).catch(() => { });
+    }
+  }
+
   // Register all agents in store and connect them in parallel
   for (const config of agents) {
     acpStore.getState().addAgent({
@@ -314,34 +341,29 @@ export function createAcpProvider({ agents, onFileRead, onFileWrite, onTerminal,
   )).then(() => {
     ready = true;
     notify();
+    // Refresh sessions for all existing workspaces once agents are connected
+    for (const cwd of knownCwds) {
+      refreshWorkspaceSessions(cwd);
+    }
   }).catch((err) => {
     console.error('Error during agents connection:', err);
   });
 
-  // Auto-refresh sessions when workspace changes (skip if already loaded)
-  const unsubWorkspace = acpStore.subscribe((state, prev) => {
-    if (!state.activeWorkspaceCwd || state.activeWorkspaceCwd === prev.activeWorkspaceCwd) return;
-    const cwd = state.activeWorkspaceCwd;
-    const ws = state.workspaces.get(cwd);
-    for (const [agentId, client] of scopedClientRegistry) {
-      if (!client.capabilities?.sessionCapabilities?.list) continue;
-      // Skip if this workspace already has sessions for this agent
-      if (ws) {
-        let hasSessions = false;
-        for (const s of ws.sessions.values()) {
-          if (s.agentId === agentId) {
-            hasSessions = true;
-            break;
-          }
+  const unsubWorkspace = acpStore.subscribe((state) => {
+    // Detect newly added workspaces
+    for (const [cwd] of state.workspaces) {
+      if (!knownCwds.has(cwd)) {
+        knownCwds.add(cwd);
+        if (ready) {
+          refreshWorkspaceSessions(cwd);
         }
-        if (hasSessions) continue;
       }
-      client.listSessions(undefined, cwd).then((res) => {
-        acpStore.getState().setSessions(res.sessions, agentId, cwd);
-        if (res.nextCursor) {
-          acpStore.getState().appendSessions([], agentId, cwd, res.nextCursor);
-        }
-      }).catch(() => { });
+    }
+    // Detect removed workspaces
+    for (const cwd of knownCwds) {
+      if (!state.workspaces.has(cwd)) {
+        knownCwds.delete(cwd);
+      }
     }
   });
 
