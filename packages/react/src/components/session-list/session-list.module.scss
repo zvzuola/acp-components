@@ -1,52 +1,61 @@
+// =============================================================================
+// Session List — polished sidebar tree
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// Root container
+// ---------------------------------------------------------------------------
 .acp-session-list {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 10px;
+  overflow: hidden;
 
+  // -------------------------------------------------------------------------
+  // Header bar — title + add-workspace button
+  // -------------------------------------------------------------------------
   &__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 12px;
-    margin-bottom: 8px;
+    padding: 14px 14px 10px;
+    flex-shrink: 0;
   }
 
   &__title {
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
     color: var(--acp-color-text-muted);
+    user-select: none;
   }
 
   &__new-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
-    border: 1px solid var(--acp-color-border-subtle);
+    width: 26px;
+    height: 26px;
+    border: none;
     border-radius: var(--acp-radius-sm);
-    background: var(--acp-color-bg-tertiary);
-    color: var(--acp-color-text-secondary);
-    font-size: 16px;
+    background: transparent;
+    color: var(--acp-color-text-muted);
+    font-size: 14px;
     cursor: pointer;
     transition: background var(--acp-duration-fast) var(--acp-ease-out),
-                color var(--acp-duration-fast) var(--acp-ease-out),
-                border-color var(--acp-duration-fast) var(--acp-ease-out);
+                color var(--acp-duration-fast) var(--acp-ease-out);
 
     &:hover {
-      background: var(--acp-color-accent);
-      color: var(--acp-color-text-inverse);
-      border-color: var(--acp-color-accent);
+      background: var(--acp-color-bg-hover);
+      color: var(--acp-color-text-primary);
     }
   }
 
   &__input {
     flex: 1;
     font-size: 12px;
-    padding: 4px 8px;
+    padding: 5px 8px;
     border: 1px solid var(--acp-color-accent);
     border-radius: var(--acp-radius-sm);
     background: var(--acp-color-bg-input);
@@ -54,32 +63,66 @@
     outline: none;
     font-family: var(--acp-font-mono);
     min-width: 0;
+    margin-left: 4px;
 
     &::placeholder {
       color: var(--acp-color-text-muted);
     }
   }
 
+  // -------------------------------------------------------------------------
+  // Scrollable items area
+  // -------------------------------------------------------------------------
   &__items {
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    padding: 0 6px 8px;
+
+    // Thin, subtle scrollbar
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--acp-color-border);
+      border-radius: 2px;
+
+      &:hover {
+        background: var(--acp-color-text-muted);
+      }
+    }
   }
 
   &__empty-state {
-    padding: 16px;
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
     color: var(--acp-color-text-muted);
-    font-size: 13px;
+    font-size: 12px;
+    text-align: center;
+    line-height: 1.6;
+    gap: 8px;
+    user-select: none;
   }
 }
 
+// ---------------------------------------------------------------------------
+// Session item
+// ---------------------------------------------------------------------------
 .acp-session-item {
+  position: relative;
   display: flex;
   align-items: center;
-  padding: 9px 12px 9px 36px;
+  padding: 8px 8px 8px 32px;
   border-radius: var(--acp-radius-sm);
   cursor: pointer;
   border: none;
@@ -88,7 +131,7 @@
   text-align: left;
   width: 100%;
   font-size: 13px;
-  gap: 10px;
+  gap: 8px;
   transition: background var(--acp-duration-fast) var(--acp-ease-out);
 
   &:hover {
@@ -99,17 +142,40 @@
     }
   }
 
-  &--active {
+  &:active {
     background: var(--acp-color-bg-tertiary);
+  }
+
+  // Active state — accent left border indicator
+  &--active {
+    background: var(--acp-color-bg-selected);
+
+    .acp-session-item__title {
+      color: var(--acp-color-text-primary);
+      font-weight: 600;
+    }
+
+    .acp-session-item__icon {
+      color: var(--acp-color-accent);
+      opacity: 1;
+    }
   }
 
   &__icon {
     flex-shrink: 0;
-    font-size: 14px;
-    opacity: 0.7;
+    font-size: 13px;
+    width: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--acp-color-text-muted);
+    opacity: 0.65;
+    transition: color var(--acp-duration-fast) var(--acp-ease-out),
+                opacity var(--acp-duration-fast) var(--acp-ease-out);
 
     &--running {
       opacity: 1;
+      color: var(--acp-color-success);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -123,12 +189,12 @@
   }
 
   &__spinner {
-    width: 14px;
-    height: 14px;
-    border: 2px solid var(--acp-color-border-subtle);
+    width: 13px;
+    height: 13px;
+    border: 2px solid var(--acp-color-success-muted);
     border-top-color: var(--acp-color-success);
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+    animation: acp-spin 0.8s linear infinite;
   }
 
   &__content {
@@ -137,18 +203,21 @@
   }
 
   &__title {
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 500;
     letter-spacing: -0.01em;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    line-height: 1.35;
+    color: var(--acp-color-text-primary);
   }
 
   &__meta {
     font-size: 11px;
     color: var(--acp-color-text-muted);
-    margin-top: 2px;
+    margin-top: 1px;
+    line-height: 1.3;
   }
 
   &__delete {
@@ -158,18 +227,257 @@
     border: none;
     color: var(--acp-color-text-muted);
     cursor: pointer;
-    padding: 4px;
+    padding: 3px;
     border-radius: var(--acp-radius-xs);
-    font-size: 12px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: opacity var(--acp-duration-fast) var(--acp-ease-out),
-                color var(--acp-duration-fast) var(--acp-ease-out);
+                color var(--acp-duration-fast) var(--acp-ease-out),
+                background var(--acp-duration-fast) var(--acp-ease-out);
 
     &:hover {
       color: var(--acp-color-error);
+      background: var(--acp-color-error-muted);
     }
   }
 }
 
+// ---------------------------------------------------------------------------
+// Workspace group
+// ---------------------------------------------------------------------------
+.acp-session-workspace-group {
+  margin-bottom: 2px;
+
+  & + & {
+    margin-top: 2px;
+    padding-top: 2px;
+    border-top: 1px solid var(--acp-color-border-subtle);
+  }
+}
+
+.acp-session-workspace-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 8px;
+  cursor: pointer;
+  user-select: none;
+  border-radius: var(--acp-radius-sm);
+  transition: background var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover {
+    background: var(--acp-color-bg-hover);
+  }
+
+  &:active {
+    background: var(--acp-color-bg-tertiary);
+  }
+
+  &__left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  &__folder {
+    flex-shrink: 0;
+    font-size: 13px;
+    color: var(--acp-color-accent);
+    opacity: 0.85;
+  }
+
+  &__name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--acp-color-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    letter-spacing: -0.01em;
+  }
+
+  &__badge {
+    flex-shrink: 0;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: var(--acp-color-bg-hover);
+    color: var(--acp-color-text-muted);
+    font-size: 10px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    margin-left: 4px;
+  }
+}
+
+.acp-session-workspace-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.acp-session-workspace-empty {
+  padding: 8px 12px 8px 32px;
+  font-size: 12px;
+  color: var(--acp-color-text-muted);
+  font-style: italic;
+  user-select: none;
+}
+
+// ---------------------------------------------------------------------------
+// Agent group
+// ---------------------------------------------------------------------------
+.acp-session-agent-group {
+  margin-top: 1px;
+}
+
+.acp-session-agent-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px 4px 20px;
+  transition: background var(--acp-duration-fast) var(--acp-ease-out);
+  border-radius: var(--acp-radius-sm);
+
+  &:hover {
+    background: var(--acp-color-bg-hover);
+
+    .acp-session-agent-header__add {
+      opacity: 1;
+    }
+  }
+
+  &__name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 11px;
+    line-height: 11px;
+    font-weight: 600;
+    color: var(--acp-color-text-secondary);
+    transition: color var(--acp-duration-fast) var(--acp-ease-out);
+
+    &:hover {
+      color: var(--acp-color-text-primary);
+    }
+  }
+
+  &__dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: box-shadow var(--acp-duration-normal) var(--acp-ease-out);
+
+    &--connected {
+      background: var(--acp-color-success);
+      box-shadow: 0 0 4px var(--acp-color-success);
+    }
+
+    &--connecting {
+      background: var(--acp-color-warning);
+      box-shadow: 0 0 4px var(--acp-color-warning);
+    }
+
+    &--disconnected {
+      background: var(--acp-color-text-muted);
+    }
+
+    &--error {
+      background: var(--acp-color-error);
+      box-shadow: 0 0 4px var(--acp-color-error);
+    }
+  }
+
+  &__add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border: none;
+    border-radius: var(--acp-radius-xs);
+    background: transparent;
+    color: var(--acp-color-text-muted);
+    font-size: 12px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity var(--acp-duration-fast) var(--acp-ease-out),
+                color var(--acp-duration-fast) var(--acp-ease-out),
+                background var(--acp-duration-fast) var(--acp-ease-out);
+
+    &:hover {
+      color: var(--acp-color-text-primary);
+      background: var(--acp-color-bg-tertiary);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Chevron (shared by workspace & agent groups)
+// ---------------------------------------------------------------------------
+.acp-session-group-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  font-size: 9px;
+  color: var(--acp-color-text-muted);
+  flex-shrink: 0;
+  transition: transform var(--acp-duration-normal) var(--acp-ease-out);
+
+  &--expanded {
+    transform: rotate(90deg);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Load more button
+// ---------------------------------------------------------------------------
+.acp-session-load-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
+
+  &__btn {
+    background: transparent;
+    border: 1px solid var(--acp-color-border-subtle);
+    border-radius: var(--acp-radius-sm);
+    color: var(--acp-color-text-muted);
+    font-size: 11px;
+    padding: 4px 14px;
+    cursor: pointer;
+    transition: background var(--acp-duration-fast) var(--acp-ease-out),
+                color var(--acp-duration-fast) var(--acp-ease-out),
+                border-color var(--acp-duration-fast) var(--acp-ease-out);
+
+    &:hover {
+      background: var(--acp-color-bg-hover);
+      color: var(--acp-color-text-secondary);
+      border-color: var(--acp-color-border);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Legacy / unused
+// ---------------------------------------------------------------------------
 .acp-agent-info {
   padding: 10px 14px;
   border-top: 1px solid var(--acp-color-border-subtle);
@@ -182,180 +490,10 @@
   }
 }
 
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.acp-session-load-more {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 0;
-  margin-top: 4px;
-
-  &__btn {
-    background: var(--acp-color-bg-tertiary);
-    border: 1px solid var(--acp-color-border-subtle);
-    border-radius: var(--acp-radius-sm);
-    color: var(--acp-color-text-secondary);
-    font-size: 12px;
-    padding: 6px 16px;
-    cursor: pointer;
-    transition: background var(--acp-duration-fast), color var(--acp-duration-fast), border-color var(--acp-duration-fast);
-
-    &:hover {
-      background: var(--acp-color-bg-hover);
-      color: var(--acp-color-text-primary);
-      border-color: var(--acp-color-border);
-    }
-  }
-}
-
-.acp-session-agent-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 12px 6px 24px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--acp-color-text-muted);
-
-  &__name {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    user-select: none;
-
-    &:hover {
-      color: var(--acp-color-text-secondary);
-    }
-  }
-
-  &__dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-
-    &--connected { background: var(--acp-color-success); }
-    &--connecting { background: var(--acp-color-warning); }
-    &--disconnected { background: var(--acp-color-text-muted); }
-    &--error { background: var(--acp-color-error); }
-  }
-
-  &__add {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
-    border: 1px solid var(--acp-color-border-subtle);
-    border-radius: var(--acp-radius-xs);
-    background: transparent;
-    color: var(--acp-color-text-muted);
-    font-size: 14px;
-    cursor: pointer;
-    transition: color var(--acp-duration-fast), background var(--acp-duration-fast), border-color var(--acp-duration-fast);
-
-    &:hover {
-      color: var(--acp-color-text-primary);
-      background: var(--acp-color-bg-hover);
-      border-color: var(--acp-color-border);
-    }
-  }
-}
-
-.acp-session-group-chevron {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 12px;
-  height: 12px;
-  font-size: 10px;
-  color: var(--acp-color-text-muted);
-  transition: transform var(--acp-duration-fast) var(--acp-ease-out);
-
-  &--expanded {
-    transform: rotate(90deg);
-  }
-}
-
-.acp-session-workspace-body {
-  display: flex;
-  flex-direction: column;
-}
-
-.acp-session-workspace-group {
-  margin-bottom: 4px;
-
-  &--active {
-    /* no extra style — just a hook for future use */
-  }
-}
-
-.acp-session-workspace-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  cursor: pointer;
-  user-select: none;
-  border-radius: var(--acp-radius-sm);
-  transition: background var(--acp-duration-fast) var(--acp-ease-out);
-
-  &:hover {
-    background: var(--acp-color-bg-hover);
-  }
-
-  &__left {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-  }
-
-  &__folder {
-    flex-shrink: 0;
-    font-size: 13px;
-    opacity: 0.7;
-  }
-
-  &__name {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--acp-color-text-primary);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  &__badge {
-    flex-shrink: 0;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 5px;
-    border-radius: 9px;
-    background: var(--acp-color-bg-tertiary);
-    color: var(--acp-color-text-muted);
-    font-size: 10px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-  }
-}
-
-.acp-session-workspace-empty {
-  padding: 8px 24px;
-  font-size: 12px;
-  color: var(--acp-color-text-muted);
-  font-style: italic;
+// ---------------------------------------------------------------------------
+// Keyframes
+// ---------------------------------------------------------------------------
+@keyframes acp-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }

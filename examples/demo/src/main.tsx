@@ -1,4 +1,5 @@
 import ReactDOM from 'react-dom/client';
+import { useEffect, useRef } from 'react';
 import { AcpProvider } from '@acp-components/react';
 import { Workbench } from '@acp-components/react';
 import { SessionList } from '@acp-components/react';
@@ -7,6 +8,26 @@ import { PermissionDialog } from '@acp-components/react';
 import { LoginDialog } from '@acp-components/react';
 import { I18nProvider, useI18n } from '@acp-components/react';
 import { useAcpStore } from '@acp-components/react';
+import { useAcpContext } from '@acp-components/react';
+
+// ---------------------------------------------------------------------------
+// Workspace cache — persists workspace paths to localStorage
+// ---------------------------------------------------------------------------
+
+const WORKSPACE_CACHE_KEY = 'acp-demo-workspaces';
+
+function getCachedWorkspaces(): string[] {
+  try {
+    const raw = localStorage.getItem(WORKSPACE_CACHE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCachedWorkspaces(paths: string[]): void {
+  localStorage.setItem(WORKSPACE_CACHE_KEY, JSON.stringify(paths));
+}
 
 function LocaleSwitcher() {
   const { i18n } = useI18n();
@@ -59,6 +80,23 @@ function LocaleSwitcher() {
 
 function AppInner() {
   const activeSessionId = useAcpStore((s) => s.activeSessionId);
+  const workspaces = useAcpStore((s) => s.workspaces);
+  const { addWorkspace } = useAcpContext();
+  const loadedRef = useRef(false);
+
+  // Load cached workspaces on mount (once)
+  useEffect(() => {
+    if (loadedRef.current) return;
+    loadedRef.current = true;
+    for (const cwd of getCachedWorkspaces()) {
+      addWorkspace(cwd);
+    }
+  }, [addWorkspace]);
+
+  // Sync workspace changes to cache
+  useEffect(() => {
+    saveCachedWorkspaces(Array.from(workspaces.keys()));
+  }, [workspaces]);
 
   const handleBrowse = async () => {
     const path = window.prompt('Enter project directory path:', '/path/to/project');
