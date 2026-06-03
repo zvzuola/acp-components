@@ -4,3 +4,4 @@ dist
 .vite
 examples/tauri/src-tauri/target
 .DS_Store
+.bitfun/

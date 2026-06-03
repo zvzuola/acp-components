@@ -121,4 +121,28 @@ export interface TerminalHandler {
   create(params: CreateTerminalRequest): Promise<TerminalHandle>;
 }
 
+export interface FileTreeNode {
+  name: string;
+  path: string;
+  kind: 'file' | 'directory';
+  children?: FileTreeNode[];
+  /** Managed by fileTreeStore: whether this directory is expanded */
+  expanded?: boolean;
+  /** Managed by fileTreeStore: whether children have been loaded */
+  loaded?: boolean;
+  /** Platform-specific metadata (size, modified time, git status, etc.) */
+  meta?: Record<string, unknown>;
+}
+
+/** Signature for a host-provided directory reader */
+export type DirectoryReadHandler = (path: string) => Promise<FileTreeNode[]>;
+
+/** Callbacks provided to the file watcher for reporting changes */
+export interface FileTreeWatchCallbacks {
+  /** Notify that a specific directory's contents changed */
+  onDirectoryChanged: (cwd: string, dirPath: string) => void;
+  /** Notify that an entire workspace needs refresh */
+  onWorkspaceChanged: (cwd: string) => void;
+}
+
 export type { ContentBlock, SessionId, SessionInfo, SessionUpdate, StopReason, ToolCall, ToolCallUpdate, ToolCallContent, Implementation, AgentCapabilities, PermissionOption, ClientCapabilities, CreateTerminalRequest, TerminalOutputResponse, WaitForTerminalExitResponse, TerminalExitStatus, PlanEntry, AuthMethod };

@@ -28,6 +28,8 @@ export { CommandPalette } from './components/command-palette';
 export type { CommandPaletteProps } from './components/command-palette/CommandPalette';
 export { TerminalView } from './components/terminal-view';
 export type { TerminalViewProps } from './components/terminal-view/TerminalView';
+export { FileTree } from './components/file-tree';
+export type { FileTreeProps, FileTreeNode } from './components/file-tree/FileTree';
 
 // Re-export hooks (now defined locally)
 export { useAcpProvider } from './hooks/useAcpProvider';
@@ -41,6 +43,8 @@ export { usePermission } from './hooks/usePermission';
 export { useConnectionStatus, useAllAgentStatuses } from './hooks/useConnectionStatus';
 export { useTerminals } from './hooks/useTerminals';
 export { useExtensions } from './hooks/useExtensions';
+export { useFileTree } from './hooks/useFileTree';
+export { useFileSystemProvider } from './hooks/useFileSystemProvider';
 export { AcpContext, useAcpContext } from './context/AcpContext';
 export type { AcpContextValue } from './context/AcpContext';
 
@@ -57,6 +61,10 @@ export type {
   AgentConnection,
   WorkspaceState,
   TerminalState,
+  DirectoryReadHandler,
+  FileTreeWatchCallbacks,
+  FileSystemProviderOptions,
+  FileSystemProviderInstance,
 } from '@acp-components/core';
 
 // i18n

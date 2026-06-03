@@ -113,4 +113,11 @@ export const zhCN = {
   'login.envVarOptional': '（可选）',
   'login.envVarSecretPlaceholder': '请输入{label}',
   'login.methodTerminal': '终端认证',
+
+  // FileTree
+  'fileTree.title': '文件',
+  'fileTree.search': '搜索文件',
+  'fileTree.searchPlaceholder': '搜索文件...',
+  'fileTree.searchAriaLabel': '搜索文件',
+  'fileTree.empty': '无文件',
 };

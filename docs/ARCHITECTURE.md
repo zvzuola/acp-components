@@ -183,5 +183,5 @@ sequenceDiagram
 
 ## 8. 后续规划
 
-- 支持MACP UI, A2UI，等动态UI能力
+- 支持MCP UI, A2UI，等动态UI能力
 - 支持自定义展示工具界面

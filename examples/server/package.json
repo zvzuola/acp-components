@@ -10,7 +10,8 @@
     "build:start": "tsc && node dist/index.js"
   },
   "dependencies": {
-    "ws": "^8.18.0"
+    "ws": "^8.18.0",
+    "chokidar": "^3.6.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

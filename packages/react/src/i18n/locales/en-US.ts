@@ -113,4 +113,11 @@ export const enUS = {
   'login.envVarOptional': '(optional)',
   'login.envVarSecretPlaceholder': 'Enter {label}',
   'login.methodTerminal': 'Terminal authentication',
+
+  // FileTree
+  'fileTree.title': 'Files',
+  'fileTree.search': 'Search files',
+  'fileTree.searchPlaceholder': 'Search files...',
+  'fileTree.searchAriaLabel': 'Search files',
+  'fileTree.empty': 'No files',
 };

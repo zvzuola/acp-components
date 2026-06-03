@@ -4,6 +4,7 @@ import { acpStore } from './store/acpStore';
 import { sessionStore } from './store/sessionStore';
 import type { ToolCallState, TerminalHandler, TerminalState } from './types';
 import type { AgentConfig } from './types';
+import type { FileSystemProviderOptions } from './fileSystem/provider';
 import type { RequestPermissionResponse, ClientCapabilities, CreateTerminalRequest, TerminalExitStatus } from '@agentclientprotocol/sdk';
 import type { PermissionRequest } from './types';
 
@@ -16,11 +17,11 @@ function generateMsgId(): string {
 
 export interface MultiAgentProviderOptions {
   agents: AgentConfig[];
-  onFileRead?: FileReadHandler;
-  onFileWrite?: FileWriteHandler;
   onTerminal?: TerminalHandler;
   onExtMethod?: ExtMethodHandler;
   onExtNotification?: ExtNotificationHandler;
+  /** Unified file system options: file tree browsing + ACP file read/write handlers */
+  fileSystem?: FileSystemProviderOptions;
 }
 
 export interface MultiAgentProviderInstance {
@@ -170,10 +171,10 @@ function buildCapabilities(
   return hasFsCaps || caps.terminal || caps.auth?.terminal ? caps : undefined;
 }
 
-export function createAcpProvider({ agents, onFileRead, onFileWrite, onTerminal, onExtMethod, onExtNotification }: MultiAgentProviderOptions): MultiAgentProviderInstance {
-  // Scoped state — each provider instance has its own isolated handlers and registries
-  const scopedFileReadHandler = onFileRead;
-  const scopedFileWriteHandler = onFileWrite;
+export function createAcpProvider({ agents, onTerminal, onExtMethod, onExtNotification, fileSystem }: MultiAgentProviderOptions): MultiAgentProviderInstance {
+  // Resolve file handlers from unified fileSystem options
+  const scopedFileReadHandler = fileSystem?.onFileRead;
+  const scopedFileWriteHandler = fileSystem?.onFileWrite;
   const scopedTerminalHandler = onTerminal;
   const scopedExtMethodHandler = onExtMethod;
   const scopedExtNotificationHandler = onExtNotification;

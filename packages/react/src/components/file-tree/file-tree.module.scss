@@ -1,0 +1,230 @@
+// =============================================================================
+// File Tree — polished tree component
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// Root container
+// ---------------------------------------------------------------------------
+.acp-file-tree {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+
+  // -------------------------------------------------------------------------
+  // Header
+  // -------------------------------------------------------------------------
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 12px 8px;
+    flex-shrink: 0;
+  }
+
+  &__header-title {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--acp-color-text-muted);
+    user-select: none;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    padding: 2px 4px;
+    border-radius: var(--acp-radius-xs);
+
+    &:hover {
+      color: var(--acp-color-text-secondary);
+    }
+
+    &:focus-visible {
+      outline-offset: 0;
+    }
+  }
+
+  &__header-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__header-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    background: var(--acp-color-bg-hover);
+    color: var(--acp-color-text-secondary);
+    line-height: 1;
+  }
+
+  &__search-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: var(--acp-radius-sm);
+    background: transparent;
+    color: var(--acp-color-text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: background var(--acp-duration-fast) var(--acp-ease-out),
+                color var(--acp-duration-fast) var(--acp-ease-out);
+    flex-shrink: 0;
+
+    &:hover {
+      background: var(--acp-color-bg-hover);
+      color: var(--acp-color-text-primary);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Search
+  // -------------------------------------------------------------------------
+  &__search-wrap {
+    padding: 0 12px 8px;
+    flex-shrink: 0;
+  }
+
+  &__search-input {
+    width: 100%;
+    height: 28px;
+    padding: 0 10px;
+    font-size: 12px;
+    font-family: var(--acp-font-sans);
+    color: var(--acp-color-text-primary);
+    background: var(--acp-color-bg-input);
+    border: 1px solid var(--acp-color-border);
+    border-radius: var(--acp-radius-sm);
+    outline: none;
+    transition: border-color var(--acp-duration-fast) var(--acp-ease-out);
+
+    &::placeholder {
+      color: var(--acp-color-text-muted);
+    }
+
+    &:focus {
+      border-color: var(--acp-color-accent);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Body (scrollable tree area)
+  // -------------------------------------------------------------------------
+  &__body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 2px 0;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Tree rows
+// ---------------------------------------------------------------------------
+.acp-file-tree-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding-right: 12px;
+  cursor: pointer;
+  user-select: none;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  color: var(--acp-color-text-secondary);
+  transition: background var(--acp-duration-fast) var(--acp-ease-out),
+              color var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover {
+    background: var(--acp-color-bg-hover);
+    color: var(--acp-color-text-primary);
+  }
+
+  &:focus-visible {
+    outline-offset: -2px;
+    border-radius: 0;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Chevron — right-pointing arrow that rotates on expand
+// ---------------------------------------------------------------------------
+.acp-file-tree-chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--acp-color-text-muted);
+  transition: transform var(--acp-duration-fast) var(--acp-ease-out);
+
+  &--open {
+    transform: rotate(90deg);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Spacer — used for file rows to align with directory chevrons
+// ---------------------------------------------------------------------------
+.acp-file-tree-spacer {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+// ---------------------------------------------------------------------------
+// Icon — folder / file
+// ---------------------------------------------------------------------------
+.acp-file-tree-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  font-size: 14px;
+  color: var(--acp-color-text-muted);
+}
+
+// ---------------------------------------------------------------------------
+// Name
+// ---------------------------------------------------------------------------
+.acp-file-tree-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-family: var(--acp-font-sans);
+
+  &--file {
+    font-size: 12.5px;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Empty state
+// ---------------------------------------------------------------------------
+.acp-file-tree-empty {
+  padding: 24px 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--acp-color-text-muted);
+  font-family: var(--acp-font-sans);
+}

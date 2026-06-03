@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
 import { AcpContext } from '../../context/AcpContext';
 import { useAcpProvider } from '../../hooks/useAcpProvider';
+import { useFileSystemProvider } from '../../hooks/useFileSystemProvider';
 import { acpStore } from '@acp-components/core';
-import type { AgentConfig, TerminalHandler } from '@acp-components/core';
-import type { FileReadHandler, FileWriteHandler, ExtMethodHandler, ExtNotificationHandler } from '@acp-components/core';
+import type { AgentConfig, TerminalHandler, FileSystemProviderOptions } from '@acp-components/core';
+import type { ExtMethodHandler, ExtNotificationHandler } from '@acp-components/core';
 import { useI18n } from '../../i18n';
 import styles from './loading.module.scss';
 
@@ -11,16 +12,27 @@ export interface AcpProviderProps {
   agents: AgentConfig[];
   theme?: 'light' | 'dark';
   children: React.ReactNode;
-  onFileRead?: FileReadHandler;
-  onFileWrite?: FileWriteHandler;
   onTerminal?: TerminalHandler;
   onExtMethod?: ExtMethodHandler;
   onExtNotification?: ExtNotificationHandler;
   defaultCwd?: string;
+  /** Unified file system options: file tree browsing + ACP file read/write handlers */
+  fileSystem?: FileSystemProviderOptions;
 }
 
-export function AcpProvider({ agents, theme = 'dark', children, onFileRead, onFileWrite, onTerminal, onExtMethod, onExtNotification, defaultCwd = '' }: AcpProviderProps) {
-  const provider = useAcpProvider({ agents, onFileRead, onFileWrite, onTerminal, onExtMethod, onExtNotification });
+function FileSystemProviderWrapper({ options, children }: { options: FileSystemProviderOptions; children: React.ReactNode }) {
+  useFileSystemProvider(options);
+  return <>{children}</>;
+}
+
+export function AcpProvider({ agents, theme = 'dark', children, onTerminal, onExtMethod, onExtNotification, defaultCwd = '', fileSystem }: AcpProviderProps) {
+  const provider = useAcpProvider({
+    agents,
+    onTerminal,
+    onExtMethod,
+    onExtNotification,
+    fileSystem,
+  });
   const { t } = useI18n();
 
   const contextValue = useMemo(() => ({
@@ -50,11 +62,18 @@ export function AcpProvider({ agents, theme = 'dark', children, onFileRead, onFi
     );
   }
 
-  return (
+  const content = (
     <AcpContext.Provider value={contextValue}>
       <div data-acp-theme={theme}>
         {children}
       </div>
     </AcpContext.Provider>
   );
+
+  // Only wrap with FileSystemProvider when onDirectoryRead is provided (file tree capability)
+  return fileSystem?.onDirectoryRead ? (
+    <FileSystemProviderWrapper options={fileSystem}>
+      {content}
+    </FileSystemProviderWrapper>
+  ) : content;
 }
