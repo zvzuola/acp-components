@@ -1,0 +1,192 @@
+// =============================================================================
+// FileViewer — Monaco-based file viewer with tabs
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// Root container
+// ---------------------------------------------------------------------------
+.acp-file-viewer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--acp-color-bg-primary);
+  color: var(--acp-color-text-primary);
+  font-family: var(--acp-font-sans);
+
+  // -------------------------------------------------------------------------
+  // Tab bar
+  // -------------------------------------------------------------------------
+  &__tabs {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-shrink: 0;
+    background: var(--acp-color-bg-secondary);
+    border-bottom: 1px solid var(--acp-color-border-subtle);
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  &__tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px 6px 12px;
+    font-size: 12px;
+    font-family: var(--acp-font-sans);
+    color: var(--acp-color-text-muted);
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--acp-color-border-subtle);
+    cursor: pointer;
+    white-space: nowrap;
+    min-width: 0;
+    max-width: 180px;
+    flex-shrink: 0;
+    transition: background var(--acp-duration-fast) var(--acp-ease-out),
+                color var(--acp-duration-fast) var(--acp-ease-out);
+
+    &:hover {
+      background: var(--acp-color-bg-hover);
+      color: var(--acp-color-text-secondary);
+    }
+
+    &--active {
+      background: var(--acp-color-bg-primary);
+      color: var(--acp-color-text-primary);
+      border-bottom: 2px solid var(--acp-color-accent);
+    }
+  }
+
+  &__tab-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__tab-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    border-radius: var(--acp-radius-xs);
+    font-size: 10px;
+    color: var(--acp-color-text-muted);
+    cursor: pointer;
+    transition: background var(--acp-duration-fast) var(--acp-ease-out),
+                color var(--acp-duration-fast) var(--acp-ease-out);
+
+    &:hover {
+      background: var(--acp-color-bg-hover);
+      color: var(--acp-color-text-primary);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Breadcrumb
+  // -------------------------------------------------------------------------
+  &__breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    font-size: 11px;
+    color: var(--acp-color-text-muted);
+    background: var(--acp-color-bg-secondary);
+    border-bottom: 1px solid var(--acp-color-border-subtle);
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  &__breadcrumb-path {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+    direction: rtl;
+    text-align: left;
+  }
+
+  &__breadcrumb-sep {
+    flex-shrink: 0;
+    color: var(--acp-color-text-muted);
+  }
+
+  &__breadcrumb-file {
+    flex-shrink: 0;
+    color: var(--acp-color-text-secondary);
+    font-weight: 600;
+  }
+
+  // -------------------------------------------------------------------------
+  // Editor area
+  // -------------------------------------------------------------------------
+  &__editor {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  &__monaco {
+    width: 100%;
+    height: 100%;
+  }
+
+  // -------------------------------------------------------------------------
+  // Loading state
+  // -------------------------------------------------------------------------
+  &__loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--acp-color-text-muted);
+    z-index: 1;
+  }
+
+  &__spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--acp-color-border);
+    border-top-color: var(--acp-color-accent);
+    border-radius: 50%;
+    animation: fileViewerSpin 0.8s linear infinite;
+  }
+
+  // -------------------------------------------------------------------------
+  // Error state
+  // -------------------------------------------------------------------------
+  &__error {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--acp-color-text-danger);
+    padding: 24px;
+    text-align: center;
+    z-index: 1;
+  }
+
+  &__error-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+}
+
+@keyframes fileViewerSpin {
+  to { transform: rotate(360deg); }
+}

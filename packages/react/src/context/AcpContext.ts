@@ -10,6 +10,10 @@ export interface AcpContextValue {
   isReady: boolean;
   addWorkspace: (cwd: string) => void;
   removeWorkspace: (cwd: string) => void;
+  /** Host-provided file open handler (plugin/IDE integration). When set, built-in editor is bypassed. */
+  onOpenFile?: (path: string, line?: number | null) => void;
+  /** Host-provided file content reader. Used by FileViewer to read file contents. */
+  onFileContentRead?: (path: string) => Promise<string>;
 }
 
 export const AcpContext = createContext<AcpContextValue | null>(null);

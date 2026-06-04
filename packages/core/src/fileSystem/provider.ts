@@ -19,6 +19,8 @@ export interface FileSystemProviderOptions {
   onFileRead?: FileReadHandler;
   /** Handler for ACP writeTextFile requests from agents */
   onFileWrite?: FileWriteHandler;
+  /** Host-provided file content reader for the built-in FileViewer component */
+  onFileContentRead?: (path: string) => Promise<string>;
 }
 
 export interface FileSystemProviderInstance {

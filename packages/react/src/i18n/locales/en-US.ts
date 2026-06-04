@@ -120,4 +120,14 @@ export const enUS = {
   'fileTree.searchPlaceholder': 'Search files...',
   'fileTree.searchAriaLabel': 'Search files',
   'fileTree.empty': 'No files',
+
+  // FileViewer
+  'fileViewer.title': 'File Viewer',
+  'fileViewer.loading': 'Loading...',
+  'fileViewer.loadingMonaco': 'Loading editor...',
+  'fileViewer.error': 'Failed to load file',
+  'fileViewer.close': 'Close',
+  'fileViewer.closeAll': 'Close all',
+  'fileViewer.noFile': 'No file open',
+  'fileViewer.monacoRequired': 'monaco-editor is required for file viewing',
 };

@@ -1,4 +1,4 @@
-import { readdir, stat } from 'node:fs/promises';
+import { readdir, stat, readFile } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import chokidar from 'chokidar';
 
@@ -100,4 +100,8 @@ export function watchWorkspace(options: WatchOptions): () => void {
   return () => {
     watcher.close();
   };
+}
+
+export async function readFileContent(filePath: string): Promise<string> {
+  return readFile(filePath, 'utf-8');
 }

@@ -30,6 +30,8 @@ export { TerminalView } from './components/terminal-view';
 export type { TerminalViewProps } from './components/terminal-view/TerminalView';
 export { FileTree } from './components/file-tree';
 export type { FileTreeProps, FileTreeNode } from './components/file-tree/FileTree';
+export { FileViewer } from './components/file-viewer';
+export type { FileViewerProps } from './components/file-viewer/FileViewer';
 
 // Re-export hooks (now defined locally)
 export { useAcpProvider } from './hooks/useAcpProvider';
@@ -44,6 +46,8 @@ export { useConnectionStatus, useAllAgentStatuses } from './hooks/useConnectionS
 export { useTerminals } from './hooks/useTerminals';
 export { useExtensions } from './hooks/useExtensions';
 export { useFileTree } from './hooks/useFileTree';
+export { useFileViewer } from './hooks/useFileViewer';
+export type { OpenFileEntry, UseFileViewerReturn } from './hooks/useFileViewer';
 export { useFileSystemProvider } from './hooks/useFileSystemProvider';
 export { AcpContext, useAcpContext } from './context/AcpContext';
 export type { AcpContextValue } from './context/AcpContext';

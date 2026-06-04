@@ -1,5 +1,42 @@
 import ReactDOM from 'react-dom/client';
 import { useEffect, useRef } from 'react';
+// @ts-expect-error Vite worker imports — types not available for ?worker suffix
+import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
+// @ts-expect-error Vite worker imports
+import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
+// @ts-expect-error Vite worker imports
+import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
+// @ts-expect-error Vite worker imports
+import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker';
+// @ts-expect-error Vite worker imports
+import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
+
+// Monaco requires MonacoEnvironment.getWorker to spawn language-specific web workers.
+// Without this, Monaco falls back to running workers on the main thread (causing UI freezes)
+// and fails on $loadForeignModule because FileAccessImpl.toUrl is unavailable outside a worker.
+// @ts-expect-error Monaco global worker environment — typed by monaco-editor, not available here
+self.MonacoEnvironment = {
+  getWorker(_: string, label: string) {
+    switch (label) {
+      case 'json':
+        return new jsonWorker();
+      case 'css':
+      case 'scss':
+      case 'less':
+        return new cssWorker();
+      case 'html':
+      case 'handlebars':
+      case 'razor':
+        return new htmlWorker();
+      case 'typescript':
+      case 'javascript':
+        return new tsWorker();
+      default:
+        return new editorWorker();
+    }
+  },
+};
+
 import { AcpProvider } from '@acp-components/react';
 import { Workbench } from '@acp-components/react';
 import { SessionList } from '@acp-components/react';
@@ -7,10 +44,12 @@ import { ChatView } from '@acp-components/react';
 import { PermissionDialog } from '@acp-components/react';
 import { LoginDialog } from '@acp-components/react';
 import { FileTree } from '@acp-components/react';
+import { FileViewer } from '@acp-components/react';
 import { I18nProvider, useI18n } from '@acp-components/react';
 import { useAcpStore } from '@acp-components/react';
 import { useAcpContext } from '@acp-components/react';
 import { useFileTree } from '@acp-components/react';
+import { useFileViewer } from '@acp-components/react';
 import type { FileTreeNode, FileTreeWatchCallbacks } from '@acp-components/react';
 
 // ---------------------------------------------------------------------------
@@ -47,6 +86,16 @@ async function serverReadDirectory(path: string): Promise<FileTreeNode[]> {
     throw new Error(body.error ?? `HTTP ${res.status}`);
   }
   return res.json();
+}
+
+async function serverReadFileContent(path: string): Promise<string> {
+  const res = await fetch(`/api/readfile?path=${encodeURIComponent(path)}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error ?? `HTTP ${res.status}`);
+  }
+  const data = await res.json() as { content: string };
+  return data.content;
 }
 
 function createServerFileWatcher(callbacks: FileTreeWatchCallbacks): () => void {
@@ -139,7 +188,7 @@ function LocaleSwitcher() {
 // FileTreePanel — displays file tree for the active workspace
 // ---------------------------------------------------------------------------
 
-function FileTreePanel({ cwd }: { cwd: string }) {
+function FileTreePanel({ cwd, onNavigateFile }: { cwd: string; onNavigateFile?: (path: string, line?: number | null) => void }) {
   const { files, loading, error, onExpand, onCollapse } = useFileTree({ cwd });
 
   if (error) {
@@ -163,7 +212,7 @@ function FileTreePanel({ cwd }: { cwd: string }) {
       files={files}
       onExpand={onExpand}
       onCollapse={onCollapse}
-      onNavigate={(path) => console.log('Navigate to:', path)}
+      onNavigate={onNavigateFile}
     />
   );
 }
@@ -189,6 +238,7 @@ function AppInner() {
   });
   const { addWorkspace } = useAcpContext();
   const loadedRef = useRef(false);
+  const fileViewer = useFileViewer();
 
   // Load cached workspaces on mount (once)
   useEffect(() => {
@@ -209,6 +259,8 @@ function AppInner() {
     return path?.trim() || null;
   };
 
+  const hasOpenFiles = fileViewer.openFiles.length > 0;
+
   return (
     <>
       <Workbench
@@ -224,15 +276,28 @@ function AppInner() {
           <div style={{ display: 'flex', flexDirection: 'row', height: '100%' }}>
 
             <div style={{ flex: 1, overflow: 'hidden', minWidth: 0 }}>
-              <ChatView sessionId={activeSessionId} />
+              <ChatView
+                sessionId={activeSessionId}
+                onNavigateFile={fileViewer.openFile}
+              />
             </div>
             {activeCwd && (
               <div style={{ flex: '0 0 260px', overflow: 'hidden', borderLeft: '1px solid var(--acp-color-border-subtle)' }}>
-                <FileTreePanel cwd={activeCwd} />
+                <FileTreePanel cwd={activeCwd} onNavigateFile={fileViewer.openFile} />
               </div>
             )}
           </div>
         }
+        panel={hasOpenFiles ? (
+          <FileViewer
+            openFiles={fileViewer.openFiles}
+            activeFile={fileViewer.activeFile}
+            onCloseFile={fileViewer.closeFile}
+            onSelectFile={fileViewer.setActiveFile}
+            revealLine={fileViewer.revealLine}
+            onRevealLineConsumed={fileViewer.clearRevealLine}
+          />
+        ) : undefined}
       />
       <PermissionDialog sessionId={activeSessionId} />
       <LoginDialog />
@@ -263,6 +328,7 @@ function App() {
         }}
         fileSystem={{
           onDirectoryRead: serverReadDirectory,
+          onFileContentRead: serverReadFileContent,
           onFileTreeWatch: ({ onDirectoryChanged, onWorkspaceChanged }) => {
             return createServerFileWatcher({ onDirectoryChanged, onWorkspaceChanged });
           },

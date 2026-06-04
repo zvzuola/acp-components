@@ -10,6 +10,7 @@
   "dependencies": {
     "@acp-components/core": "workspace:*",
     "@acp-components/react": "workspace:*",
+    "monaco-editor": "^0.52.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

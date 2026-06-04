@@ -18,6 +18,8 @@ export interface AcpProviderProps {
   defaultCwd?: string;
   /** Unified file system options: file tree browsing + ACP file read/write handlers */
   fileSystem?: FileSystemProviderOptions;
+  /** Host-provided file open handler. When set, built-in FileViewer is bypassed — host opens the file in its own editor. */
+  onOpenFile?: (path: string, line?: number | null) => void;
 }
 
 function FileSystemProviderWrapper({ options, children }: { options: FileSystemProviderOptions; children: React.ReactNode }) {
@@ -25,7 +27,17 @@ function FileSystemProviderWrapper({ options, children }: { options: FileSystemP
   return <>{children}</>;
 }
 
-export function AcpProvider({ agents, theme = 'dark', children, onTerminal, onExtMethod, onExtNotification, defaultCwd = '', fileSystem }: AcpProviderProps) {
+export function AcpProvider({
+  agents,
+  theme = 'dark',
+  children,
+  onTerminal,
+  onExtMethod,
+  onExtNotification,
+  defaultCwd = '',
+  fileSystem,
+  onOpenFile,
+}: AcpProviderProps) {
   const provider = useAcpProvider({
     agents,
     onTerminal,
@@ -44,7 +56,9 @@ export function AcpProvider({ agents, theme = 'dark', children, onTerminal, onEx
     addWorkspace: provider.addWorkspace,
     removeWorkspace: provider.removeWorkspace,
     isReady: provider.isReady,
-  }), [provider]);
+    onOpenFile,
+    onFileContentRead: fileSystem?.onFileContentRead,
+  }), [provider, onOpenFile, fileSystem?.onFileContentRead]);
 
   // Sync defaultCwd to store once on mount
   React.useEffect(() => {

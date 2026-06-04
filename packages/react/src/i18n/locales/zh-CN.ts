@@ -120,4 +120,14 @@ export const zhCN = {
   'fileTree.searchPlaceholder': '搜索文件...',
   'fileTree.searchAriaLabel': '搜索文件',
   'fileTree.empty': '无文件',
+
+  // FileViewer
+  'fileViewer.title': '文件查看器',
+  'fileViewer.loading': '加载中...',
+  'fileViewer.loadingMonaco': '编辑器加载中...',
+  'fileViewer.error': '加载文件失败',
+  'fileViewer.close': '关闭',
+  'fileViewer.closeAll': '全部关闭',
+  'fileViewer.noFile': '未打开文件',
+  'fileViewer.monacoRequired': '文件查看需要 monaco-editor',
 };

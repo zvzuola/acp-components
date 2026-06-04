@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { WebSocketServer } from 'ws';
 import { createBridge } from './bridge.js';
-import { readDirectory, watchWorkspace } from './fileSystem.js';
+import { readDirectory, watchWorkspace, readFileContent } from './fileSystem.js';
 
 const PORT = parseInt(process.env.ACP_PORT ?? '3100', 10);
 const HOST = process.env.ACP_HOST ?? '127.0.0.1';
@@ -86,6 +86,27 @@ const httpServer = createServer(async (req, res) => {
     req.on('close', () => {
       unwatch();
     });
+    return;
+  }
+
+  // GET /api/readfile?path=/some/file
+  if (url.pathname === '/api/readfile' && req.method === 'GET') {
+    const filePath = url.searchParams.get('path');
+    if (!filePath) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Missing path parameter' }));
+      return;
+    }
+    try {
+      const content = await readFileContent(filePath);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ content }));
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        error: err instanceof Error ? err.message : 'Failed to read file',
+      }));
+    }
     return;
   }
 
