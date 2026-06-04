@@ -1,1 +1,15 @@
 @import './styles/themes.scss';
+
+/* Global class applied to <body> during resize drag
+   Prevents text selection and iframe pointer-events stealing events */
+.acp-resizing {
+  user-select: none !important;
+
+  * {
+    user-select: none !important;
+  }
+
+  iframe {
+    pointer-events: none !important;
+  }
+}

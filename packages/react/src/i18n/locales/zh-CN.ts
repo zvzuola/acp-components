@@ -24,6 +24,8 @@ export const zhCN = {
 
   // Workbench
   'workbench.ariaLabel': 'ACP 工作台',
+  'workbench.resizeSidebar': '调整侧边栏宽度',
+  'workbench.resizePanel': '调整面板宽度',
 
   // PermissionDialog
   'permission.ariaLabel': '需要授权',

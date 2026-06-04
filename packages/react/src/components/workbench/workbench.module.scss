@@ -11,8 +11,8 @@
     background: var(--acp-color-bg-glass);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border-right: 1px solid var(--acp-color-border-subtle);
     display: flex;
+    flex: 0 0 auto;
     flex-direction: column;
     overflow: visible;
     box-shadow: var(--acp-shadow-sm);
@@ -22,10 +22,10 @@
 
   &__main {
     display: flex;
+    flex: 1 1 0;
     flex-direction: column;
-    overflow: hidden;
     min-width: 0;
-    flex: 1;
+    overflow: hidden;
   }
 
   &__panel {
@@ -33,7 +33,8 @@
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-left: 1px solid var(--acp-color-border-subtle);
-    overflow: hidden;
+    flex: 0 0 auto;
+    overflow: visible;
     box-shadow: var(--acp-shadow-sm);
   }
 }

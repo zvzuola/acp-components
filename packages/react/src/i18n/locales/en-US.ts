@@ -24,6 +24,8 @@ export const enUS = {
 
   // Workbench
   'workbench.ariaLabel': 'ACP Workbench',
+  'workbench.resizeSidebar': 'Resize sidebar',
+  'workbench.resizePanel': 'Resize panel',
 
   // PermissionDialog
   'permission.ariaLabel': 'Permission required',

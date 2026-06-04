@@ -1,0 +1,46 @@
+.resize-handle {
+  position: relative;
+  flex: 0 0 auto;
+  width: 1px;
+  height: 100%;
+  cursor: col-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  user-select: none;
+  z-index: 2;
+  outline: none;
+
+  &__line {
+    position: relative;
+    display: block;
+    width: 1px;
+    height: 100%;
+    background: var(--acp-color-border-subtle);
+    transition:
+      width var(--acp-duration-fast) var(--acp-ease-out),
+      background var(--acp-duration-fast) var(--acp-ease-out);
+  }
+
+  // Invisible hit-area expander (for easier targeting)
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 -2px;
+  }
+
+  &:hover &__line {
+    background: var(--acp-color-border-accent);
+  }
+
+  &--active &__line,
+  &:focus-visible &__line {
+    width: 2px;
+    background: var(--acp-color-accent);
+  }
+
+  &:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--acp-color-accent-muted);
+  }
+}
