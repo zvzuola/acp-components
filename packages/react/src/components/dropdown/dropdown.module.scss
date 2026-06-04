@@ -1,0 +1,261 @@
+// =============================================================================
+// Dropdown — generic floating menu component
+// Glassmorphic design. All --acp-* tokens. No business-specific styles.
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// Root container — relative anchor for absolute content positioning
+// ---------------------------------------------------------------------------
+.acp-dropdown {
+  position: relative;
+  display: inline-flex;
+  overflow: visible;
+}
+
+// ---------------------------------------------------------------------------
+// Placement variants — control where Content appears relative to Trigger
+// ---------------------------------------------------------------------------
+.acp-dropdown-placement-bottom-start {
+  .acp-dropdown__content {
+    top: calc(100% + 8px);
+    left: 0;
+    transform-origin: top left;
+  }
+}
+
+.acp-dropdown-placement-bottom-end {
+  .acp-dropdown__content {
+    top: calc(100% + 8px);
+    right: 0;
+    transform-origin: top right;
+  }
+}
+
+.acp-dropdown-placement-top-start {
+  .acp-dropdown__content {
+    bottom: calc(100% + 8px);
+    left: 0;
+    transform-origin: bottom left;
+  }
+}
+
+.acp-dropdown-placement-top-end {
+  .acp-dropdown__content {
+    bottom: calc(100% + 8px);
+    right: 0;
+    transform-origin: bottom right;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Trigger — wrapper element or asChild target that toggles Content.
+// Styles are minimal: consumers provide their own visual design.
+// Active / hover states use descendant selectors to style inner elements.
+// ---------------------------------------------------------------------------
+.acp-dropdown__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+// Active state — consumers target inner elements via descendant selectors
+// e.g. `.acp-dropdown__trigger--active .my-icon { transform: rotate(90deg) }`
+
+// ---------------------------------------------------------------------------
+// Content — floating glassmorphic panel
+// ---------------------------------------------------------------------------
+.acp-dropdown__content {
+  position: absolute;
+  padding: 4px;
+  border-radius: var(--acp-radius-md);
+  background: var(--acp-color-bg-glass);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid var(--acp-color-border);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35),
+              0 0 0 1px rgba(255, 255, 255, 0.04);
+  z-index: 100;
+  animation: acp-dropdown-content-in var(--acp-duration-normal) var(--acp-ease-spring) both;
+}
+
+// ---------------------------------------------------------------------------
+// Section — grouped items with optional label header
+// ---------------------------------------------------------------------------
+.acp-dropdown__section-label {
+  padding: 6px 10px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--acp-color-text-muted);
+  user-select: none;
+}
+
+// ---------------------------------------------------------------------------
+// Item — clickable row with icon / label / value / slot
+// ---------------------------------------------------------------------------
+.acp-dropdown__item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 8px;
+  padding: 7px 10px;
+  border: none;
+  border-radius: var(--acp-radius-sm);
+  background: transparent;
+  color: var(--acp-color-text-primary);
+  font-family: var(--acp-font-sans);
+  font-size: 12.5px;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover {
+    background: var(--acp-color-bg-hover);
+  }
+
+  &--disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+
+    &:hover {
+      background: transparent;
+    }
+  }
+}
+
+.acp-dropdown__item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  font-size: 13px;
+  color: var(--acp-color-text-secondary);
+  transition: color var(--acp-duration-fast) var(--acp-ease-out);
+
+  .acp-dropdown__item:hover & {
+    color: var(--acp-color-accent);
+  }
+}
+
+.acp-dropdown__item-label {
+  flex: 1;
+  min-width: 0;
+  color: var(--acp-color-text-primary);
+  line-height: 1.3;
+}
+
+.acp-dropdown__item-value {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--acp-color-text-muted);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+// ---------------------------------------------------------------------------
+// Chevron — used in Submenu trigger row
+// ---------------------------------------------------------------------------
+.acp-dropdown__chevron {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--acp-color-text-muted);
+  transition: transform var(--acp-duration-fast) var(--acp-ease-out),
+              color var(--acp-duration-fast) var(--acp-ease-out);
+
+  &--expanded {
+    transform: translateX(2px);
+    color: var(--acp-color-accent);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Submenu group — hover-expandable with nested items panel
+// ---------------------------------------------------------------------------
+.acp-dropdown__submenu-group {
+  position: relative;
+
+  &--expanded .acp-dropdown__item {
+    background: var(--acp-color-bg-hover);
+  }
+}
+
+.acp-dropdown__submenu {
+  position: absolute;
+  left: calc(100% + 6px);
+  top: -4px;
+  width: 130px;
+  padding: 4px;
+  border-radius: var(--acp-radius-md);
+  background: var(--acp-color-bg-glass);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid var(--acp-color-border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35),
+              0 0 0 1px rgba(255, 255, 255, 0.04);
+  z-index: 101;
+  animation: acp-dropdown-submenu-in var(--acp-duration-fast) var(--acp-ease-out) both;
+}
+
+.acp-dropdown__submenu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: var(--acp-radius-sm);
+  background: transparent;
+  color: var(--acp-color-text-primary);
+  font-family: var(--acp-font-sans);
+  font-size: 12.5px;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover {
+    background: var(--acp-color-bg-hover);
+  }
+
+  &--active {
+    color: var(--acp-color-accent-text);
+    font-weight: 600;
+  }
+}
+
+.acp-dropdown__submenu-check {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--acp-color-accent);
+  margin-left: 4px;
+}
+
+// ---------------------------------------------------------------------------
+// Keyframes
+// ---------------------------------------------------------------------------
+@keyframes acp-dropdown-content-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes acp-dropdown-submenu-in {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

@@ -1,16 +1,11 @@
 .acp-workbench {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  grid-template-rows: 1fr;
+  display: flex;
+  flex-direction: row;
   height: 100vh;
   background: var(--acp-color-bg-primary);
   color: var(--acp-color-text-primary);
   font-family: var(--acp-font-sans);
   overflow: hidden;
-
-  &--has-panel {
-    grid-template-columns: 260px 1fr 360px;
-  }
 
   &__sidebar {
     background: var(--acp-color-bg-glass);
@@ -19,8 +14,10 @@
     border-right: 1px solid var(--acp-color-border-subtle);
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible;
     box-shadow: var(--acp-shadow-sm);
+    height: 100%;
+    z-index: 1;
   }
 
   &__main {
@@ -28,6 +25,7 @@
     flex-direction: column;
     overflow: hidden;
     min-width: 0;
+    flex: 1;
   }
 
   &__panel {

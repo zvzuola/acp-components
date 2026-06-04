@@ -32,6 +32,18 @@ export { FileTree } from './components/file-tree';
 export type { FileTreeProps, FileTreeNode } from './components/file-tree/FileTree';
 export { FileViewer } from './components/file-viewer';
 export type { FileViewerProps } from './components/file-viewer/FileViewer';
+export { SettingsMenu } from './components/settings-menu/SettingsMenu';
+export type { SettingsMenuProps } from './components/settings-menu/SettingsMenu';
+export { Dropdown } from './components/dropdown';
+export type {
+  DropdownProps,
+  DropdownTriggerProps,
+  DropdownContentProps,
+  DropdownSectionProps,
+  DropdownItemProps,
+  DropdownSubmenuProps,
+  DropdownSubmenuItemProps,
+} from './components/dropdown';
 
 // Re-export hooks (now defined locally)
 export { useAcpProvider } from './hooks/useAcpProvider';
@@ -51,6 +63,8 @@ export type { OpenFileEntry, UseFileViewerReturn } from './hooks/useFileViewer';
 export { useFileSystemProvider } from './hooks/useFileSystemProvider';
 export { AcpContext, useAcpContext } from './context/AcpContext';
 export type { AcpContextValue } from './context/AcpContext';
+export { useSettings } from './context/SettingsContext';
+export type { SettingsContextValue } from './context/SettingsContext';
 
 // Re-export types from core for convenience
 export type {

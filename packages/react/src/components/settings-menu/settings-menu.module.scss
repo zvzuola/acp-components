@@ -1,0 +1,96 @@
+// =============================================================================
+// Settings Menu — sidebar wrapper + trigger + toggle switch
+// These styles are SettingsMenu-specific. All shared dropdown styles live in
+// the Dropdown component's stylesheet.
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// Container — sidebar footer wrapper with top border
+// ---------------------------------------------------------------------------
+.acp-settings-menu {
+  display: flex;
+  flex-shrink: 0;
+  padding: 8px 12px 10px;
+  border-top: 1px solid var(--acp-color-border-subtle);
+}
+
+// ---------------------------------------------------------------------------
+// Trigger button — gear icon with rotation on hover/active
+// ---------------------------------------------------------------------------
+.acp-settings-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--acp-radius-sm);
+  background: transparent;
+  color: var(--acp-color-text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background var(--acp-duration-fast) var(--acp-ease-out),
+              color var(--acp-duration-fast) var(--acp-ease-out),
+              transform var(--acp-duration-normal) var(--acp-ease-out);
+
+  &:hover {
+    background: var(--acp-color-bg-hover);
+    color: var(--acp-color-text-secondary);
+
+    svg {
+      transform: rotate(45deg);
+    }
+  }
+
+  &:active {
+    background: var(--acp-color-bg-tertiary);
+  }
+}
+
+// When the Dropdown opens, it sets data-acp-dropdown-open on the root wrapper.
+.acp-settings-menu[data-acp-dropdown-open] {
+  .acp-settings-trigger {
+    color: var(--acp-color-accent);
+
+    svg {
+      transform: rotate(90deg);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Theme toggle switch — 32×18px pill with sliding knob (SettingsMenu-specific)
+// ---------------------------------------------------------------------------
+.acp-settings-toggle {
+  position: relative;
+  flex-shrink: 0;
+  width: 32px;
+  height: 18px;
+  border-radius: 9px;
+  background: var(--acp-color-bg-hover);
+  border: 1px solid var(--acp-color-border-subtle);
+  cursor: pointer;
+  transition: background var(--acp-duration-normal) var(--acp-ease-out),
+              border-color var(--acp-duration-normal) var(--acp-ease-out);
+
+  &--on {
+    background: var(--acp-color-accent);
+    border-color: transparent;
+  }
+}
+
+.acp-settings-toggle__knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--acp-color-knob);
+  box-shadow: var(--acp-color-knob-shadow);
+  transition: transform var(--acp-duration-normal) var(--acp-ease-spring);
+
+  .acp-settings-toggle--on & {
+    transform: translateX(14px);
+  }
+}

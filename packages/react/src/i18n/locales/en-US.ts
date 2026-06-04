@@ -130,4 +130,11 @@ export const enUS = {
   'fileViewer.closeAll': 'Close all',
   'fileViewer.noFile': 'No file open',
   'fileViewer.monacoRequired': 'monaco-editor is required for file viewing',
+
+  // Settings
+  'settings.title': 'Settings',
+  'settings.theme': 'Theme',
+  'settings.themeDark': 'Dark',
+  'settings.themeLight': 'Light',
+  'settings.language': 'Language',
 };

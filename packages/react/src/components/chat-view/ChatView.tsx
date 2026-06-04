@@ -106,15 +106,15 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
           );
         })}
       </div>
-      {plan.some((e) => e.status !== 'completed') && (
-        <div className={styles.acpPlanWrapper}>
+      <div className={styles.acpChatBottom}>
+        {plan.some((e) => e.status !== 'completed') && (
           <PlanView entries={plan} isStreaming={isStreaming} />
+        )}
+        <ChatComposer sessionId={sessionId} isStreaming={isStreaming} availableCommands={availableCommands} editText={editText} onEditTextConsumed={() => setEditText(undefined)} />
+        <div className={styles.acpChatFooter}>
+          <SessionConfigPanel sessionId={sessionId} />
+          <UsageBar sessionId={sessionId} />
         </div>
-      )}
-      <ChatComposer sessionId={sessionId} isStreaming={isStreaming} availableCommands={availableCommands} editText={editText} onEditTextConsumed={() => setEditText(undefined)} />
-      <div className={styles.acpChatFooter}>
-        <SessionConfigPanel sessionId={sessionId} />
-        <UsageBar sessionId={sessionId} />
       </div>
     </div>
   );

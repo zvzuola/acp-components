@@ -15,7 +15,7 @@ export function Workbench({ sidebar, main, panel, className }: WorkbenchProps) {
 
   return (
     <div
-      className={`${styles.acpWorkbench}${hasPanel ? ` ${styles.acpWorkbenchHasPanel}` : ''}${className ? ` ${className}` : ''}`}
+      className={`${styles.acpWorkbench}${className ? ` ${className}` : ''}`}
       role="application"
       aria-label={t('workbench.ariaLabel')}
     >

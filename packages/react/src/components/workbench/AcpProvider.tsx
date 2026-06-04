@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { AcpContext } from '../../context/AcpContext';
+import { SettingsContext } from '../../context/SettingsContext';
 import { useAcpProvider } from '../../hooks/useAcpProvider';
 import { useFileSystemProvider } from '../../hooks/useFileSystemProvider';
 import { acpStore } from '@acp-components/core';
@@ -29,7 +30,7 @@ function FileSystemProviderWrapper({ options, children }: { options: FileSystemP
 
 export function AcpProvider({
   agents,
-  theme = 'dark',
+  theme: initialTheme = 'dark',
   children,
   onTerminal,
   onExtMethod,
@@ -46,6 +47,16 @@ export function AcpProvider({
     fileSystem,
   });
   const { t } = useI18n();
+
+  // Runtime theme state — initialized from prop, switchable via useSettings().setTheme()
+  const [theme, setTheme] = useState<'dark' | 'light'>(initialTheme);
+
+  // Sync if the parent changes the initialTheme prop after mount
+  React.useEffect(() => {
+    setTheme(initialTheme);
+  }, [initialTheme]);
+
+  const settingsValue = useMemo(() => ({ theme, setTheme }), [theme]);
 
   const contextValue = useMemo(() => ({
     getClient: provider.getClient,
@@ -69,19 +80,23 @@ export function AcpProvider({
 
   if (!provider.isReady) {
     return (
-      <div data-acp-theme={theme} className={styles.acpLoading}>
-        <div className={styles.acpLoadingSpinner} />
-        <span>{t('loading.connecting')}</span>
-      </div>
+      <SettingsContext.Provider value={settingsValue}>
+        <div data-acp-theme={theme} className={styles.acpLoading}>
+          <div className={styles.acpLoadingSpinner} />
+          <span>{t('loading.connecting')}</span>
+        </div>
+      </SettingsContext.Provider>
     );
   }
 
   const content = (
-    <AcpContext.Provider value={contextValue}>
-      <div data-acp-theme={theme}>
-        {children}
-      </div>
-    </AcpContext.Provider>
+    <SettingsContext.Provider value={settingsValue}>
+      <AcpContext.Provider value={contextValue}>
+        <div data-acp-theme={theme}>
+          {children}
+        </div>
+      </AcpContext.Provider>
+    </SettingsContext.Provider>
   );
 
   // Only wrap with FileSystemProvider when onDirectoryRead is provided (file tree capability)

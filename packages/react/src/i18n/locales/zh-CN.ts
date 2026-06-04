@@ -130,4 +130,11 @@ export const zhCN = {
   'fileViewer.closeAll': '全部关闭',
   'fileViewer.noFile': '未打开文件',
   'fileViewer.monacoRequired': '文件查看需要 monaco-editor',
+
+  // Settings
+  'settings.title': '设置',
+  'settings.theme': '主题',
+  'settings.themeDark': '深色',
+  'settings.themeLight': '浅色',
+  'settings.language': '语言',
 };

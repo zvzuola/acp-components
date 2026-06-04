@@ -45,7 +45,8 @@ import { PermissionDialog } from '@acp-components/react';
 import { LoginDialog } from '@acp-components/react';
 import { FileTree } from '@acp-components/react';
 import { FileViewer } from '@acp-components/react';
-import { I18nProvider, useI18n } from '@acp-components/react';
+import { SettingsMenu } from '@acp-components/react';
+import { I18nProvider } from '@acp-components/react';
 import { useAcpStore } from '@acp-components/react';
 import { useAcpContext } from '@acp-components/react';
 import { useFileTree } from '@acp-components/react';
@@ -144,46 +145,6 @@ function createServerFileWatcher(callbacks: FileTreeWatchCallbacks): () => void 
   })();
 }
 
-function LocaleSwitcher() {
-  const { i18n } = useI18n();
-  const current = i18n.language?.startsWith('zh') ? 'zh-CN' : 'en-US';
-
-  return (
-    <div style={{ display: 'flex', gap: 4, padding: '8px 12px' }}>
-      <button
-        onClick={() => i18n.changeLanguage('en-US')}
-        style={{
-          flex: 1,
-          padding: '4px 0',
-          border: '1px solid var(--acp-color-border)',
-          borderRadius: 4,
-          background: current === 'en-US' ? 'var(--acp-color-accent)' : 'transparent',
-          color: current === 'en-US' ? 'var(--acp-color-text-inverse)' : 'var(--acp-color-text-muted)',
-          cursor: 'pointer',
-          fontSize: 12,
-        }}
-      >
-        EN
-      </button>
-      <button
-        onClick={() => i18n.changeLanguage('zh-CN')}
-        style={{
-          flex: 1,
-          padding: '4px 0',
-          border: '1px solid var(--acp-color-border)',
-          borderRadius: 4,
-          background: current === 'zh-CN' ? 'var(--acp-color-accent)' : 'transparent',
-          color: current === 'zh-CN' ? 'var(--acp-color-text-inverse)' : 'var(--acp-color-text-muted)',
-          cursor: 'pointer',
-          fontSize: 12,
-        }}
-      >
-        中文
-      </button>
-    </div>
-  );
-}
-
 // ---------------------------------------------------------------------------
 // FileTreePanel — displays file tree for the active workspace
 // ---------------------------------------------------------------------------
@@ -269,7 +230,7 @@ function AppInner() {
             <div style={{ flex: 1, overflow: "hidden" }}>
               <SessionList onBrowse={handleBrowse} />
             </div>
-            <LocaleSwitcher />
+            <SettingsMenu />
           </>
         }
         main={
