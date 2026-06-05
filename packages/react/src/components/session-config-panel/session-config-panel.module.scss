@@ -1,46 +1,58 @@
+// =============================================================================
+// Session Config Panel — Precision Instrument Aesthetic
+// =============================================================================
+// Compact control surface for session configuration options.
+// Inspired by high-end lab equipment: hairline details, precise spacing,
+// satisfying toggle mechanics, and glass-depth tooltips.
+// =============================================================================
+
+// ── Panel Container ────────────────────────────────────────────────────────
+
 .acp-session-config-panel {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+
+  // Fade-slide entrance — the panel materializes after footer renders
+  animation: config-panel-enter var(--acp-duration-slow) var(--acp-ease-out) both;
 }
+
+@keyframes config-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ── Config Item — individual control ───────────────────────────────────────
 
 .acp-session-config-item {
   display: flex;
   align-items: center;
-  gap: 6px;
   position: relative;
-}
-
-.acp-session-config-label {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--acp-color-text-secondary);
-  white-space: nowrap;
-  letter-spacing: -0.01em;
-}
-
-.acp-session-config-select {
-  padding: 5px 8px;
-  border: 1px solid var(--acp-color-border);
   border-radius: var(--acp-radius-sm);
-  background: var(--acp-color-bg-input);
-  color: var(--acp-color-text-primary);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  outline: none;
-  min-width: 100px;
-  transition: border-color var(--acp-duration-fast) var(--acp-ease-out);
-
-  &:focus {
-    border-color: var(--acp-color-accent);
-    box-shadow: 0 0 0 3px var(--acp-color-accent-muted);
-  }
+  transition: background var(--acp-duration-fast) var(--acp-ease-out);
 
   &:hover {
-    border-color: var(--acp-color-text-muted);
+    background: var(--acp-color-bg-hover);
+
+    // Reveal description on hover
+    .acp-session-config-description {
+      opacity: 1;
+      visibility: visible;
+      transform: translate(-50%, 0);
+      transition-delay: 400ms;
+    }
   }
 }
+
+// ── Toggle Switch ──────────────────────────────────────────────────────────
+// Precision toggle — wider track, satisfying spring animation,
+// subtle glow on active state
 
 .acp-session-config-toggle {
   display: flex;
@@ -49,24 +61,41 @@
 
 .acp-session-config-switch {
   position: relative;
-  width: 34px;
-  height: 20px;
-  border: none;
-  border-radius: 10px;
-  background: var(--acp-color-border);
+  width: 36px;
+  height: 22px;
+  border: 1px solid var(--acp-color-border);
+  border-radius: 11px;
+  background: var(--acp-color-bg-input);
   cursor: pointer;
   padding: 0;
-  transition: background var(--acp-duration-fast) var(--acp-ease-out);
   outline: none;
+  transition:
+    border-color var(--acp-duration-fast) var(--acp-ease-out),
+    background var(--acp-duration-fast) var(--acp-ease-out),
+    box-shadow var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover {
+    border-color: var(--acp-color-text-muted);
+  }
 
   &:focus-visible {
+    border-color: var(--acp-color-accent);
     box-shadow: 0 0 0 3px var(--acp-color-accent-muted);
   }
 
+  // Active state — accent fill + subtle inner glow
   &--on {
     background: var(--acp-color-accent);
+    border-color: var(--acp-color-accent);
+
+    &:hover {
+      background: var(--acp-color-accent-hover);
+    }
   }
 }
+
+// ── Switch Knob ────────────────────────────────────────────────────────────
+// Satisfying spring-loaded knob with shadow depth
 
 .acp-session-config-switch-knob {
   position: absolute;
@@ -76,20 +105,65 @@
   height: 16px;
   border-radius: 50%;
   background: var(--acp-color-knob);
-  box-shadow: var(--acp-color-knob-shadow);
-  transition: transform var(--acp-duration-fast) var(--acp-ease-spring);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(0, 0, 0, 0.06);
+  transition: transform 180ms var(--acp-ease-spring);
 
   .acp-session-config-switch--on & {
     transform: translateX(14px);
   }
+
+  // Micro-press effect when the switch toggles — knob compresses slightly
+  .acp-session-config-switch:active & {
+    transform: translateX(var(--knob-x, 0px)) scaleX(1.1);
+    transition: transform 60ms var(--acp-ease-out);
+  }
 }
 
+// ── Description Tooltip ────────────────────────────────────────────────────
+// Glass-depth tooltip that appears on hover with a subtle delay.
+// Positioned above the item, centered.
+
 .acp-session-config-description {
-  font-size: 11px;
-  color: var(--acp-color-text-muted);
   position: absolute;
-  top: 100%;
-  left: 0;
-  margin-top: 2px;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translate(-50%, 4px);
+  padding: 5px 10px;
+  border: 1px solid var(--acp-color-border);
+  border-radius: var(--acp-radius-sm);
+  background: var(--acp-color-bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--acp-shadow-md);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--acp-color-text-secondary);
   white-space: nowrap;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--acp-duration-fast) var(--acp-ease-out),
+    visibility var(--acp-duration-fast) var(--acp-ease-out),
+    transform var(--acp-duration-fast) var(--acp-ease-out);
+  z-index: 10;
+
+  // Arrow/triangle pointing down to the item
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid var(--acp-color-bg-glass);
+  }
 }

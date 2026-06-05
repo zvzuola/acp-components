@@ -28,6 +28,8 @@ export { ConnectionStatus, UsageBar } from './components/status-bar';
 export type { UsageBarProps } from './components/status-bar/UsageBar';
 export { SessionConfigPanel } from './components/session-config-panel';
 export type { SessionConfigPanelProps } from './components/session-config-panel/SessionConfigPanel';
+export { Select } from './components/select';
+export type { SelectProps, SelectOption, SelectOptionGroup } from './components/select';
 export { CommandPalette } from './components/command-palette';
 export type { CommandPaletteProps } from './components/command-palette/CommandPalette';
 export { TerminalView } from './components/terminal-view';

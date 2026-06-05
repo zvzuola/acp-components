@@ -1,0 +1,210 @@
+// =============================================================================
+// Select — Custom Dropdown Select
+// =============================================================================
+// Replaces native <select> with a styled trigger + glass popover.
+// Precision instrument aesthetic: compact pill trigger, backdrop-blur panel,
+// smooth open/close animation, subtle checkmark for selected item.
+// =============================================================================
+
+// ── Container ──────────────────────────────────────────────────────────────
+
+.acp-select {
+  position: relative;
+  display: inline-block;
+
+  &--disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+// ── Trigger Button ─────────────────────────────────────────────────────────
+
+.acp-select-trigger {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 7px 4px 8px;
+  border: 1px solid var(--acp-color-border);
+  border-radius: var(--acp-radius-xs);
+  background: var(--acp-color-bg-input);
+  color: var(--acp-color-text-primary);
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--acp-font-sans);
+  cursor: pointer;
+  outline: none;
+  line-height: 1.4;
+  min-width: 0;
+  transition:
+    border-color var(--acp-duration-fast) var(--acp-ease-out),
+    box-shadow var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover {
+    border-color: var(--acp-color-text-muted);
+  }
+
+  &:focus-visible {
+    border-color: var(--acp-color-accent);
+    box-shadow: 0 0 0 3px var(--acp-color-accent-muted);
+  }
+
+  &--open {
+    border-color: var(--acp-color-accent);
+    box-shadow: 0 0 0 3px var(--acp-color-accent-muted);
+  }
+
+  &--borderless {
+    border-color: transparent;
+    background: transparent;
+
+    &:hover {
+      border-color: transparent;
+      background: var(--acp-color-bg-hover);
+    }
+
+    &.acp-select-trigger--open {
+      border-color: var(--acp-color-accent);
+      background: var(--acp-color-bg-input);
+    }
+  }
+}
+
+// ── Selected value text ────────────────────────────────────────────────────
+
+.acp-select-value {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.acp-select-placeholder {
+  color: var(--acp-color-text-muted);
+}
+
+// ── Chevron ────────────────────────────────────────────────────────────────
+
+.acp-select-chevron {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  width: 10px;
+  height: 6px;
+  background-color: var(--acp-color-text-muted);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23fff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23fff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  transition: transform var(--acp-duration-fast) var(--acp-ease-out);
+
+  &--open {
+    transform: rotate(180deg);
+  }
+}
+
+// ── Popover panel ──────────────────────────────────────────────────────────
+// Positioned via inline fixed styles (portal to <body>).
+// Placement auto-flips based on available viewport space.
+
+.acp-select-popover {
+  z-index: 1000;
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid var(--acp-color-border);
+  border-radius: var(--acp-radius-sm);
+  background: var(--acp-color-bg-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--acp-shadow-md);
+  animation: select-popover-enter 120ms var(--acp-ease-out) both;
+  transform-origin: top left;
+
+  // Flipped placement — animate from bottom
+  &--top {
+    transform-origin: bottom left;
+    animation-name: select-popover-enter-top;
+  }
+}
+
+@keyframes select-popover-enter {
+  from {
+    opacity: 0;
+    transform: scaleY(0.95) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1) translateY(0);
+  }
+}
+
+@keyframes select-popover-enter-top {
+  from {
+    opacity: 0;
+    transform: scaleY(0.95) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1) translateY(0);
+  }
+}
+
+// ── Option group ───────────────────────────────────────────────────────────
+
+.acp-select-group {
+  + .acp-select-group {
+    margin-top: 2px;
+    padding-top: 2px;
+    border-top: 1px solid var(--acp-color-border-subtle);
+  }
+}
+
+.acp-select-group-label {
+  padding: 4px 8px 2px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--acp-color-text-muted);
+  user-select: none;
+}
+
+// ── Option row ─────────────────────────────────────────────────────────────
+
+.acp-select-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: var(--acp-radius-xs);
+  font-size: 12px;
+  color: var(--acp-color-text-primary);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover,
+  &--focused {
+    background: var(--acp-color-bg-hover);
+  }
+
+  &--selected {
+    color: var(--acp-color-accent-text);
+  }
+}
+
+.acp-select-option-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// ── Checkmark ──────────────────────────────────────────────────────────────
+
+.acp-select-check {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--acp-color-accent);
+  line-height: 1;
+}

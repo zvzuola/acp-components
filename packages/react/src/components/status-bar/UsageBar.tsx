@@ -14,6 +14,11 @@ function formatTokens(n: number): string {
   return String(n);
 }
 
+// Ring geometry constants
+const RING_RADIUS = 9;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+const SVG_SIZE = 24;
+
 export function UsageBar({ sessionId }: UsageBarProps) {
   const { usage } = useSession(sessionId);
   const { t } = useI18n();
@@ -21,26 +26,61 @@ export function UsageBar({ sessionId }: UsageBarProps) {
   if (!sessionId || !usage) return null;
 
   const pct = usage.size > 0 ? Math.min((usage.used / usage.size) * 100, 100) : 0;
-  const fillClass = pct > 80 ? styles.acpUsageBarFillHigh
-    : pct > 50 ? styles.acpUsageBarFillMedium
-      : styles.acpUsageBarFillLow;
+  const offset = RING_CIRCUMFERENCE * (1 - pct / 100);
+
+  const colorClass = pct > 80 ? styles.acpUsageBarRingFillHigh
+    : pct > 50 ? styles.acpUsageBarRingFillMedium
+    : styles.acpUsageBarRingFillLow;
 
   return (
-    <div className={styles.acpUsageBar} role="meter" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={t('usageBar.ariaLabel', { used: formatTokens(usage.used), total: formatTokens(usage.size) })}>
-      <div className={styles.acpUsageBarWrap}>
-        <div
-          className={`${styles.acpUsageBarFill} ${fillClass}`}
-          style={{ width: `${pct}%` }}
+    <div
+      className={styles.acpUsageBar}
+      role="meter"
+      aria-valuenow={Math.round(pct)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={t('usageBar.ariaLabel', { used: formatTokens(usage.used), total: formatTokens(usage.size) })}
+    >
+      <svg
+        className={styles.acpUsageBarRing}
+        width={SVG_SIZE}
+        height={SVG_SIZE}
+        viewBox={`0 0 ${SVG_SIZE} ${SVG_SIZE}`}
+        aria-hidden="true"
+      >
+        {/* Background track */}
+        <circle
+          className={styles.acpUsageBarRingTrack}
+          cx={SVG_SIZE / 2}
+          cy={SVG_SIZE / 2}
+          r={RING_RADIUS}
+          fill="none"
+          strokeWidth="1.5"
         />
-      </div>
-      <span className={styles.acpUsageBarText}>
-        {formatTokens(usage.used)}/{formatTokens(usage.size)}
-      </span>
-      {usage.cost && (
-        <span className={styles.acpUsageBarCost}>
-          {usage.cost.currency} {usage.cost.amount.toFixed(2)}
+        {/* Progress arc */}
+        <circle
+          className={`${styles.acpUsageBarRingFill} ${colorClass}`}
+          cx={SVG_SIZE / 2}
+          cy={SVG_SIZE / 2}
+          r={RING_RADIUS}
+          fill="none"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeDasharray={RING_CIRCUMFERENCE}
+          strokeDashoffset={offset}
+          transform={`rotate(-90 ${SVG_SIZE / 2} ${SVG_SIZE / 2})`}
+        />
+      </svg>
+      <div className={styles.acpUsageBarTooltip}>
+        <span className={styles.acpUsageBarText}>
+          {formatTokens(usage.used)}<span className={styles.acpUsageBarTextSep}>/</span>{formatTokens(usage.size)}
         </span>
-      )}
+        {usage.cost && (
+          <span className={styles.acpUsageBarCost}>
+            {usage.cost.currency}{usage.cost.amount.toFixed(2)}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

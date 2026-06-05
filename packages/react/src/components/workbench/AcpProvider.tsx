@@ -51,6 +51,14 @@ export function AcpProvider({
   // Runtime theme state — initialized from prop, switchable via useSettings().setTheme()
   const [theme, setTheme] = useState<'dark' | 'light'>(initialTheme);
 
+  // Sync theme to <body> so portaled components (Select, etc.) inherit CSS variables
+  React.useEffect(() => {
+    document.body.setAttribute('data-acp-theme', theme);
+    return () => {
+      document.body.removeAttribute('data-acp-theme');
+    };
+  }, [theme]);
+
   // Sync if the parent changes the initialTheme prop after mount
   React.useEffect(() => {
     setTheme(initialTheme);
@@ -81,7 +89,7 @@ export function AcpProvider({
   if (!provider.isReady) {
     return (
       <SettingsContext.Provider value={settingsValue}>
-        <div data-acp-theme={theme} className={styles.acpLoading}>
+        <div className={styles.acpLoading}>
           <div className={styles.acpLoadingSpinner} />
           <span>{t('loading.connecting')}</span>
         </div>
@@ -92,7 +100,7 @@ export function AcpProvider({
   const content = (
     <SettingsContext.Provider value={settingsValue}>
       <AcpContext.Provider value={contextValue}>
-        <div data-acp-theme={theme}>
+        <div>
           {children}
         </div>
       </AcpContext.Provider>
