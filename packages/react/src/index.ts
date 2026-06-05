@@ -8,6 +8,8 @@ export { ResizeHandle } from './components/workbench';
 export type { ResizeHandleProps } from './components/workbench/ResizeHandle';
 export { SessionList } from './components/session-list';
 export type { SessionListProps } from './components/session-list/SessionList';
+export { Sidebar } from './components/sidebar';
+export type { SidebarProps } from './components/sidebar/Sidebar';
 export { Markdown } from './components/markdown';
 export type { MarkdownProps } from './components/markdown/Markdown';
 export { ChatView, MessageBubble, ChatComposer, ToolCallCard, StreamingIndicator, ThoughtView, PlanView } from './components/chat-view';

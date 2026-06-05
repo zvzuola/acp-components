@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { CloseOutlined, MessageOutlined, FolderOutlined, PlusOutlined, RightOutlined } from '@ant-design/icons';
+import { CloseOutlined, MessageOutlined, FolderOutlined, FolderOpenOutlined, PlusOutlined, RightOutlined } from '@ant-design/icons';
 import { useStore } from 'zustand/react';
 import { sessionStore } from '@acp-components/core';
 import { useSessions } from '../../hooks/useSessions';
@@ -17,6 +17,7 @@ type SessionStatusType = 'running' | 'needs-action' | null;
 
 export interface SessionListProps {
   onBrowse?: () => Promise<string | null>;
+  onShowFiles?: (cwd: string) => void;
 }
 
 function getWorkspaceName(cwd: string): string {
@@ -201,10 +202,11 @@ function AgentGroup({ agentId, agentName, agentStatus, sessions, cwd }: {
 // WorkspaceGroup — renders a workspace and its agent groups
 // ---------------------------------------------------------------------------
 
-function WorkspaceGroup({ cwd, workspace, isWorkspaceActive }: {
+function WorkspaceGroup({ cwd, workspace, isWorkspaceActive, onShowFiles }: {
   cwd: string;
   workspace: WorkspaceState;
   isWorkspaceActive: boolean;
+  onShowFiles?: (cwd: string) => void;
 }) {
   const { t } = useI18n();
   const agents = useAcpStore((s) => s.agents);
@@ -241,9 +243,21 @@ function WorkspaceGroup({ cwd, workspace, isWorkspaceActive }: {
           <span className={styles.acpSessionWorkspaceHeaderFolder}><FolderOutlined /></span>
           <span className={styles.acpSessionWorkspaceHeaderName}>{getWorkspaceName(cwd)}</span>
         </span>
-        {sessionCount > 0 && (
-          <span className={styles.acpSessionWorkspaceHeaderBadge}>{sessionCount}</span>
-        )}
+        <div className={styles.acpSessionWorkspaceHeaderActions}>
+          {onShowFiles && (
+            <button
+              className={styles.acpSessionWorkspaceHeaderFilesBtn}
+              onClick={(e) => { e.stopPropagation(); onShowFiles(cwd); }}
+              aria-label={t('sidebar.showFiles')}
+              title={t('sidebar.showFiles')}
+            >
+              <FolderOpenOutlined />
+            </button>
+          )}
+          {sessionCount > 0 && (
+            <span className={styles.acpSessionWorkspaceHeaderBadge}>{sessionCount}</span>
+          )}
+        </div>
       </div>
       {!collapsed && (
         <div className={styles.acpSessionWorkspaceBody}>
@@ -272,7 +286,7 @@ function WorkspaceGroup({ cwd, workspace, isWorkspaceActive }: {
 // SessionList — top-level orchestrator
 // ---------------------------------------------------------------------------
 
-export function SessionList({ onBrowse }: SessionListProps) {
+export function SessionList({ onBrowse, onShowFiles }: SessionListProps) {
   const { activeSessionId } = useSessions();
   const agents = useAcpStore((s) => s.agents);
   const workspaces = useAcpStore((s) => s.workspaces);
@@ -364,6 +378,7 @@ export function SessionList({ onBrowse }: SessionListProps) {
             cwd={cwd}
             workspace={ws}
             isWorkspaceActive={cwd === activeWorkspaceCwd}
+            onShowFiles={onShowFiles}
           />
         ))}
       </div>

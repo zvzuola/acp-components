@@ -139,4 +139,11 @@ export const zhCN = {
   'settings.themeDark': '深色',
   'settings.themeLight': '浅色',
   'settings.language': '语言',
+
+  // Sidebar
+  'sidebar.sessionsTitle': '会话',
+  'sidebar.filesTitle': '文件',
+  'sidebar.backToSessions': '返回会话',
+  'sidebar.showFiles': '显示文件',
+  'sidebar.noWorkspace': '请选择工作区',
 };

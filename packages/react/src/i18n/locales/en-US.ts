@@ -139,4 +139,11 @@ export const enUS = {
   'settings.themeDark': 'Dark',
   'settings.themeLight': 'Light',
   'settings.language': 'Language',
+
+  // Sidebar
+  'sidebar.sessionsTitle': 'Sessions',
+  'sidebar.filesTitle': 'Files',
+  'sidebar.backToSessions': 'Back to sessions',
+  'sidebar.showFiles': 'Show files',
+  'sidebar.noWorkspace': 'Select a workspace',
 };

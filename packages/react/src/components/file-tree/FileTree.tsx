@@ -1,10 +1,9 @@
-import { useState, useCallback, useMemo, useRef, memo } from 'react';
+import { useCallback, useMemo, memo } from 'react';
 import {
   RightOutlined,
   FolderOutlined,
   FolderOpenOutlined,
   FileTextOutlined,
-  FileSearchOutlined,
 } from '@ant-design/icons';
 import type { FileTreeNode } from '@acp-components/core';
 import { useI18n } from '../../i18n';
@@ -17,8 +16,6 @@ export interface FileTreeProps {
   files: FileTreeNode[];
   /** Called when the user clicks a file node */
   onNavigate?: (path: string) => void;
-  /** Optional search query to filter visible nodes */
-  searchQuery?: string;
   /** Additional class name */
   className?: string;
   /** Whether to show the root nodes' parent path */
@@ -32,47 +29,6 @@ export interface FileTreeProps {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function groupByDirectory(nodes: FileTreeNode[]): FileTreeNode[] {
-  const dirMap = new Map<string, FileTreeNode>();
-  const rootNodes: FileTreeNode[] = [];
-
-  for (const node of nodes) {
-    const parts = node.path.replace(/\\/g, '/').split('/');
-    const dirPath = parts.slice(0, -1).join('/');
-
-    if (!dirPath) {
-      rootNodes.push(node);
-      continue;
-    }
-
-    // Build ancestor chain
-    let currentPath = '';
-    let context = rootNodes;
-    for (let i = 0; i < parts.length - 1; i++) {
-      currentPath = currentPath ? `${currentPath}/${parts[i]}` : parts[i];
-      let dirNode = dirMap.get(currentPath);
-      if (!dirNode) {
-        dirNode = {
-          name: parts[i],
-          path: currentPath,
-          kind: 'directory',
-          children: [],
-        };
-        dirMap.set(currentPath, dirNode);
-        context.push(dirNode);
-      }
-      context = dirNode.children!;
-    }
-
-    context.push({
-      ...node,
-      name: parts[parts.length - 1],
-    });
-  }
-
-  return sortNodesRecursive(rootNodes);
-}
 
 function sortNodesRecursive(nodes: FileTreeNode[]): FileTreeNode[] {
   const sorted = [...nodes].sort((a, b) => {
@@ -88,41 +44,6 @@ function sortNodesRecursive(nodes: FileTreeNode[]): FileTreeNode[] {
   }
 
   return sorted;
-}
-
-function matchesSearch(node: FileTreeNode, query: string): FileTreeNode | null {
-  const normalizedQuery = query.toLowerCase();
-  const nameMatch = node.name.toLowerCase().includes(normalizedQuery);
-  const pathMatch = node.path.toLowerCase().includes(normalizedQuery);
-
-  if (node.kind === 'file') {
-    if (nameMatch || pathMatch) {
-      return { ...node };
-    }
-    return null;
-  }
-
-  if (node.children) {
-    const matchedChildren = node.children
-      .map((child) => matchesSearch(child, query))
-      .filter((child): child is FileTreeNode => child !== null);
-
-    if (matchedChildren.length > 0) {
-      return {
-        ...node,
-        children: matchedChildren,
-      };
-    }
-  }
-
-  if (nameMatch || pathMatch) {
-    return {
-      ...node,
-      children: node.children ?? [],
-    };
-  }
-
-  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -252,46 +173,20 @@ const FileTreeRow = memo(function FileTreeRow({
 export function FileTree({
   files,
   onNavigate,
-  searchQuery,
   className,
   showRoot,
   onExpand,
   onCollapse,
 }: FileTreeProps) {
   const { t } = useI18n();
-  const [collapsed, setCollapsed] = useState(false);
-  const [localSearch, setLocalSearch] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const effectiveSearch = searchQuery ?? localSearch;
 
   const hierarchicalNodes = useMemo(() => {
     // Data from the store is already hierarchical (directories contain their
     // direct children). We just need to sort it.
-    // groupByDirectory is only for flat file lists (e.g. search results with
-    // bare paths), which would need showRoot=false explicitly.
     return sortNodesRecursive(files);
   }, [files]);
 
-  const filteredNodes = useMemo(() => {
-    if (!effectiveSearch || !effectiveSearch.trim()) return hierarchicalNodes;
-    return hierarchicalNodes
-      .map((node) => matchesSearch(node, effectiveSearch.trim()))
-      .filter((node): node is FileTreeNode => node !== null);
-  }, [hierarchicalNodes, effectiveSearch]);
-
-  const hasFiles = filteredNodes.length > 0;
-
-  const handleFocusSearch = useCallback(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  const handleSearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setLocalSearch(e.target.value);
-    },
-    []
-  );
+  const hasFiles = hierarchicalNodes.length > 0;
 
   return (
     <div
@@ -299,94 +194,24 @@ export function FileTree({
         className ? ` ${className}` : ''
       }`}
     >
-      <div className={styles.acpFileTreeHeader}>
-        <span
-          className={styles.acpFileTreeHeaderTitle}
-          onClick={() => setCollapsed((prev) => !prev)}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              setCollapsed((prev) => !prev);
-            }
-          }}
-        >
-          <span
-            className={`${styles.acpFileTreeChevron}${
-              !collapsed ? ` ${styles.acpFileTreeChevronOpen}` : ''
-            }`}
-          >
-            <RightOutlined />
-          </span>
-          <span className={styles.acpFileTreeHeaderLabel}>
-            {t('fileTree.title')}
-          </span>
-          {hasFiles && (
-            <span className={styles.acpFileTreeHeaderCount}>
-              {countFiles(filteredNodes)}
-            </span>
-          )}
-        </span>
-        {searchQuery === undefined && (
-          <button
-            className={styles.acpFileTreeSearchToggle}
-            onClick={handleFocusSearch}
-            aria-label={t('fileTree.searchAriaLabel')}
-            title={t('fileTree.search')}
-          >
-            <FileSearchOutlined />
-          </button>
+      <div className={styles.acpFileTreeBody} role="tree" aria-label={t('fileTree.title')}>
+        {!hasFiles ? (
+          <div className={styles.acpFileTreeEmpty}>
+            {t('fileTree.empty')}
+          </div>
+        ) : (
+          hierarchicalNodes.map((node) => (
+            <FileTreeRow
+              key={node.path}
+              node={node}
+              depth={0}
+              onNavigate={onNavigate}
+              onExpand={onExpand}
+              onCollapse={onCollapse}
+            />
+          ))
         )}
       </div>
-
-      {searchQuery === undefined && !collapsed && (
-        <div className={styles.acpFileTreeSearchWrap}>
-          <input
-            ref={inputRef}
-            className={styles.acpFileTreeSearchInput}
-            type="text"
-            value={localSearch}
-            onChange={handleSearchChange}
-            placeholder={t('fileTree.searchPlaceholder')}
-            aria-label={t('fileTree.searchAriaLabel')}
-          />
-        </div>
-      )}
-
-      {!collapsed && (
-        <div className={styles.acpFileTreeBody} role="tree" aria-label={t('fileTree.title')}>
-          {!hasFiles ? (
-            <div className={styles.acpFileTreeEmpty}>
-              {t('fileTree.empty')}
-            </div>
-          ) : (
-            filteredNodes.map((node) => (
-              <FileTreeRow
-                key={node.path}
-                node={node}
-                depth={0}
-                onNavigate={onNavigate}
-                onExpand={onExpand}
-                onCollapse={onCollapse}
-              />
-            ))
-          )}
-        </div>
-      )}
     </div>
   );
-}
-
-function countFiles(nodes: FileTreeNode[]): number {
-  let count = 0;
-  for (const node of nodes) {
-    if (node.kind === 'file') {
-      count++;
-    }
-    if (node.children) {
-      count += countFiles(node.children);
-    }
-  }
-  return count;
 }

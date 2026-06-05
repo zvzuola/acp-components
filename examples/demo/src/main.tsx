@@ -39,17 +39,14 @@ self.MonacoEnvironment = {
 
 import { AcpProvider } from '@acp-components/react';
 import { Workbench } from '@acp-components/react';
-import { SessionList } from '@acp-components/react';
+import { Sidebar } from '@acp-components/react';
 import { ChatView } from '@acp-components/react';
 import { PermissionDialog } from '@acp-components/react';
 import { LoginDialog } from '@acp-components/react';
-import { FileTree } from '@acp-components/react';
 import { FileViewer } from '@acp-components/react';
-import { SettingsMenu } from '@acp-components/react';
 import { I18nProvider } from '@acp-components/react';
 import { useAcpStore } from '@acp-components/react';
 import { useAcpContext } from '@acp-components/react';
-import { useFileTree } from '@acp-components/react';
 import { useFileViewer } from '@acp-components/react';
 import type { FileTreeNode, FileTreeWatchCallbacks } from '@acp-components/react';
 
@@ -145,39 +142,6 @@ function createServerFileWatcher(callbacks: FileTreeWatchCallbacks): () => void 
   })();
 }
 
-// ---------------------------------------------------------------------------
-// FileTreePanel — displays file tree for the active workspace
-// ---------------------------------------------------------------------------
-
-function FileTreePanel({ cwd, onNavigateFile }: { cwd: string; onNavigateFile?: (path: string, line?: number | null) => void }) {
-  const { files, loading, error, onExpand, onCollapse } = useFileTree({ cwd });
-
-  if (error) {
-    return (
-      <div style={{ padding: 12, color: 'var(--acp-color-error)' }}>
-        Error: {error}
-      </div>
-    );
-  }
-
-  if (loading && files.length === 0) {
-    return (
-      <div style={{ padding: 12, color: 'var(--acp-color-text-muted)' }}>
-        Loading...
-      </div>
-    );
-  }
-
-  return (
-    <FileTree
-      files={files}
-      onExpand={onExpand}
-      onCollapse={onCollapse}
-      onNavigate={onNavigateFile}
-    />
-  );
-}
-
 // In web environments, stdio transport is unavailable (can't spawn child processes).
 // Use WebSocket transport connected to the acp-server backend, which bridges
 // the agent's stdio to WebSocket.
@@ -190,13 +154,6 @@ function FileTreePanel({ cwd, onNavigateFile }: { cwd: string; onNavigateFile?: 
 function AppInner() {
   const activeSessionId = useAcpStore((s) => s.activeSessionId);
   const workspaces = useAcpStore((s) => s.workspaces);
-  const activeCwd = useAcpStore((s) => {
-    if (!s.activeSessionId) return null;
-    for (const [cwd, ws] of s.workspaces) {
-      if (ws.sessions.has(s.activeSessionId)) return cwd;
-    }
-    return null;
-  });
   const { addWorkspace } = useAcpContext();
   const loadedRef = useRef(false);
   const fileViewer = useFileViewer();
@@ -226,28 +183,16 @@ function AppInner() {
     <>
       <Workbench
         sidebar={
-          <>
-            <div style={{ flex: 1, overflow: "hidden" }}>
-              <SessionList onBrowse={handleBrowse} />
-            </div>
-            <SettingsMenu />
-          </>
+          <Sidebar
+            onBrowse={handleBrowse}
+            onNavigateFile={fileViewer.openFile}
+          />
         }
         main={
-          <div style={{ display: 'flex', flexDirection: 'row', height: '100%' }}>
-
-            <div style={{ flex: 1, overflow: 'hidden', minWidth: 0 }}>
-              <ChatView
-                sessionId={activeSessionId}
-                onNavigateFile={fileViewer.openFile}
-              />
-            </div>
-            {activeCwd && (
-              <div style={{ flex: '0 0 260px', overflow: 'hidden', borderLeft: '1px solid var(--acp-color-border-subtle)' }}>
-                <FileTreePanel cwd={activeCwd} onNavigateFile={fileViewer.openFile} />
-              </div>
-            )}
-          </div>
+          <ChatView
+            sessionId={activeSessionId}
+            onNavigateFile={fileViewer.openFile}
+          />
         }
         panel={hasOpenFiles ? (
           <FileViewer

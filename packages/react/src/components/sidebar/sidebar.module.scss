@@ -1,0 +1,133 @@
+// =============================================================================
+// Sidebar — unified session/file tree container
+// =============================================================================
+
+.acp-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  // -------------------------------------------------------------------------
+  // Sessions view
+  // -------------------------------------------------------------------------
+  &__sessions {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  // -------------------------------------------------------------------------
+  // Files view
+  // -------------------------------------------------------------------------
+  &__files {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  &__files-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px 10px;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--acp-color-border-subtle);
+  }
+
+  &__files-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: var(--acp-radius-sm);
+    background: transparent;
+    color: var(--acp-color-text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: background var(--acp-duration-fast) var(--acp-ease-out),
+                color var(--acp-duration-fast) var(--acp-ease-out);
+
+    &:hover {
+      background: var(--acp-color-bg-hover);
+      color: var(--acp-color-text-primary);
+    }
+  }
+
+  &__files-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--acp-color-text-muted);
+    user-select: none;
+  }
+
+  &__files-name {
+    font-size: 11px;
+    color: var(--acp-color-text-secondary);
+    margin-left: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 120px;
+  }
+
+  &__files-body {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__files-error {
+    padding: 12px;
+    color: var(--acp-color-error);
+    font-size: 12px;
+  }
+
+  &__files-loading {
+    padding: 12px;
+    color: var(--acp-color-text-muted);
+    font-size: 12px;
+  }
+
+  // -------------------------------------------------------------------------
+  // Empty state
+  // -------------------------------------------------------------------------
+  &__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 12px;
+    color: var(--acp-color-text-muted);
+    font-size: 12px;
+    user-select: none;
+  }
+
+  &__empty-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: var(--acp-radius-sm);
+    background: var(--acp-color-bg-hover);
+    color: var(--acp-color-text-secondary);
+    font-size: 14px;
+    cursor: pointer;
+    transition: background var(--acp-duration-fast) var(--acp-ease-out),
+                color var(--acp-duration-fast) var(--acp-ease-out);
+
+    &:hover {
+      background: var(--acp-color-bg-tertiary);
+      color: var(--acp-color-text-primary);
+    }
+  }
+}
