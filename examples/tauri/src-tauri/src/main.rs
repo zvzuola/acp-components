@@ -2,7 +2,9 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fs;
 use std::io::{BufRead, BufReader, Write};
+use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{mpsc, Arc, Mutex};
@@ -540,10 +542,57 @@ fn release_terminal(state: tauri::State<'_, AppState>, args: TerminalIdArg) -> R
     Ok(())
 }
 
+// ---------------------------------------------------------------------------
+// Workspace persistence — save/load opened workspace directories so they
+// are automatically restored on the next app launch.
+// ---------------------------------------------------------------------------
+
+#[derive(Deserialize)]
+struct SaveWorkspacesArgs {
+    workspaces: Vec<String>,
+}
+
+#[derive(Serialize)]
+struct LoadWorkspacesResult {
+    workspaces: Vec<String>,
+}
+
+fn workspaces_file_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    fs::create_dir_all(&data_dir).map_err(|e| e.to_string())?;
+    Ok(data_dir.join("workspaces.json"))
+}
+
+#[tauri::command]
+fn save_workspaces(app: tauri::AppHandle, args: SaveWorkspacesArgs) -> Result<(), String> {
+    let file_path = workspaces_file_path(&app)?;
+    let json = serde_json::to_string(&args.workspaces).map_err(|e| e.to_string())?;
+    fs::write(&file_path, json).map_err(|e| e.to_string())?;
+    println!("[workspaces] Saved {} workspace(s)", args.workspaces.len());
+    Ok(())
+}
+
+#[tauri::command]
+fn load_workspaces(app: tauri::AppHandle) -> Result<LoadWorkspacesResult, String> {
+    let file_path = workspaces_file_path(&app)?;
+    match fs::read_to_string(&file_path) {
+        Ok(json) => {
+            let workspaces: Vec<String> = serde_json::from_str(&json).map_err(|e| e.to_string())?;
+            println!("[workspaces] Loaded {} workspace(s)", workspaces.len());
+            Ok(LoadWorkspacesResult { workspaces })
+        }
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            Ok(LoadWorkspacesResult { workspaces: vec![] })
+        }
+        Err(e) => Err(e.to_string()),
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .manage(AppState {
             agents: Mutex::new(HashMap::new()),
             terminals: Mutex::new(HashMap::new()),
@@ -556,6 +605,8 @@ pub fn run() {
             write_to_terminal,
             kill_terminal,
             release_terminal,
+            save_workspaces,
+            load_workspaces,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
