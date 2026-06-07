@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { RightOutlined } from '@ant-design/icons';
-import type { ContentBlock } from '@agentclientprotocol/sdk';
+import type { ContentBlock } from '@acp-components/core';
 import { Markdown } from '../markdown';
 import { useI18n } from '../../i18n';
 import styles from './thought-view.module.scss';

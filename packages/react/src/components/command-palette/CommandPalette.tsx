@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import type { AvailableCommand } from '@agentclientprotocol/sdk';
+import type { AvailableCommand } from '@acp-components/core';
 import { useI18n } from '../../i18n';
 import styles from './command-palette.module.scss';
 

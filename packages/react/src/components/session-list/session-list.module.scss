@@ -137,6 +137,10 @@
   &:hover {
     background: var(--acp-color-bg-hover);
 
+    .acp-session-item__fork {
+      opacity: 1;
+    }
+
     .acp-session-item__delete {
       opacity: 1;
     }
@@ -240,6 +244,34 @@
     &:hover {
       color: var(--acp-color-error);
       background: var(--acp-color-error-muted);
+    }
+  }
+
+  &__fork {
+    opacity: 0;
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: var(--acp-color-text-muted);
+    cursor: pointer;
+    padding: 3px;
+    border-radius: var(--acp-radius-xs);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity var(--acp-duration-fast) var(--acp-ease-out),
+                color var(--acp-duration-fast) var(--acp-ease-out),
+                background var(--acp-duration-fast) var(--acp-ease-out);
+
+    &:hover {
+      color: var(--acp-color-accent);
+      background: var(--acp-color-accent-muted);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
   }
 }

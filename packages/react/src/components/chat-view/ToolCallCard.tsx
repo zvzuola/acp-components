@@ -15,7 +15,7 @@ import {
 import { useStore } from 'zustand/react';
 import type { ToolCallState, TerminalState } from '@acp-components/core';
 import { sessionStore } from '@acp-components/core';
-import type { ToolCallLocation, ToolKind } from '@agentclientprotocol/sdk';
+import type { ToolCallLocation, ToolKind } from '@acp-components/core';
 import { DiffView } from '../diff-view';
 import { TerminalView } from '../terminal-view';
 import { useI18n } from '../../i18n';

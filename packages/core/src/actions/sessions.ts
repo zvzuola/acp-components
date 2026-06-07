@@ -15,6 +15,24 @@ export async function createSession(client: AcpClient, agentId: string, cwd: str
   return res.sessionId;
 }
 
+export async function forkSession(client: AcpClient, sourceSessionId: SessionId): Promise<SessionId> {
+  const cwd = findWorkspaceBySession(acpStore.getState().workspaces, sourceSessionId);
+  if (!cwd) throw new Error(`Source session ${sourceSessionId} not found in any workspace`);
+
+  const ws = acpStore.getState().workspaces.get(cwd);
+  const sourceMeta = ws?.sessions.get(sourceSessionId);
+  if (!sourceMeta) throw new Error(`Source session ${sourceSessionId} not found`);
+
+  const res = await client.forkSession(sourceSessionId, cwd);
+  const meta: SessionMeta = { id: res.sessionId, cwd, agentId: sourceMeta.agentId, loaded: true };
+  acpStore.getState().addSession(meta);
+  sessionStore.getState().ensureSession(res.sessionId);
+  if (res.configOptions) {
+    sessionStore.getState().setConfigOptions(res.sessionId, res.configOptions);
+  }
+  return res.sessionId;
+}
+
 export async function loadSession(client: AcpClient, sessionId: SessionId, cwd: string): Promise<void> {
   sessionStore.getState().resetSession(sessionId);
   const res = await client.loadSession(sessionId, cwd);
@@ -42,6 +60,12 @@ export async function selectSession(client: AcpClient, sessionId: SessionId): Pr
 
 export async function closeSession(client: AcpClient, sessionId: SessionId): Promise<void> {
   await client.closeSession(sessionId);
+  acpStore.getState().removeSession(sessionId);
+  sessionStore.getState().removeSession(sessionId);
+}
+
+export async function deleteSession(client: AcpClient, sessionId: SessionId): Promise<void> {
+  await client.deleteSession(sessionId);
   acpStore.getState().removeSession(sessionId);
   sessionStore.getState().removeSession(sessionId);
 }

@@ -1,12 +1,12 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { CloseOutlined, MessageOutlined, FolderOutlined, FolderOpenOutlined, PlusOutlined, RightOutlined } from '@ant-design/icons';
+import { CloseOutlined, ForkOutlined, MessageOutlined, FolderOutlined, FolderOpenOutlined, PlusOutlined, RightOutlined } from '@ant-design/icons';
 import { useStore } from 'zustand/react';
 import { sessionStore } from '@acp-components/core';
 import { useSessions } from '../../hooks/useSessions';
 import { useAcpStore } from '../../hooks/useAcpStore';
 import { useI18n } from '../../i18n';
 import type { SessionMeta, WorkspaceState } from '@acp-components/core';
-import type { SessionId } from '@agentclientprotocol/sdk';
+import type { SessionId } from '@acp-components/core';
 import styles from './session-list.module.scss';
 
 // ---------------------------------------------------------------------------
@@ -71,8 +71,11 @@ function SessionItem({ session, isActive }: {
 }) {
   const { t } = useI18n();
   const formatTime = useFormatTime();
-  const { selectSession, closeSession } = useSessions();
+  const { selectSession, deleteSession, forkSession, setActiveSession } = useSessions();
   const status = useSessionStatus(session.id);
+  const supportsFork = useAcpStore((s) => !!s.agents.get(session.agentId)?.capabilities?.sessionCapabilities?.fork);
+  const supportsDelete = useAcpStore((s) => !!s.agents.get(session.agentId)?.capabilities?.sessionCapabilities?.delete);
+  const [isForking, setIsForking] = useState(false);
 
   return (
     <div
@@ -90,14 +93,39 @@ function SessionItem({ session, isActive }: {
         </div>
         <div className={styles.acpSessionItemMeta}>{formatTime(session.updatedAt)}</div>
       </div>
-      <button
-        className={styles.acpSessionItemDelete}
-        onClick={(e) => { e.stopPropagation(); void closeSession(session.id); }}
-        aria-label={t('sessionList.closeSession')}
-        title={t('sessionList.closeSession')}
-      >
-        <CloseOutlined />
-      </button>
+      {supportsFork && (
+        <button
+          className={styles.acpSessionItemFork}
+          onClick={async (e) => {
+            e.stopPropagation();
+            if (isForking) return;
+            setIsForking(true);
+            try {
+              const newId = await forkSession(session.id);
+              setActiveSession(newId);
+            } catch (err) {
+              console.error('Failed to fork session:', err);
+            } finally {
+              setIsForking(false);
+            }
+          }}
+          disabled={isForking}
+          aria-label={t('sessionList.forkSession')}
+          title={t('sessionList.forkSession')}
+        >
+          <ForkOutlined />
+        </button>
+      )}
+      {supportsDelete && (
+        <button
+          className={styles.acpSessionItemDelete}
+          onClick={(e) => { e.stopPropagation(); void deleteSession(session.id); }}
+          aria-label={t('sessionList.deleteSession')}
+          title={t('sessionList.deleteSession')}
+        >
+          <CloseOutlined />
+        </button>
+      )}
     </div>
   );
 }

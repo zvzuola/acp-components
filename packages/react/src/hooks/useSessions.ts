@@ -7,12 +7,14 @@ import {
   loadSession as coreLoadSession,
   selectSession as coreSelectSession,
   closeSession as coreCloseSession,
+  deleteSession as coreDeleteSession,
+  forkSession as coreForkSession,
   refreshSessions as coreRefreshSessions,
   loadMoreSessions as coreLoadMoreSessions,
   acpStore,
 } from '@acp-components/core';
-import type { SessionId } from '@agentclientprotocol/sdk';
-import { RequestError } from '@agentclientprotocol/sdk';
+import type { SessionId } from '@acp-components/core';
+import { RequestError } from '@acp-components/core';
 import type { AcpClient, SessionMeta } from '@acp-components/core';
 
 export function useSessions() {
@@ -72,6 +74,18 @@ export function useSessions() {
     return coreCloseSession(client, sessionId);
   }, [getClientForSession]);
 
+  const deleteSession = useCallback(async (sessionId: SessionId) => {
+    const client = getClientForSession(sessionId);
+    if (!client) return;
+    return coreDeleteSession(client, sessionId);
+  }, [getClientForSession]);
+
+  const forkSession = useCallback(async (sourceSessionId: SessionId) => {
+    const client = getClientForSession(sourceSessionId);
+    if (!client) throw new Error('No client for session');
+    return coreForkSession(client, sourceSessionId);
+  }, [getClientForSession]);
+
   const refreshSessions = useCallback(async (agentId: string, cwd: string) => {
     const client = getClient(agentId);
     if (!client) return;
@@ -107,6 +121,8 @@ export function useSessions() {
     createSession,
     loadSession,
     closeSession,
+    deleteSession,
+    forkSession,
     refreshSessions,
     loadMoreSessions,
   };

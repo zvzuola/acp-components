@@ -1,9 +1,19 @@
 import { useStore } from 'zustand/react';
 import { useMemo } from 'react';
 import { sessionStore } from '@acp-components/core';
-import type { SessionId } from '@agentclientprotocol/sdk';
+import type { Message, ToolCallState, PermissionRequest } from '@acp-components/core';
+import type { SessionId, PlanEntry, UsageUpdate, SessionConfigOption, AvailableCommand } from '@acp-components/core';
 
-export function useSession(sessionId: SessionId | null) {
+export function useSession(sessionId: SessionId | null): {
+  messages: Message[];
+  isStreaming: boolean;
+  pendingToolCalls: ToolCallState[];
+  pendingPermissions: PermissionRequest[];
+  plan: PlanEntry[];
+  usage: UsageUpdate | null;
+  configOptions: SessionConfigOption[];
+  availableCommands: AvailableCommand[];
+} {
   const sessions = useStore(sessionStore, (s) => s.sessions);
 
   const data = useMemo(() => {

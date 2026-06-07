@@ -30,6 +30,10 @@ import {
   type KillTerminalRequest,
   type CloseSessionRequest,
   type CloseSessionResponse,
+  type DeleteSessionRequest,
+  type DeleteSessionResponse,
+  type ForkSessionRequest,
+  type ForkSessionResponse,
   type AuthenticateRequest,
   type AuthenticateResponse,
 } from '@agentclientprotocol/sdk';
@@ -288,6 +292,11 @@ export class AcpClient {
     return this.connection.newSession({ cwd, mcpServers });
   }
 
+  async forkSession(sessionId: string, cwd: string, mcpServers: ForkSessionRequest['mcpServers'] = []): Promise<ForkSessionResponse> {
+    if (!this.connection) throw new Error('Not connected');
+    return this.connection.unstable_forkSession({ sessionId, cwd, mcpServers });
+  }
+
   async prompt(sessionId: string, prompt: PromptRequest['prompt']): Promise<PromptResponse> {
     if (!this.connection) throw new Error('Not connected');
     return this.connection.prompt({ sessionId, prompt });
@@ -328,6 +337,12 @@ export class AcpClient {
     if (!this.connection) throw new Error('Not connected');
     const params: CloseSessionRequest = { sessionId };
     return this.connection.closeSession(params);
+  }
+
+  async deleteSession(sessionId: string): Promise<DeleteSessionResponse> {
+    if (!this.connection) throw new Error('Not connected');
+    const params: DeleteSessionRequest = { sessionId };
+    return this.connection.deleteSession(params);
   }
 
   async authenticate(methodId: string): Promise<AuthenticateResponse> {

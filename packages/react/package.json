@@ -42,7 +42,6 @@
     }
   },
   "devDependencies": {
-    "@agentclientprotocol/sdk": "^0.22.1",
     "@testing-library/react": "^16.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

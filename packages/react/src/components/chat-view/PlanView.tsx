@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { CheckCircleOutlined, SyncOutlined, CheckCircleFilled, RightOutlined } from '@ant-design/icons';
-import type { PlanEntry } from '@agentclientprotocol/sdk';
+import type { PlanEntry } from '@acp-components/core';
 import { useI18n } from '../../i18n';
 import styles from './plan-view.module.scss';
 

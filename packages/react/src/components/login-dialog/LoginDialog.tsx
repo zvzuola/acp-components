@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import type { AuthMethodEnvVar, AuthMethod } from '@agentclientprotocol/sdk';
+import type { AuthMethodEnvVar, AuthMethod } from '@acp-components/core';
 import { useAcpStore } from '../../hooks/useAcpStore';
 import { useAcpContext } from '../../context/AcpContext';
 import { authenticate as coreAuthenticate, acpStore } from '@acp-components/core';

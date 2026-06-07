@@ -5,8 +5,8 @@ import { readDirectory, watchWorkspace, readFileContent } from './fileSystem.js'
 
 const PORT = parseInt(process.env.ACP_PORT ?? '3100', 10);
 const HOST = process.env.ACP_HOST ?? '127.0.0.1';
-const AGENT_COMMAND = process.env.ACP_AGENT ?? 'opencode';
-const AGENT_ARGS = (process.env.ACP_AGENT_ARGS ?? 'acp').split(' ').filter(Boolean);
+const AGENT_COMMAND = process.env.ACP_AGENT ?? 'npx';
+const AGENT_ARGS = (process.env.ACP_AGENT_ARGS ?? 'opencode-ai@latest acp').split(' ').filter(Boolean);
 
 // ---------------------------------------------------------------------------
 // HTTP Server — serves file system API endpoints

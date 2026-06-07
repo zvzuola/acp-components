@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import { useSession } from '../../hooks/useSession';
 import { useSessions } from '../../hooks/useSessions';
-import type { SessionId } from '@agentclientprotocol/sdk';
+import type { SessionId } from '@acp-components/core';
 import type { Message } from '@acp-components/core';
 import { MessageBubble } from './MessageBubble';
 import { UserMessage } from './UserMessage';

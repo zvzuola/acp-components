@@ -37,7 +37,8 @@ export const enUS = {
   // SessionList
   'sessionList.title': 'Workspaces',
   'sessionList.newSession': 'New session',
-  'sessionList.closeSession': 'Close session',
+  'sessionList.deleteSession': 'Delete session',
+  'sessionList.forkSession': 'Fork session',
   'sessionList.defaultSessionTitle': 'New Session',
   'sessionList.emptyState': 'No sessions yet. Click + to start.',
   'sessionList.loadMore': 'Load more',

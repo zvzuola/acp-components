@@ -1,5 +1,5 @@
 import { useSession } from './useSession';
-import type { SessionId } from '@agentclientprotocol/sdk';
+import type { SessionId } from '@acp-components/core';
 
 export function useToolCalls(sessionId: SessionId | null) {
   const { pendingToolCalls } = useSession(sessionId);

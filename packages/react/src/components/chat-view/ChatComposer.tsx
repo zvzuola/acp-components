@@ -8,7 +8,7 @@ import {
 } from '@ant-design/icons';
 import { usePrompt } from '../../hooks/usePrompt';
 import { useAcpStore } from '../../hooks/useAcpStore';
-import type { SessionId, ContentBlock, AvailableCommand, PromptCapabilities } from '@agentclientprotocol/sdk';
+import type { SessionId, ContentBlock, AvailableCommand, PromptCapabilities } from '@acp-components/core';
 import { CommandPalette } from '../command-palette';
 import { useI18n } from '../../i18n';
 import styles from './chat-composer.module.scss';

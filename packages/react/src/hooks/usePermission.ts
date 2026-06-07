@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useSession } from './useSession';
 import { respondToPermission, denyPermission } from '@acp-components/core';
-import type { SessionId } from '@agentclientprotocol/sdk';
+import type { SessionId } from '@acp-components/core';
 
 export function usePermission(sessionId: SessionId | null) {
   const { pendingPermissions } = useSession(sessionId);

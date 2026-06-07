@@ -17,7 +17,18 @@ import type {
   TerminalExitStatus,
   PlanEntry,
   AuthMethod,
+  AvailableCommand,
+  PromptResponse,
+  UsageUpdate,
+  SessionConfigOption,
+  PromptCapabilities,
+  SessionConfigSelectOptions,
+  SessionConfigSelectGroup,
+  AuthMethodEnvVar,
+  ToolCallLocation,
+  ToolKind,
 } from '@agentclientprotocol/sdk';
+export { RequestError } from '@agentclientprotocol/sdk';
 import type { AcpTransport } from '../transport/types';
 
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -145,4 +156,4 @@ export interface FileTreeWatchCallbacks {
   onWorkspaceChanged: (cwd: string) => void;
 }
 
-export type { ContentBlock, SessionId, SessionInfo, SessionUpdate, StopReason, ToolCall, ToolCallUpdate, ToolCallContent, Implementation, AgentCapabilities, PermissionOption, ClientCapabilities, CreateTerminalRequest, TerminalOutputResponse, WaitForTerminalExitResponse, TerminalExitStatus, PlanEntry, AuthMethod };
+export type { ContentBlock, SessionId, SessionInfo, SessionUpdate, StopReason, ToolCall, ToolCallUpdate, ToolCallContent, Implementation, AgentCapabilities, PermissionOption, ClientCapabilities, CreateTerminalRequest, TerminalOutputResponse, WaitForTerminalExitResponse, TerminalExitStatus, PlanEntry, AuthMethod, AvailableCommand, PromptResponse, UsageUpdate, SessionConfigOption, PromptCapabilities, SessionConfigSelectOptions, SessionConfigSelectGroup, AuthMethodEnvVar, ToolCallLocation, ToolKind };

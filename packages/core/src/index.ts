@@ -10,7 +10,7 @@ export { createAcpProvider } from './provider';
 export type { MultiAgentProviderOptions, MultiAgentProviderInstance } from './provider';
 export { createFileSystemProvider } from './fileSystem/provider';
 export type { FileSystemProviderOptions, FileSystemProviderInstance } from './fileSystem/provider';
-export { createSession, loadSession, selectSession, closeSession, refreshSessions, loadMoreSessions, setSessionConfigOption, authenticate, authenticateWithEnv } from './actions/sessions';
+export { createSession, loadSession, selectSession, closeSession, deleteSession, forkSession, refreshSessions, loadMoreSessions, setSessionConfigOption, authenticate, authenticateWithEnv } from './actions/sessions';
 export { sendPrompt, cancelPrompt } from './actions/prompt';
 export { respondToPermission, denyPermission } from './actions/permission';
 export { callExtMethod, sendExtNotification } from './actions/extensions';
@@ -36,4 +36,5 @@ export type {
   DirectoryReadHandler,
   FileTreeWatchCallbacks,
 } from './types';
-export type { ContentBlock, SessionId, SessionInfo, StopReason, ToolCall, ToolCallUpdate, ToolCallContent, AgentCapabilities, SessionUpdate, ClientCapabilities, CreateTerminalRequest, TerminalOutputResponse, WaitForTerminalExitResponse, TerminalExitStatus } from './types';
+export type { ContentBlock, SessionId, SessionInfo, StopReason, ToolCall, ToolCallUpdate, ToolCallContent, AgentCapabilities, SessionUpdate, ClientCapabilities, CreateTerminalRequest, TerminalOutputResponse, WaitForTerminalExitResponse, TerminalExitStatus, PlanEntry, AuthMethod, AvailableCommand, PromptResponse, UsageUpdate, SessionConfigOption, PromptCapabilities, SessionConfigSelectOptions, SessionConfigSelectGroup, AuthMethodEnvVar, ToolCallLocation, ToolKind } from './types';
+export { RequestError } from './types';

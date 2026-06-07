@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSession } from '../../hooks/useSession';
-import type { SessionId } from '@agentclientprotocol/sdk';
+import type { SessionId } from '@acp-components/core';
 import { useI18n } from '../../i18n';
 import styles from './usage-bar.module.scss';
 

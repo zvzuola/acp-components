@@ -2,9 +2,12 @@ import { useCallback, useMemo } from 'react';
 import { useAcpContext } from '../context/AcpContext';
 import { useAcpStore } from './useAcpStore';
 import { sendPrompt, cancelPrompt, acpStore } from '@acp-components/core';
-import type { SessionId, ContentBlock } from '@agentclientprotocol/sdk';
+import type { SessionId, ContentBlock, PromptResponse } from '@acp-components/core';
 
-export function usePrompt(sessionId: SessionId | null) {
+export function usePrompt(sessionId: SessionId | null): {
+  send: (contentBlocks: ContentBlock[]) => Promise<PromptResponse | undefined>;
+  cancel: () => Promise<void>;
+} {
   const { getClient } = useAcpContext();
 
   const client = useMemo(() => {

@@ -16,7 +16,6 @@ export default defineConfig({
         'zustand',
         'zustand/react',
         '@acp-components/core',
-        '@agentclientprotocol/sdk',
         'monaco-editor',
         /^monaco-editor\//,
       ],

@@ -24,8 +24,8 @@ const transportConfig = {
   type: 'custom' as const,
   transport: new TauriIpcTransport({
     agentId: 'default',
-    command: 'opencode',
-    args: ['acp'],
+    command: 'npx',
+    args: ['opencode-ai@latest', 'acp'],
   }),
 };
 
