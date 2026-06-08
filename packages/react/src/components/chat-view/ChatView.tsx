@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
+import React, { useRef, useMemo, useState, useCallback } from 'react';
+import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { useSession } from '../../hooks/useSession';
-import { useSessions } from '../../hooks/useSessions';
+import { useAcpStore } from '../../hooks/useAcpStore';
 import type { SessionId } from '@acp-components/core';
 import type { Message } from '@acp-components/core';
 import { MessageBubble } from './MessageBubble';
@@ -50,12 +51,16 @@ function groupMessagesIntoRounds(messages: Message[]): Round[] {
 
 export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
   const { messages, isStreaming, plan, availableCommands } = useSession(sessionId);
-  const { sessions } = useSessions();
-  const sessionTitle = useMemo(() => {
+  const sessionTitle = useAcpStore((s) => {
     if (!sessionId) return null;
-    return sessions.find((s) => s.id === sessionId)?.title;
-  }, [sessions, sessionId]);
-  const listRef = useRef<HTMLDivElement>(null);
+    for (const ws of s.workspaces.values()) {
+      const meta = ws.sessions.get(sessionId);
+      if (meta) return meta.title;
+    }
+    return null;
+  });
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const [isAtBottom, setIsAtBottom] = useState(true);
   const { t } = useI18n();
 
   const [editText, setEditText] = useState<string | undefined>(undefined);
@@ -66,14 +71,54 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
     setEditText(text);
   }, []);
 
-  useEffect(() => {
-    if (listRef.current) {
-      listRef.current.scrollTo({
-        top: listRef.current.scrollHeight,
-        behavior: isStreaming ? 'smooth' : 'instant',
-      });
-    }
-  }, [messages, isStreaming]);
+  const handleAtBottomStateChange = useCallback((atBottom: boolean) => {
+    setIsAtBottom(atBottom);
+  }, []);
+
+  const handleScrollToBottom = useCallback(() => {
+    virtuosoRef.current?.scrollToIndex({ index: 'LAST', align: 'end', behavior: isStreaming ? 'auto' : 'smooth' });
+  }, [isStreaming]);
+
+
+  const followOutput = useCallback(
+    (_isAtBottom: boolean) => {
+      return isStreaming ? 'smooth' : 'auto';
+    },
+    [isStreaming],
+  );
+
+  const computeItemKey = useCallback(
+    (_index: number, round: Round) => {
+      const key = round.userMessage?.id ?? round.agentMessages[0]?.id;
+      return key ?? `round-${_index}`;
+    },
+    [],
+  );
+
+  const itemContent = useCallback(
+    (_index: number, round: Round) => {
+      const isLastRound = _index === rounds.length - 1;
+      return (
+        <div className={styles.acpVirtuosoItem}>
+          <div className={styles.acpRound}>
+            {round.userMessage && (
+              <UserMessage message={round.userMessage} onEdit={handleUserMessageEdit} />
+            )}
+            {round.agentMessages.length > 0 && (
+              <MessageBubble
+                sessionId={sessionId}
+                messages={round.agentMessages}
+                isStreaming={isLastRound && isStreaming}
+                onNavigateFile={onNavigateFile}
+              />
+            )}
+            {isLastRound && isStreaming && <StreamingIndicator />}
+          </div>
+        </div>
+      );
+    },
+    [rounds.length, isStreaming, handleUserMessageEdit, onNavigateFile],
+  );
 
   if (!sessionId) {
     return (
@@ -90,27 +135,39 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
       <div className={styles.acpChatHeader}>
         <span className={styles.acpChatHeaderTitle}>{sessionTitle || t('chat.title')}</span>
       </div>
-      <div className={styles.acpMessageList} ref={listRef} role="log" aria-live="polite" aria-label="Messages">
-        {rounds.map((round, i) => {
-          const isLastRound = i === rounds.length - 1;
-          return (
-            <div key={round.userMessage?.id ?? round.agentMessages[0]?.id ?? i} className={styles.acpRound}>
-              {round.userMessage && (
-                <UserMessage message={round.userMessage} onEdit={handleUserMessageEdit} />
-              )}
-              {round.agentMessages.length > 0 && (
-                <MessageBubble messages={round.agentMessages} isStreaming={isLastRound && isStreaming} onNavigateFile={onNavigateFile} />
-              )}
-              {isLastRound && isStreaming && <StreamingIndicator />}
-            </div>
-          );
-        })}
+      <div className={styles.acpMessageListWrapper}>
+        <Virtuoso
+          ref={virtuosoRef}
+          className={styles.acpMessageList}
+          data={rounds}
+          computeItemKey={computeItemKey}
+          itemContent={itemContent}
+          followOutput={followOutput}
+          atBottomStateChange={handleAtBottomStateChange}
+          initialTopMostItemIndex={{ index: 'LAST', align: 'end' }}
+        />
+        {!isAtBottom && (
+          <button
+            className={styles.acpScrollToBottom}
+            onClick={handleScrollToBottom}
+            aria-label={t('chat.scrollToBottom')}
+            type="button"
+          >
+            <span className={styles.acpScrollToBottomArrow} />
+          </button>
+        )}
       </div>
       <div className={styles.acpChatBottom}>
         {plan.some((e) => e.status !== 'completed') && (
           <PlanView entries={plan} isStreaming={isStreaming} />
         )}
-        <ChatComposer sessionId={sessionId} isStreaming={isStreaming} availableCommands={availableCommands} editText={editText} onEditTextConsumed={() => setEditText(undefined)} />
+        <ChatComposer
+          sessionId={sessionId}
+          isStreaming={isStreaming}
+          availableCommands={availableCommands}
+          editText={editText}
+          onEditTextConsumed={() => setEditText(undefined)}
+        />
         <div className={styles.acpChatFooter}>
           <SessionConfigPanel sessionId={sessionId} />
           <UsageBar sessionId={sessionId} />

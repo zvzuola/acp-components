@@ -35,8 +35,8 @@ export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'er
 
 export type MessagePart =
   | { type: 'content'; content: ContentBlock[] }
-  | { type: 'thought'; thought: ContentBlock[] }
-  | { type: 'tool_calls'; toolCalls: ToolCallState[] }
+  | { type: 'thought'; thought: ContentBlock[]; expanded?: boolean }
+  | { type: 'tool_calls'; toolCalls: ToolCallState[]; expanded?: boolean }
   | { type: 'plan'; plan: PlanEntry[] };
 
 export interface Message {

@@ -36,6 +36,7 @@ interface SessionStoreState {
   setUsage: (sessionId: SessionId, usage: UsageUpdate) => void;
   setConfigOptions: (sessionId: SessionId, configOptions: SessionConfigOption[]) => void;
   setAvailableCommands: (sessionId: SessionId, commands: AvailableCommand[]) => void;
+  setPartExpanded: (sessionId: SessionId, messageId: string, partIndex: number, expanded: boolean) => void;
 
   addTerminal: (sessionId: SessionId, terminal: TerminalState) => void;
   updateTerminalOutput: (sessionId: SessionId, terminalId: string, output: string, truncated: boolean) => void;
@@ -55,6 +56,64 @@ function createSessionData(): SessionData {
     availableCommands: [],
     terminals: new Map(),
   };
+}
+
+// --- Message update helpers (avoid O(n) message scans during streaming) ---
+
+function appendContentBlockToMessage(m: Message, block: ContentBlock): Message {
+  const parts = m.parts;
+  const last = parts[parts.length - 1];
+  if (last?.type === 'content') {
+    const blocks = last.content;
+    if (blocks.length > 0) {
+      const lastBlock = blocks[blocks.length - 1];
+      if (lastBlock.type === 'text' && block.type === 'text') {
+        const hasAnnotations = 'annotations' in block && block.annotations != null;
+        if (!hasAnnotations) {
+          return {
+            ...m,
+            parts: [
+              ...parts.slice(0, -1),
+              { ...last, content: [...blocks.slice(0, -1), { ...lastBlock, text: lastBlock.text + block.text }] },
+            ],
+          };
+        }
+      }
+    }
+    return {
+      ...m,
+      parts: [...parts.slice(0, -1), { ...last, content: [...blocks, block] }],
+    };
+  }
+  return { ...m, parts: [...parts, { type: 'content', content: [block] }] };
+}
+
+function appendThoughtBlockToMessage(m: Message, block: ContentBlock): Message {
+  const parts = m.parts;
+  const last = parts[parts.length - 1];
+  if (last?.type === 'thought') {
+    const blocks = last.thought;
+    if (blocks.length > 0) {
+      const lastBlock = blocks[blocks.length - 1];
+      if (lastBlock.type === 'text' && block.type === 'text') {
+        const hasAnnotations = 'annotations' in block && block.annotations != null;
+        if (!hasAnnotations) {
+          return {
+            ...m,
+            parts: [
+              ...parts.slice(0, -1),
+              { ...last, thought: [...blocks.slice(0, -1), { ...lastBlock, text: lastBlock.text + block.text }] },
+            ],
+          };
+        }
+      }
+    }
+    return {
+      ...m,
+      parts: [...parts.slice(0, -1), { ...last, thought: [...blocks, block] }],
+    };
+  }
+  return { ...m, parts: [...parts, { type: 'thought', thought: [block] }] };
 }
 
 export const sessionStore = createStore<SessionStoreState>((set) => ({
@@ -107,46 +166,32 @@ export const sessionStore = createStore<SessionStoreState>((set) => ({
     set((s) => {
       const data = s.sessions.get(sessionId);
       if (!data) return s;
-      const exists = data.messages.some((m) => m.id === messageId);
+      const msgs = data.messages;
+      const lastIdx = msgs.length - 1;
+
       let messages: Message[];
-      if (exists) {
-        messages = data.messages.map((m) => {
-          if (m.id !== messageId) return m;
-          const parts = m.parts;
-          const last = parts[parts.length - 1];
-          if (last?.type === 'content') {
-            const blocks = last.content;
-            if (blocks.length > 0) {
-              const lastBlock = blocks[blocks.length - 1];
-              if (lastBlock.type === 'text' && block.type === 'text') {
-                const hasAnnotations = 'annotations' in block && block.annotations != null;
-                if (!hasAnnotations) {
-                  return {
-                    ...m,
-                    parts: [
-                      ...parts.slice(0, -1),
-                      { ...last, content: [...blocks.slice(0, -1), { ...lastBlock, text: lastBlock.text + block.text }] },
-                    ],
-                  };
-                }
-              }
-            }
-            return {
-              ...m,
-              parts: [...parts.slice(0, -1), { ...last, content: [...blocks, block] }],
-            };
-          }
-          return { ...m, parts: [...parts, { type: 'content', content: [block] }] };
-        });
+
+      // Fast path: last message matches (common streaming case, O(1))
+      if (lastIdx >= 0 && msgs[lastIdx].id === messageId) {
+        const updated = appendContentBlockToMessage(msgs[lastIdx], block);
+        messages = [...msgs.slice(0, lastIdx), updated];
       } else {
-        const newMsg: Message = {
-          id: messageId,
-          role,
-          parts: [{ type: 'content', content: [block] }],
-          timestamp: Date.now(),
-        };
-        messages = [...data.messages, newMsg];
+        // Slow path: find the target message (for edge cases, O(n) but rare)
+        const idx = msgs.findIndex((m) => m.id === messageId);
+        if (idx >= 0) {
+          const updated = appendContentBlockToMessage(msgs[idx], block);
+          messages = [...msgs.slice(0, idx), updated, ...msgs.slice(idx + 1)];
+        } else {
+          const newMsg: Message = {
+            id: messageId,
+            role,
+            parts: [{ type: 'content', content: [block] }],
+            timestamp: Date.now(),
+          };
+          messages = [...msgs, newMsg];
+        }
       }
+
       const next = new Map(s.sessions);
       next.set(sessionId, { ...data, messages });
       return { sessions: next };
@@ -156,46 +201,32 @@ export const sessionStore = createStore<SessionStoreState>((set) => ({
     set((s) => {
       const data = s.sessions.get(sessionId);
       if (!data) return s;
-      const exists = data.messages.some((m) => m.id === messageId);
+      const msgs = data.messages;
+      const lastIdx = msgs.length - 1;
+
       let messages: Message[];
-      if (exists) {
-        messages = data.messages.map((m) => {
-          if (m.id !== messageId) return m;
-          const parts = m.parts;
-          const last = parts[parts.length - 1];
-          if (last?.type === 'thought') {
-            const blocks = last.thought;
-            if (blocks.length > 0) {
-              const lastBlock = blocks[blocks.length - 1];
-              if (lastBlock.type === 'text' && block.type === 'text') {
-                const hasAnnotations = 'annotations' in block && block.annotations != null;
-                if (!hasAnnotations) {
-                  return {
-                    ...m,
-                    parts: [
-                      ...parts.slice(0, -1),
-                      { ...last, thought: [...blocks.slice(0, -1), { ...lastBlock, text: lastBlock.text + block.text }] },
-                    ],
-                  };
-                }
-              }
-            }
-            return {
-              ...m,
-              parts: [...parts.slice(0, -1), { ...last, thought: [...blocks, block] }],
-            };
-          }
-          return { ...m, parts: [...parts, { type: 'thought', thought: [block] }] };
-        });
+
+      // Fast path: last message matches (common streaming case, O(1))
+      if (lastIdx >= 0 && msgs[lastIdx].id === messageId) {
+        const updated = appendThoughtBlockToMessage(msgs[lastIdx], block);
+        messages = [...msgs.slice(0, lastIdx), updated];
       } else {
-        const newMsg: Message = {
-          id: messageId,
-          role,
-          parts: [{ type: 'thought', thought: [block] }],
-          timestamp: Date.now(),
-        };
-        messages = [...data.messages, newMsg];
+        // Slow path: find the target message (for edge cases, O(n) but rare)
+        const idx = msgs.findIndex((m) => m.id === messageId);
+        if (idx >= 0) {
+          const updated = appendThoughtBlockToMessage(msgs[idx], block);
+          messages = [...msgs.slice(0, idx), updated, ...msgs.slice(idx + 1)];
+        } else {
+          const newMsg: Message = {
+            id: messageId,
+            role,
+            parts: [{ type: 'thought', thought: [block] }],
+            timestamp: Date.now(),
+          };
+          messages = [...msgs, newMsg];
+        }
       }
+
       const next = new Map(s.sessions);
       next.set(sessionId, { ...data, messages });
       return { sessions: next };
@@ -379,6 +410,24 @@ export const sessionStore = createStore<SessionStoreState>((set) => ({
       if (!data) return s;
       const next = new Map(s.sessions);
       next.set(sessionId, { ...data, availableCommands: commands });
+      return { sessions: next };
+    }),
+
+  setPartExpanded: (sessionId, messageId, partIndex, expanded) =>
+    set((s) => {
+      const data = s.sessions.get(sessionId);
+      if (!data) return s;
+      const messages = data.messages.map((m) => {
+        if (m.id !== messageId) return m;
+        const part = m.parts[partIndex];
+        if (!part || (part.type !== 'thought' && part.type !== 'tool_calls')) return m;
+        const updatedPart = { ...part, expanded };
+        const parts = [...m.parts];
+        parts[partIndex] = updatedPart;
+        return { ...m, parts };
+      });
+      const next = new Map(s.sessions);
+      next.set(sessionId, { ...data, messages });
       return { sessions: next };
     }),
 

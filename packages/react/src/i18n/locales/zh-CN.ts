@@ -21,6 +21,7 @@ export const zhCN = {
   // ChatView
   'chat.emptyState': '选择或创建一个会话以开始',
   'chat.title': '对话',
+  'chat.scrollToBottom': '滚动到底部',
 
   // Workbench
   'workbench.ariaLabel': 'ACP 工作台',

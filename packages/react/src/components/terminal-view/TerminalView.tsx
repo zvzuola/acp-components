@@ -1,19 +1,37 @@
 import React, { useState } from 'react';
+import { useStore } from 'zustand/react';
 import { RightOutlined, DownOutlined } from '@ant-design/icons';
 import type { SessionId, TerminalState } from '@acp-components/core';
+import { sessionStore } from '@acp-components/core';
 import { useTerminals } from '../../hooks/useTerminals';
 import { useI18n } from '../../i18n';
 import styles from './terminal-view.module.scss';
 
 export interface TerminalViewProps {
   sessionId?: SessionId | null;
-  terminals?: TerminalState[];
+  /** If provided, only this terminal is shown (targeted subscription). */
+  terminalId?: string;
 }
 
-export function TerminalView({ sessionId, terminals: externalTerminals }: TerminalViewProps) {
+export function TerminalView({ sessionId, terminalId }: TerminalViewProps) {
   const { t } = useI18n();
   const hookTerminals = useTerminals(sessionId ?? null);
-  const terminals = externalTerminals ?? hookTerminals;
+
+  // Targeted subscription for a single terminal (avoids scanning all sessions)
+  const singleTerminal = useStore(sessionStore, (s) => {
+    if (!sessionId || !terminalId) return undefined;
+    return s.sessions.get(sessionId)?.terminals.get(terminalId);
+  });
+
+  // Resolve terminals: single terminal lookup > all session terminals
+  let terminals: TerminalState[];
+  if (terminalId) {
+    terminals = singleTerminal
+      ? [singleTerminal]
+      : [{ terminalId, command: '', output: '', exitStatus: null, truncated: false }];
+  } else {
+    terminals = hookTerminals;
+  }
 
   if (terminals.length === 0) {
     return (

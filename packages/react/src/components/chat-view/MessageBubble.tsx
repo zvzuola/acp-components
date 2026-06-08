@@ -1,7 +1,8 @@
 import React from 'react';
 import { FileTextOutlined, LinkOutlined } from '@ant-design/icons';
-import type { Message, MessagePart } from '@acp-components/core';
+import type { Message, MessagePart, SessionId } from '@acp-components/core';
 import type { ContentBlock } from '@acp-components/core';
+import { sessionStore } from '@acp-components/core';
 import { useI18n } from '../../i18n';
 import { Markdown } from '../markdown';
 import { ToolCallCard } from './ToolCallCard';
@@ -10,6 +11,7 @@ import { PlanView } from './PlanView';
 import styles from './chat-view.module.scss';
 
 export interface MessageBubbleProps {
+  sessionId: SessionId | null;
   messages: Message[];
   isStreaming?: boolean;
   onNavigateFile?: (path: string, line?: number | null) => void;
@@ -56,7 +58,21 @@ function renderContent(content: ContentBlock) {
   }
 }
 
-function renderPart(part: MessagePart, partIndex: number, isStreaming?: boolean, onNavigateFile?: (path: string, line?: number | null) => void) {
+function renderPart(
+  part: MessagePart,
+  partIndex: number,
+  sessionId: SessionId | null,
+  messageId: string,
+  isStreaming?: boolean,
+  onNavigateFile?: (path: string, line?: number | null) => void,
+) {
+  const expanded = (part as { expanded?: boolean }).expanded ?? false;
+
+  function setExpanded(value: boolean) {
+    if (!sessionId) return;
+    sessionStore.getState().setPartExpanded(sessionId, messageId, partIndex, value);
+  }
+
   switch (part.type) {
     case 'thought':
       return (
@@ -64,11 +80,20 @@ function renderPart(part: MessagePart, partIndex: number, isStreaming?: boolean,
           key={partIndex}
           thought={part.thought}
           isStreaming={!!isStreaming}
+          expanded={expanded}
+          onExpandedChange={setExpanded}
         />
       );
     case 'tool_calls':
       return part.toolCalls.map((tc) => (
-        <ToolCallCard key={tc.toolCallId} toolCall={tc} onNavigate={onNavigateFile} />
+        <ToolCallCard
+          key={tc.toolCallId}
+          sessionId={sessionId}
+          toolCall={tc}
+          onNavigate={onNavigateFile}
+          expanded={expanded}
+          onExpandedChange={setExpanded}
+        />
       ));
     case 'content':
       return part.content.map((block, j) => (
@@ -80,29 +105,70 @@ function renderPart(part: MessagePart, partIndex: number, isStreaming?: boolean,
   }
 }
 
-export function MessageBubble({ messages, isStreaming = false, onNavigateFile }: MessageBubbleProps) {
+function areMessagesEqual(a: Message[], b: Message[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
+interface AgentMessageProps {
+  message: Message;
+  sessionId: SessionId | null;
+  isStreaming: boolean;
+  onNavigateFile?: (path: string, line?: number | null) => void;
+}
+
+const AgentMessage = React.memo(function AgentMessage({
+  message,
+  sessionId,
+  isStreaming,
+  onNavigateFile,
+}: AgentMessageProps) {
   const { t } = useI18n();
-  const lastMsg = messages[messages.length - 1];
-  const lastPart = lastMsg?.parts[lastMsg.parts.length - 1];
+  const lastPartIndex = message.parts.length - 1;
+  const lastPart = message.parts[lastPartIndex];
   const thoughtStillStreaming = isStreaming && lastPart?.type === 'thought';
+
+  return (
+    <>
+      {message.parts.map((part, j) => {
+        const isStreamingThought = j === lastPartIndex && thoughtStillStreaming;
+        return renderPart(part, j, sessionId, message.id, isStreamingThought, onNavigateFile);
+      })}
+      {message.stopReason && (
+        <div className={styles.acpMessageBubbleStopReason}>
+          {t(`stopReason.${message.stopReason}`)}
+        </div>
+      )}
+    </>
+  );
+});
+
+export const MessageBubble = React.memo(function MessageBubble({ sessionId, messages, isStreaming = false, onNavigateFile }: MessageBubbleProps) {
+  const lastIdx = messages.length - 1;
 
   return (
     <div className={`${styles.acpMessageBubble} ${styles.acpMessageBubbleAgent}`}>
       <div className={styles.acpMessageBubbleContent}>
-        {messages.map((msg) => (
-          <React.Fragment key={msg.id}>
-            {msg.parts.map((part, j) => {
-              const isStreamingThought = msg === lastMsg && j === lastMsg.parts.length - 1 && thoughtStillStreaming;
-              return renderPart(part, j, isStreamingThought, onNavigateFile);
-            })}
-            {msg.stopReason && (
-              <div className={styles.acpMessageBubbleStopReason}>
-                {t(`stopReason.${msg.stopReason}`)}
-              </div>
-            )}
-          </React.Fragment>
+        {messages.map((msg, i) => (
+          <AgentMessage
+            key={msg.id}
+            message={msg}
+            sessionId={sessionId}
+            isStreaming={isStreaming && i === lastIdx}
+            onNavigateFile={onNavigateFile}
+          />
         ))}
       </div>
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.sessionId === nextProps.sessionId &&
+    prevProps.isStreaming === nextProps.isStreaming &&
+    prevProps.onNavigateFile === nextProps.onNavigateFile &&
+    areMessagesEqual(prevProps.messages, nextProps.messages)
+  );
+});

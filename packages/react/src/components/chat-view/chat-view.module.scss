@@ -29,15 +29,30 @@
   }
 }
 
-// ── Message List ────────────────────────────────────────────────────────
-.acp-message-list {
+// ── Message List (Virtuoso virtual scrolling) ─────────────────────────
+.acp-message-list-wrapper {
+  position: relative;
   flex: 1;
-  overflow-y: auto;
-  padding: 24px 20px 32px;
+  min-height: 0;
+}
+
+.acp-message-list {
+  height: 100%;
+}
+
+// ── Virtuoso Item Wrapper ─────────────────────────────────────────────
+.acp-virtuoso-item {
   display: flex;
-  flex-direction: column;
-  gap: 36px;
-  align-items: center;
+  justify-content: center;
+  padding: 0 20px 36px;
+}
+
+.acp-virtuoso-header {
+  height: 24px;
+}
+
+.acp-virtuoso-footer {
+  height: 32px;
 }
 
 // ── Round ───────────────────────────────────────────────────────────────
@@ -53,7 +68,6 @@
 .acp-message-bubble {
   display: flex;
   width: 100%;
-  animation: acp-message-in 0.25s var(--acp-ease-out);
 
   &--agent {
     .acp-message-bubble__content {
@@ -111,18 +125,6 @@
   }
 }
 
-@keyframes acp-message-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 // ── Streaming Indicator ─────────────────────────────────────────────────
 .acp-streaming-indicator {
   display: flex;
@@ -169,6 +171,56 @@
   40% {
     transform: scale(1);
     opacity: 1;
+  }
+}
+
+// ── Scroll to Bottom Button ────────────────────────────────────────────
+.acp-scroll-to-bottom {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--acp-color-border-subtle);
+  border-radius: 50%;
+  background: var(--acp-color-bg-glass);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: transform 0.15s var(--acp-ease-out), box-shadow 0.15s var(--acp-ease-out);
+  animation: acp-scroll-to-bottom-in 0.2s var(--acp-ease-out);
+  z-index: 10;
+
+  &:hover {
+    transform: translateX(-50%) scale(1.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  &:active {
+    transform: translateX(-50%) scale(0.96);
+  }
+}
+
+.acp-scroll-to-bottom-arrow {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--acp-color-text-secondary);
+  border-bottom: 2px solid var(--acp-color-text-secondary);
+  transform: rotate(45deg) translateY(-1px);
+}
+
+@keyframes acp-scroll-to-bottom-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
   }
 }
 

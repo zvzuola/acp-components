@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React from 'react';
 import {
   FileTextOutlined,
   EditOutlined,
@@ -12,18 +12,19 @@ import {
   ToolOutlined,
   RightOutlined,
 } from '@ant-design/icons';
-import { useStore } from 'zustand/react';
-import type { ToolCallState, TerminalState } from '@acp-components/core';
-import { sessionStore } from '@acp-components/core';
-import type { ToolCallLocation, ToolKind } from '@acp-components/core';
+import type { ToolCallState, SessionId } from '@acp-components/core';
+import type { ToolCallLocation } from '@acp-components/core';
 import { DiffView } from '../diff-view';
 import { TerminalView } from '../terminal-view';
 import { useI18n } from '../../i18n';
 import styles from './tool-call.module.scss';
 
 export interface ToolCallCardProps {
+  sessionId: SessionId | null;
   toolCall: ToolCallState;
   onNavigate?: (path: string, line?: number | null) => void;
+  expanded: boolean;
+  onExpandedChange: (expanded: boolean) => void;
 }
 
 const statusClass: Record<string, string> = {
@@ -77,18 +78,16 @@ function LocationChip({ loc, onNavigate }: { loc: ToolCallLocation; onNavigate?:
   );
 }
 
-export function ToolCallCard({ toolCall, onNavigate }: ToolCallCardProps) {
-  const [expanded, setExpanded] = useState(false);
+export const ToolCallCard = React.memo(function ToolCallCard({ sessionId, toolCall, onNavigate, expanded, onExpandedChange }: ToolCallCardProps) {
   const hasContent = toolCall.content && toolCall.content.length > 0;
   const hasLocations = toolCall.locations && toolCall.locations.length > 0;
   const { t } = useI18n();
-  const sessions = useStore(sessionStore, (s) => s.sessions);
 
   return (
     <div className={styles.acpToolCall}>
       <button
         className={styles.acpToolCallHeader}
-        onClick={() => setExpanded(!expanded)}
+        onClick={() => onExpandedChange(!expanded)}
         aria-expanded={expanded}
       >
         <span className={`${styles.acpToolCallStatus} ${statusClass[String(toolCall.status)] || ''}`} />
@@ -128,15 +127,7 @@ export function ToolCallCard({ toolCall, onNavigate }: ToolCallCardProps) {
               }
               case 'terminal': {
                 const term = item as unknown as { terminalId: string };
-                let terminalState: TerminalState | undefined;
-                for (const [, data] of sessions) {
-                  const found = data.terminals.get(term.terminalId);
-                  if (found) { terminalState = found; break; }
-                }
-                const terminals = terminalState
-                  ? [terminalState]
-                  : [{ terminalId: term.terminalId, command: '', output: '', exitStatus: null, truncated: false }];
-                return <TerminalView key={i} terminals={terminals} />;
+                return <TerminalView key={i} sessionId={sessionId} terminalId={term.terminalId} />;
               }
               default:
                 return null;
@@ -146,4 +137,4 @@ export function ToolCallCard({ toolCall, onNavigate }: ToolCallCardProps) {
       )}
     </div>
   );
-}
+});

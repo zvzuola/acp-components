@@ -48,7 +48,7 @@ export interface MarkdownProps {
   className?: string;
 }
 
-export function Markdown({ children, className }: MarkdownProps) {
+export const Markdown = React.memo(function Markdown({ children, className }: MarkdownProps) {
   return (
     <div className={`${styles.acpMarkdown}${className ? ` ${className}` : ''}`}>
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
@@ -56,4 +56,4 @@ export function Markdown({ children, className }: MarkdownProps) {
       </ReactMarkdown>
     </div>
   );
-}
+});

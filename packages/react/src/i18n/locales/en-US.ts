@@ -21,6 +21,7 @@ export const enUS = {
   // ChatView
   'chat.emptyState': 'Select or create a session to begin',
   'chat.title': 'Chat',
+  'chat.scrollToBottom': 'Scroll to bottom',
 
   // Workbench
   'workbench.ariaLabel': 'ACP Workbench',

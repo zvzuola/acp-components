@@ -1,5 +1,4 @@
 import { useStore } from 'zustand/react';
-import { useMemo } from 'react';
 import { sessionStore } from '@acp-components/core';
 import type { Message, ToolCallState, PermissionRequest } from '@acp-components/core';
 import type { SessionId, PlanEntry, UsageUpdate, SessionConfigOption, AvailableCommand } from '@acp-components/core';
@@ -14,12 +13,10 @@ export function useSession(sessionId: SessionId | null): {
   configOptions: SessionConfigOption[];
   availableCommands: AvailableCommand[];
 } {
-  const sessions = useStore(sessionStore, (s) => s.sessions);
-
-  const data = useMemo(() => {
+  const data = useStore(sessionStore, (s) => {
     if (!sessionId) return null;
-    return sessions.get(sessionId) ?? null;
-  }, [sessions, sessionId]);
+    return s.sessions.get(sessionId) ?? null;
+  });
 
   if (!data) {
     return {
