@@ -1,6 +1,6 @@
 import React, { useRef, useMemo, useState, useCallback, useEffect } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import { useSession } from '../../hooks/useSession';
+import { useSessionMessages, useSessionIsStreaming, useSessionPlan, useSessionAvailableCommands } from '../../hooks/useSession';
 import { useAcpStore } from '../../hooks/useAcpStore';
 import type { SessionId } from '@acp-components/core';
 import type { Message } from '@acp-components/core';
@@ -49,8 +49,83 @@ function groupMessagesIntoRounds(messages: Message[]): Round[] {
   return rounds;
 }
 
+/**
+ * Incremental round grouping — avoids O(n) full recomputation on every chunk
+ * during streaming. When only the last message changed (the common streaming
+ * pattern from appendContent/appendThought fast-path), we patch just the last
+ * round instead of rebuilding the entire rounds array.
+ */
+function useRounds(messages: Message[], sessionId: SessionId | null): Round[] {
+  const prevMessagesRef = useRef<Message[]>([]);
+  const roundsRef = useRef<Round[]>([]);
+
+  // Full reset when session changes
+  useEffect(() => {
+    prevMessagesRef.current = [];
+    roundsRef.current = [];
+  }, [sessionId]);
+
+  return useMemo(() => {
+    const prev = prevMessagesRef.current;
+
+    // Fast path: same-length array, only the last message changed (streaming)
+    if (
+      prev.length === messages.length &&
+      messages.length > 0 &&
+      roundsRef.current.length > 0
+    ) {
+      let onlyLastChanged = true;
+      for (let i = 0; i < messages.length - 1; i++) {
+        if (prev[i] !== messages[i]) {
+          onlyLastChanged = false;
+          break;
+        }
+      }
+
+      if (onlyLastChanged) {
+        const lastMsg = messages[messages.length - 1];
+        const rounds = roundsRef.current;
+        const lastIdx = rounds.length - 1;
+        const lastRound = rounds[lastIdx];
+
+        const updatedRound: Round = { ...lastRound };
+        if (lastMsg.role === 'user') {
+          updatedRound.userMessage = lastMsg;
+        } else {
+          const agentMsgs = lastRound.agentMessages;
+          const agentLastIdx = agentMsgs.length - 1;
+          if (agentLastIdx >= 0 && agentMsgs[agentLastIdx].id === lastMsg.id) {
+            // Replace existing last agent message (streaming update)
+            updatedRound.agentMessages = [
+              ...agentMsgs.slice(0, agentLastIdx),
+              lastMsg,
+            ];
+          } else {
+            // Append new agent message (new message in the same round, e.g. tool_call)
+            updatedRound.agentMessages = [...agentMsgs, lastMsg];
+          }
+        }
+
+        const newRounds = [...rounds.slice(0, lastIdx), updatedRound];
+        prevMessagesRef.current = messages;
+        roundsRef.current = newRounds;
+        return newRounds;
+      }
+    }
+
+    // Slow path: full recomputation (structural change or initial render)
+    const newRounds = groupMessagesIntoRounds(messages);
+    prevMessagesRef.current = messages;
+    roundsRef.current = newRounds;
+    return newRounds;
+  }, [messages]);
+}
+
 export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
-  const { messages, isStreaming, plan, availableCommands } = useSession(sessionId);
+  const messages = useSessionMessages(sessionId);
+  const isStreaming = useSessionIsStreaming(sessionId);
+  const plan = useSessionPlan(sessionId);
+  const availableCommands = useSessionAvailableCommands(sessionId);
   const sessionTitle = useAcpStore((s) => {
     if (!sessionId) return null;
     for (const ws of s.workspaces.values()) {
@@ -70,7 +145,7 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
 
   const [editText, setEditText] = useState<string | undefined>(undefined);
 
-  const rounds = useMemo(() => groupMessagesIntoRounds(messages), [messages]);
+  const rounds = useRounds(messages, sessionId);
 
   const handleUserMessageEdit = useCallback((text: string) => {
     setEditText(text);

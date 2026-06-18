@@ -1,8 +1,8 @@
-import { useSession } from './useSession';
+import { useSessionPendingToolCalls } from './useSession';
 import type { SessionId } from '@acp-components/core';
 
 export function useToolCalls(sessionId: SessionId | null) {
-  const { pendingToolCalls } = useSession(sessionId);
+  const pendingToolCalls = useSessionPendingToolCalls(sessionId);
   return {
     toolCalls: pendingToolCalls,
     activeToolCalls: pendingToolCalls.filter(

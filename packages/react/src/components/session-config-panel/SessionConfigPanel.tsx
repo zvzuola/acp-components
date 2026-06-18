@@ -1,4 +1,4 @@
-import { useSession } from '../../hooks/useSession';
+import { useSessionConfigOptions } from '../../hooks/useSession';
 import { useAcpContext } from '../../context/AcpContext';
 import { useAcpStore } from '../../hooks/useAcpStore';
 import { setSessionConfigOption, acpStore } from '@acp-components/core';
@@ -26,7 +26,7 @@ function mapOptions(options: SessionConfigSelectOptions): (SelectOption | Select
 }
 
 export function SessionConfigPanel({ sessionId }: SessionConfigPanelProps) {
-  const { configOptions } = useSession(sessionId);
+  const configOptions = useSessionConfigOptions(sessionId);
   const { getClient } = useAcpContext();
 
   if (!sessionId || configOptions.length === 0) return null;

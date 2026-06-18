@@ -189,7 +189,14 @@ Each agent in the `agents` array gets its own transport configuration:
 | `useAcpStore(selector)` | Subscribe to the global `acpStore` (Zustand vanilla store via `useSyncExternalStore`) |
 | `useSessionStore(sessionId, selector)` | Subscribe to per-session `sessionStore` |
 | `useSessions()` | Session CRUD: list all sessions across workspaces, create, select, close, refresh; returns global `activeSessionId` |
-| `useSession(sessionId)` | All data for one session: messages, streaming state, tool calls, permissions, plan, usage, config options, available commands |
+| `useSessionMessages(sessionId)` | Messages for one session |
+| `useSessionIsStreaming(sessionId)` | Streaming state for one session |
+| `useSessionPlan(sessionId)` | Plan entries for one session |
+| `useSessionAvailableCommands(sessionId)` | Available commands for one session |
+| `useSessionPendingToolCalls(sessionId)` | Pending tool calls for one session |
+| `useSessionPendingPermissions(sessionId)` | Pending permission requests for one session |
+| `useSessionConfigOptions(sessionId)` | Config options for one session |
+| `useSessionUsage(sessionId)` | Token usage for one session |
 | `usePrompt(sessionId)` | `send(blocks)` and `cancel()` for sending / canceling prompts (auto-resolves the correct agent client) |
 | `useToolCalls(sessionId)` | Pending and completed tool calls for a session |
 | `usePermission(sessionId)` | Current permission request with `respond(optionId)` and `deny()` actions |

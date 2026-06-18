@@ -1,5 +1,5 @@
 import React from 'react';
-import { useSession } from '../../hooks/useSession';
+import { useSessionUsage } from '../../hooks/useSession';
 import type { SessionId } from '@acp-components/core';
 import { useI18n } from '../../i18n';
 import styles from './usage-bar.module.scss';
@@ -20,7 +20,7 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 const SVG_SIZE = 24;
 
 export function UsageBar({ sessionId }: UsageBarProps) {
-  const { usage } = useSession(sessionId);
+  const usage = useSessionUsage(sessionId);
   const { t } = useI18n();
 
   if (!sessionId || !usage) return null;

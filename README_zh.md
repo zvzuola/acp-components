@@ -191,7 +191,14 @@ ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
 | `useAcpStore(selector)` | 订阅全局 `acpStore`（Zustand vanilla store，通过 `useSyncExternalStore`） |
 | `useSessionStore(sessionId, selector)` | 订阅单个会话的 `sessionStore` |
 | `useSessions()` | 会话 CRUD：跨工作区列出所有会话、创建、选择、关闭、刷新；返回全局 `activeSessionId` |
-| `useSession(sessionId)` | 单个会话的全部数据：消息、流式状态、工具调用、权限、计划、用量、配置项、可用命令 |
+| `useSessionMessages(sessionId)` | 单会话的消息列表 |
+| `useSessionIsStreaming(sessionId)` | 单会话的流式状态 |
+| `useSessionPlan(sessionId)` | 单会话的 plan 条目 |
+| `useSessionAvailableCommands(sessionId)` | 单会话的可用命令 |
+| `useSessionPendingToolCalls(sessionId)` | 单会话的等待中工具调用 |
+| `useSessionPendingPermissions(sessionId)` | 单会话的等待中权限请求 |
+| `useSessionConfigOptions(sessionId)` | 单会话的配置项 |
+| `useSessionUsage(sessionId)` | 单会话的 token 用量 |
 | `usePrompt(sessionId)` | 发送消息 `send(blocks)` 和取消 `cancel()`（自动路由到正确的 Agent client） |
 | `useToolCalls(sessionId)` | 某会话的等待中和已完成的工具调用 |
 | `usePermission(sessionId)` | 当前权限请求，包含 `respond(optionId)` 和 `deny()` 操作 |

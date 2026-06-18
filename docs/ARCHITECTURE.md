@@ -137,7 +137,7 @@ Agent 推送的 `sessionUpdate` 统一在 core provider 层转换为 store actio
 | 层级 | 内容 | 说明 |
 | --- | --- | --- |
 | Provider + Context | `useAcpProvider`、`AcpContext` | 初始化多 Agent 连接、注入 `getClient(agentId)` 和 store 到组件树 |
-| Hooks | `useSession`、`useSessions`、`usePrompt`、`useToolCalls`、`usePermission`、`useConnectionStatus`、`useAllAgentStatuses` 等 | 订阅 store 状态，暴露 action 给组件 |
+| Hooks | `useSessionMessages`、`useSessionIsStreaming`、`useSessions`、`usePrompt`、`useToolCalls`、`usePermission`、`useConnectionStatus`、`useAllAgentStatuses` 等 | 订阅 store 状态，暴露 action 给组件 |
 | Components | `workbench`、`chat-view`、`session-list`（按 Agent 分组）、`project-opener`、`status-bar`、`permission-dialog`、`diff-view`、`terminal-view`、`command-palette`、`session-config-panel` | 完整工作台布局及独立功能区块 |
 
 组件之间的通信通过 core 层的 store 完成，不直接互调。每个组件可按需独立使用，也可以拼成完整工作台。
