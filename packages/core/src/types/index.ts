@@ -36,7 +36,7 @@ export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'er
 export type MessagePart =
   | { type: 'content'; content: ContentBlock[] }
   | { type: 'thought'; thought: ContentBlock[]; expanded?: boolean }
-  | { type: 'tool_calls'; toolCalls: ToolCallState[]; expanded?: boolean }
+  | { type: 'tool_calls'; toolCalls: ToolCallState[] }
   | { type: 'plan'; plan: PlanEntry[] };
 
 export interface Message {
@@ -48,6 +48,8 @@ export interface Message {
 }
 
 export interface ToolCallState extends ToolCall {
+  /** UI-only expanded state — not sent over the wire */
+  expanded?: boolean;
 }
 
 export interface Session extends SessionInfo {

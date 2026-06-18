@@ -37,6 +37,7 @@ interface SessionStoreState {
   setConfigOptions: (sessionId: SessionId, configOptions: SessionConfigOption[]) => void;
   setAvailableCommands: (sessionId: SessionId, commands: AvailableCommand[]) => void;
   setPartExpanded: (sessionId: SessionId, messageId: string, partIndex: number, expanded: boolean) => void;
+  setToolCallExpanded: (sessionId: SessionId, toolCallId: string, expanded: boolean) => void;
 
   addTerminal: (sessionId: SessionId, terminal: TerminalState) => void;
   updateTerminalOutput: (sessionId: SessionId, terminalId: string, output: string, truncated: boolean) => void;
@@ -260,7 +261,8 @@ export const sessionStore = createStore<SessionStoreState>((set) => ({
       const next = new Map(s.sessions);
       const toolCalls = new Map(data.pendingToolCalls);
       const existing = toolCalls.get(tc.toolCallId);
-      toolCalls.set(tc.toolCallId, existing ? { ...existing, ...tc } : tc);
+      // Preserve UI-only expanded state (agent never sends it)
+      toolCalls.set(tc.toolCallId, existing ? { ...existing, ...tc, expanded: existing.expanded } : tc);
 
       const lastMsg = data.messages[data.messages.length - 1];
       let messages: Message[];
@@ -273,7 +275,8 @@ export const sessionStore = createStore<SessionStoreState>((set) => ({
           const idx = tcs.findIndex((t) => t.toolCallId === tc.toolCallId);
           if (idx >= 0) {
             const updatedTcs = [...tcs];
-            updatedTcs[idx] = { ...updatedTcs[idx], ...tc };
+            // Preserve UI-only expanded state (agent never sends it)
+            updatedTcs[idx] = { ...updatedTcs[idx], ...tc, expanded: updatedTcs[idx].expanded };
             messages = [
               ...data.messages.slice(0, -1),
               { ...lastMsg, parts: [...parts.slice(0, -1), { ...last, toolCalls: updatedTcs }] },
@@ -319,6 +322,7 @@ export const sessionStore = createStore<SessionStoreState>((set) => ({
         ...update,
         content: 'content' in update ? (update.content ?? []) : existing.content,
         locations: 'locations' in update ? (update.locations ?? []) : existing.locations,
+        expanded: existing.expanded,
       };
       toolCalls.set(id, updated);
 
@@ -420,7 +424,7 @@ export const sessionStore = createStore<SessionStoreState>((set) => ({
       const messages = data.messages.map((m) => {
         if (m.id !== messageId) return m;
         const part = m.parts[partIndex];
-        if (!part || (part.type !== 'thought' && part.type !== 'tool_calls')) return m;
+        if (!part || part.type !== 'thought') return m;
         const updatedPart = { ...part, expanded };
         const parts = [...m.parts];
         parts[partIndex] = updatedPart;
@@ -428,6 +432,41 @@ export const sessionStore = createStore<SessionStoreState>((set) => ({
       });
       const next = new Map(s.sessions);
       next.set(sessionId, { ...data, messages });
+      return { sessions: next };
+    }),
+
+  setToolCallExpanded: (sessionId, toolCallId, expanded) =>
+    set((s) => {
+      const data = s.sessions.get(sessionId);
+      if (!data) return s;
+
+      // Update in pendingToolCalls
+      const existing = data.pendingToolCalls.get(toolCallId);
+      const pendingToolCalls = new Map(data.pendingToolCalls);
+      if (existing) {
+        pendingToolCalls.set(toolCallId, { ...existing, expanded });
+      }
+
+      // Update in messages (tool calls are embedded in tool_calls parts)
+      const messages = data.messages.map((m) => {
+        const tcPartIdx = m.parts.findIndex(
+          (p) => p.type === 'tool_calls' && p.toolCalls.some((t) => t.toolCallId === toolCallId),
+        );
+        if (tcPartIdx < 0) return m;
+        const part = m.parts[tcPartIdx];
+        if (part.type !== 'tool_calls') return m;
+        const updatedParts = [...m.parts];
+        updatedParts[tcPartIdx] = {
+          ...part,
+          toolCalls: part.toolCalls.map((t) =>
+            t.toolCallId === toolCallId ? { ...t, expanded } : t,
+          ),
+        };
+        return { ...m, parts: updatedParts };
+      });
+
+      const next = new Map(s.sessions);
+      next.set(sessionId, { ...data, pendingToolCalls, messages });
       return { sessions: next };
     }),
 

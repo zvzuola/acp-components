@@ -66,35 +66,42 @@ function renderPart(
   isStreaming?: boolean,
   onNavigateFile?: (path: string, line?: number | null) => void,
 ) {
-  const expanded = (part as { expanded?: boolean }).expanded ?? false;
-
-  function setExpanded(value: boolean) {
+  function setThoughtExpanded(value: boolean) {
     if (!sessionId) return;
     sessionStore.getState().setPartExpanded(sessionId, messageId, partIndex, value);
   }
 
   switch (part.type) {
-    case 'thought':
+    case 'thought': {
+      const expanded = part.expanded ?? false;
       return (
         <ThoughtView
           key={partIndex}
           thought={part.thought}
           isStreaming={!!isStreaming}
           expanded={expanded}
-          onExpandedChange={setExpanded}
+          onExpandedChange={setThoughtExpanded}
         />
       );
+    }
     case 'tool_calls':
-      return part.toolCalls.map((tc) => (
-        <ToolCallCard
-          key={tc.toolCallId}
-          sessionId={sessionId}
-          toolCall={tc}
-          onNavigate={onNavigateFile}
-          expanded={expanded}
-          onExpandedChange={setExpanded}
-        />
-      ));
+      return part.toolCalls.map((tc) => {
+        const tcExpanded = tc.expanded ?? false;
+        function setTcExpanded(value: boolean) {
+          if (!sessionId) return;
+          sessionStore.getState().setToolCallExpanded(sessionId, tc.toolCallId, value);
+        }
+        return (
+          <ToolCallCard
+            key={tc.toolCallId}
+            sessionId={sessionId}
+            toolCall={tc}
+            onNavigate={onNavigateFile}
+            expanded={tcExpanded}
+            onExpandedChange={setTcExpanded}
+          />
+        );
+      });
     case 'content':
       return part.content.map((block, j) => (
         <React.Fragment key={j}>{renderContent(block)}</React.Fragment>

@@ -58,14 +58,17 @@ function groupMessagesIntoRounds(messages: Message[]): Round[] {
 function useRounds(messages: Message[], sessionId: SessionId | null): Round[] {
   const prevMessagesRef = useRef<Message[]>([]);
   const roundsRef = useRef<Round[]>([]);
-
-  // Full reset when session changes
-  useEffect(() => {
-    prevMessagesRef.current = [];
-    roundsRef.current = [];
-  }, [sessionId]);
+  const sessionRef = useRef(sessionId);
 
   return useMemo(() => {
+    // Full reset when session changes — done inline (during render) instead of
+    // in an effect, so the refs are correct before the first useMemo pass.
+    if (sessionRef.current !== sessionId) {
+      sessionRef.current = sessionId;
+      prevMessagesRef.current = [];
+      roundsRef.current = [];
+    }
+
     const prev = prevMessagesRef.current;
 
     // Fast path: same-length array, only the last message changed (streaming)
@@ -118,7 +121,7 @@ function useRounds(messages: Message[], sessionId: SessionId | null): Round[] {
     prevMessagesRef.current = messages;
     roundsRef.current = newRounds;
     return newRounds;
-  }, [messages]);
+  }, [messages, sessionId]);
 }
 
 export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
@@ -146,6 +149,11 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
   const [editText, setEditText] = useState<string | undefined>(undefined);
 
   const rounds = useRounds(messages, sessionId);
+
+  // Stable ref for rounds.length so itemContent callback doesn't invalidate
+  // when a new round starts (avoids Virtuoso re-rendering all visible items).
+  const roundsLengthRef = useRef(rounds.length);
+  roundsLengthRef.current = rounds.length;
 
   const handleUserMessageEdit = useCallback((text: string) => {
     setEditText(text);
@@ -227,7 +235,7 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
 
   const itemContent = useCallback(
     (_index: number, round: Round) => {
-      const isLastRound = _index === rounds.length - 1;
+      const isLastRound = _index === roundsLengthRef.current - 1;
       return (
         <div className={styles.acpVirtuosoItem}>
           <div className={styles.acpRound}>
@@ -247,7 +255,7 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
         </div>
       );
     },
-    [rounds.length, isStreaming, handleUserMessageEdit, onNavigateFile],
+    [sessionId, isStreaming, handleUserMessageEdit, onNavigateFile],
   );
 
   if (!sessionId) {
