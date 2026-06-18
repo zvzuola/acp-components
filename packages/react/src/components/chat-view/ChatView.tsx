@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useState, useCallback } from 'react';
+import React, { useRef, useMemo, useState, useCallback, useEffect } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { useSession } from '../../hooks/useSession';
 import { useAcpStore } from '../../hooks/useAcpStore';
@@ -60,8 +60,13 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
     return null;
   });
   const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const scrollerElRef = useRef<HTMLElement | null>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const { t } = useI18n();
+
+  // Intent-based auto-scroll tracking: only stop following when the user
+  // *explicitly* scrolls up (wheel/touch). Content growth alone never stops it.
+  const userScrolledUpRef = useRef(false);
 
   const [editText, setEditText] = useState<string | undefined>(undefined);
 
@@ -71,11 +76,61 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
     setEditText(text);
   }, []);
 
+  // Listen for user-initiated scroll events (wheel / touch) to detect when
+  // the user explicitly scrolls up — only then do we stop auto-following.
+  useEffect(() => {
+    const scroller = scrollerElRef.current;
+    if (!scroller) return;
+
+    let touchStartY = 0;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.deltaY < 0) {
+        userScrolledUpRef.current = true;
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0]?.clientY ?? 0;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const y = e.touches[0]?.clientY ?? touchStartY;
+      const deltaY = touchStartY - y;
+      if (deltaY < -5) {
+        // finger moved downward → scrolling up in content
+        userScrolledUpRef.current = true;
+      }
+    };
+
+    scroller.addEventListener('wheel', handleWheel, { passive: true });
+    scroller.addEventListener('touchstart', handleTouchStart, { passive: true });
+    scroller.addEventListener('touchmove', handleTouchMove, { passive: true });
+    return () => {
+      scroller.removeEventListener('wheel', handleWheel);
+      scroller.removeEventListener('touchstart', handleTouchStart);
+      scroller.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, [sessionId]);
+
+  // When switching sessions, reset scroll intent.
+  useEffect(() => {
+    userScrolledUpRef.current = false;
+  }, [sessionId]);
+
   const handleAtBottomStateChange = useCallback((atBottom: boolean) => {
+    console.debug('ChatView: atBottom state changed:', atBottom, Date.now());
     setIsAtBottom(atBottom);
+    if (atBottom) {
+      userScrolledUpRef.current = false;
+    } else if (!userScrolledUpRef.current) {
+      // Content grew and we fell off the bottom — scroll to catch up.
+      virtuosoRef.current?.scrollToIndex({ index: 'LAST', align: 'end', behavior: 'auto' });
+    }
   }, []);
 
   const handleScrollToBottom = useCallback(() => {
+    userScrolledUpRef.current = false;
     virtuosoRef.current?.scrollToIndex({ index: 'LAST', align: 'end', behavior: isStreaming ? 'auto' : 'smooth' });
   }, [isStreaming]);
 
@@ -137,7 +192,9 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
       </div>
       <div className={styles.acpMessageListWrapper}>
         <Virtuoso
+          key={sessionId} // reset virtuoso state when sessionId changes
           ref={virtuosoRef}
+          scrollerRef={(el) => { scrollerElRef.current = el as HTMLElement | null; }}
           className={styles.acpMessageList}
           data={rounds}
           computeItemKey={computeItemKey}
