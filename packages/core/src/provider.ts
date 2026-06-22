@@ -5,7 +5,7 @@ import { sessionStore } from './store/sessionStore';
 import type { ToolCallState, TerminalHandler, TerminalState } from './types';
 import type { AgentConfig } from './types';
 import type { FileSystemProviderOptions } from './fileSystem/provider';
-import type { RequestPermissionResponse, ClientCapabilities, CreateTerminalRequest, TerminalExitStatus } from '@agentclientprotocol/sdk';
+import type { RequestPermissionResponse, ClientCapabilities, CreateTerminalRequest, TerminalExitStatus, ContentBlock } from '@agentclientprotocol/sdk';
 import type { PermissionRequest } from './types';
 
 function generateMsgId(): string {
@@ -13,6 +13,23 @@ function generateMsgId(): string {
     return crypto.randomUUID();
   }
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+// ---------------------------------------------------------------------------
+// Content chunk batching — reduces React re-render frequency during streaming
+// by accumulating text chunks over a short window and applying them as a
+// single merged update instead of firing on every individual chunk.
+//
+// Batching is scoped PER SESSION: each session owns its own buffer + flush
+// timer, so a busy session running tool calls cannot interrupt another
+// session's accumulation window. See `setupSessionUpdateHandler`.
+// ---------------------------------------------------------------------------
+
+const BATCH_WINDOW_MS = 16; // ~1 frame at 60 fps — imperceptible delay, aligned with display
+
+/** Check whether a ContentBlock is a plain text block (suitable for batching). */
+function isTextBlock(block: ContentBlock): block is ContentBlock & { type: 'text'; text: string } {
+  return block.type === 'text' && !('annotations' in block && block.annotations != null);
 }
 
 export interface MultiAgentProviderOptions {
@@ -37,6 +54,100 @@ function setupSessionUpdateHandler(client: AcpClient): () => void {
   // 追踪每个 session+role 的当前 messageId
   // 只有连续的同类型 chunk 才复用，中间插入其他类型消息时清除缓存
   const lastMsgIdBySession = new Map<string, Record<string, string>>();
+
+  // --- Per-session chunk batching ---
+  // 每个 session 独享自己的 buffer + flush timer，互不打断：
+  // 某个 session 频繁触发 tool_call 不会再把其他 session 正在累积的文本提前冲掉。
+  interface ChunkBatch {
+    messageId: string;
+    role: 'agent' | 'user';
+    /** Whether this batch targets `appendContent` or `appendThought`. */
+    batchType: 'content' | 'thought';
+    /** Accumulated text for text-type blocks only. Non-text blocks are NOT batched. */
+    mergedText: string;
+  }
+  interface SessionBatcher {
+    /** Keyed by "messageId:role:batchType" */
+    buffer: Map<string, ChunkBatch>;
+    timer: ReturnType<typeof setTimeout> | null;
+  }
+  /** 仅持有「有待 flush 文本」的 session，flush 后即移除，避免长期驻留泄漏。 */
+  const batchers = new Map<string, SessionBatcher>();
+
+  function makeBatchKey(messageId: string, role: string, batchType: 'content' | 'thought'): string {
+    return `${messageId}:${role}:${batchType}`;
+  }
+
+  /** Flush 并清理指定 session 的批次（timer + buffer）。无批次时为 no-op。 */
+  function flushSessionBatcher(sessionId: string): void {
+    const batcher = batchers.get(sessionId);
+    if (!batcher) return;
+    if (batcher.timer) {
+      clearTimeout(batcher.timer);
+      batcher.timer = null;
+    }
+    if (batcher.buffer.size === 0) {
+      batchers.delete(sessionId);
+      return;
+    }
+
+    const store = sessionStore.getState();
+    for (const [, batch] of batcher.buffer) {
+      const block: ContentBlock = {
+        type: 'text',
+        text: batch.mergedText,
+        _meta: null,
+        annotations: null,
+      };
+      if (batch.batchType === 'content') {
+        store.appendContent(sessionId, batch.messageId, batch.role, block);
+      } else {
+        store.appendThought(sessionId, batch.messageId, batch.role, block);
+      }
+    }
+    batcher.buffer.clear();
+    batchers.delete(sessionId);
+  }
+
+  function scheduleFlush(sessionId: string, batcher: SessionBatcher): void {
+    if (batcher.timer) return;
+    batcher.timer = setTimeout(() => flushSessionBatcher(sessionId), BATCH_WINDOW_MS);
+  }
+
+  /**
+   * Enqueue a text content/thought chunk for batched processing.
+   * Non-text blocks must be applied directly after calling flushSessionBatcher(sessionId) first
+   * to preserve message ordering.
+   */
+  function enqueueTextChunk(
+    sessionId: string,
+    messageId: string,
+    role: 'agent' | 'user',
+    batchType: 'content' | 'thought',
+    text: string,
+  ): void {
+    let batcher = batchers.get(sessionId);
+    if (!batcher) {
+      batcher = { buffer: new Map(), timer: null };
+      batchers.set(sessionId, batcher);
+    }
+    const key = makeBatchKey(messageId, role, batchType);
+    const existing = batcher.buffer.get(key);
+    if (existing) {
+      existing.mergedText += text;
+    } else {
+      batcher.buffer.set(key, { messageId, role, batchType, mergedText: text });
+    }
+    scheduleFlush(sessionId, batcher);
+  }
+
+  /** Teardown：冲掉所有 session 的待处理文本（防丢失）并清空 timer（防泄漏/串扰）。 */
+  function destroyAllBatchers(): void {
+    for (const sessionId of [...batchers.keys()]) {
+      flushSessionBatcher(sessionId);
+    }
+    batchers.clear();
+  }
 
   function resolveMsgId(sessionId: string, role: string, messageId?: string): string {
     // 如果 chunk 自带 messageId，直接使用并更新缓存
@@ -64,7 +175,7 @@ function setupSessionUpdateHandler(client: AcpClient): () => void {
     if (Object.keys(cache).length === 0) lastMsgIdBySession.delete(sessionId);
   }
 
-  return client.onSessionUpdate((notification) => {
+  const unsubSession = client.onSessionUpdate((notification) => {
     const { sessionId, update } = notification;
     const store = sessionStore.getState();
     store.ensureSession(sessionId);
@@ -75,7 +186,13 @@ function setupSessionUpdateHandler(client: AcpClient): () => void {
         clearMsgIdCache(sessionId, 'user', 'thought');
         if ('content' in update && update.content) {
           const msgId = resolveMsgId(sessionId, 'agent', (update as { messageId?: string }).messageId);
-          store.appendContent(sessionId, msgId, 'agent', update.content);
+          if (isTextBlock(update.content)) {
+            enqueueTextChunk(sessionId, msgId, 'agent', 'content', update.content.text);
+          } else {
+            // Non-text block (e.g. tool_use, tool_result) — flush batched text first
+            flushSessionBatcher(sessionId);
+            store.appendContent(sessionId, msgId, 'agent', update.content);
+          }
         }
         break;
       case 'user_message_chunk':
@@ -83,7 +200,12 @@ function setupSessionUpdateHandler(client: AcpClient): () => void {
         clearMsgIdCache(sessionId, 'agent', 'thought');
         if ('content' in update && update.content) {
           const msgId = resolveMsgId(sessionId, 'user', (update as { messageId?: string }).messageId);
-          store.appendContent(sessionId, msgId, 'user', update.content);
+          if (isTextBlock(update.content)) {
+            enqueueTextChunk(sessionId, msgId, 'user', 'content', update.content.text);
+          } else {
+            flushSessionBatcher(sessionId);
+            store.appendContent(sessionId, msgId, 'user', update.content);
+          }
         }
         break;
       case 'agent_thought_chunk':
@@ -91,10 +213,17 @@ function setupSessionUpdateHandler(client: AcpClient): () => void {
         clearMsgIdCache(sessionId, 'user', 'agent');
         if ('content' in update && update.content) {
           const msgId = resolveMsgId(sessionId, 'thought', (update as { messageId?: string }).messageId);
-          store.appendThought(sessionId, msgId, 'agent', update.content);
+          if (isTextBlock(update.content)) {
+            enqueueTextChunk(sessionId, msgId, 'agent', 'thought', update.content.text);
+          } else {
+            flushSessionBatcher(sessionId);
+            store.appendThought(sessionId, msgId, 'agent', update.content);
+          }
         }
         break;
       case 'tool_call':
+        // Flush any batched text chunks before processing tool call (ordering)
+        flushSessionBatcher(sessionId);
         // 打断所有角色的连续性
         clearMsgIdCache(sessionId, 'user', 'agent', 'thought');
         store.upsertToolCall(sessionId, {
@@ -109,6 +238,8 @@ function setupSessionUpdateHandler(client: AcpClient): () => void {
         });
         break;
       case 'tool_call_update':
+        // Flush any batched text chunks before processing tool call update (ordering)
+        flushSessionBatcher(sessionId);
         // 打断所有角色的连续性
         clearMsgIdCache(sessionId, 'user', 'agent', 'thought');
         {
@@ -124,6 +255,8 @@ function setupSessionUpdateHandler(client: AcpClient): () => void {
         }
         break;
       case 'plan':
+        // Flush any batched text chunks before processing plan (ordering)
+        flushSessionBatcher(sessionId);
         // 打断所有角色的连续性
         clearMsgIdCache(sessionId, 'user', 'agent', 'thought');
         store.setPlan(sessionId, update.entries);
@@ -146,6 +279,11 @@ function setupSessionUpdateHandler(client: AcpClient): () => void {
         break;
     }
   });
+
+  return () => {
+    unsubSession();
+    destroyAllBatchers();
+  };
 }
 
 function buildCapabilities(

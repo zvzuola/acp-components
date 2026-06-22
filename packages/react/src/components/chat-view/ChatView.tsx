@@ -146,6 +146,12 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
   // *explicitly* scrolls up (wheel/touch). Content growth alone never stops it.
   const userScrolledUpRef = useRef(false);
 
+  // Debounce timer for showing the scroll-to-bottom button. During streaming,
+  // content growth can transiently push us off the bottom (before followOutput
+  // catches up); debouncing here keeps the button from flickering on/off every
+  // chunk. Cancelled if we return to bottom within the window.
+  const showBtnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const [editText, setEditText] = useState<string | undefined>(undefined);
 
   const rounds = useRounds(messages, sessionId);
@@ -201,15 +207,56 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
     userScrolledUpRef.current = false;
   }, [sessionId]);
 
+  // Clean up the debounce timer on unmount.
+  useEffect(() => {
+    return () => {
+      if (showBtnTimerRef.current) {
+        clearTimeout(showBtnTimerRef.current);
+        showBtnTimerRef.current = null;
+      }
+    };
+  }, []);
+
   const handleAtBottomStateChange = useCallback((atBottom: boolean) => {
-    console.debug('ChatView: atBottom state changed:', atBottom, Date.now());
-    setIsAtBottom(atBottom);
     if (atBottom) {
+      // Back at bottom — cancel any pending button-show and hide immediately.
+      if (showBtnTimerRef.current) {
+        clearTimeout(showBtnTimerRef.current);
+        showBtnTimerRef.current = null;
+      }
+      setIsAtBottom(true);
       userScrolledUpRef.current = false;
-    } else if (!userScrolledUpRef.current) {
-      // Content grew and we fell off the bottom — scroll to catch up.
-      virtuosoRef.current?.scrollToIndex({ index: 'LAST', align: 'end', behavior: 'auto' });
+      return;
     }
+
+    if (userScrolledUpRef.current) {
+      // User explicitly scrolled up — show the button immediately, no debounce.
+      if (showBtnTimerRef.current) {
+        clearTimeout(showBtnTimerRef.current);
+        showBtnTimerRef.current = null;
+      }
+      setIsAtBottom(false);
+      return;
+    }
+
+    // Content grew and we fell off the bottom before followOutput caught up —
+    // scroll the native scroller element directly to catch up. Unlike
+    // Virtuoso's scrollToIndex (which computes its target from the item-size
+    // tree that lags behind the real DOM mid-stream), scrollHeight stays
+    // accurate while the last message is still growing.
+    const el = scrollerElRef.current;
+    if (el) {
+      el.scrollTo({ top: el.scrollHeight, behavior: 'auto' });
+    }
+
+    // Debounce the button-show so transient off-bottom states during streaming
+    // (between chunks / mid-follow-animation) don't flicker the button. Only
+    // show if we stay off-bottom for the full window.
+    if (showBtnTimerRef.current) clearTimeout(showBtnTimerRef.current);
+    showBtnTimerRef.current = setTimeout(() => {
+      showBtnTimerRef.current = null;
+      setIsAtBottom(false);
+    }, 200);
   }, []);
 
   const handleScrollToBottom = useCallback(() => {
