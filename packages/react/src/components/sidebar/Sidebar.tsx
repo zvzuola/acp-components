@@ -9,7 +9,6 @@ import { useI18n } from '../../i18n';
 import styles from './sidebar.module.scss';
 
 export interface SidebarProps {
-  onBrowse?: () => Promise<string | null>;
   onNavigateFile?: (path: string, line?: number | null) => void;
   className?: string;
 }
@@ -68,7 +67,7 @@ function FileTreeView({ cwd, onNavigateFile, onBack }: {
   );
 }
 
-export function Sidebar({ onBrowse, onNavigateFile, className }: SidebarProps) {
+export function Sidebar({ onNavigateFile, className }: SidebarProps) {
   const { t } = useI18n();
   const [view, setView] = useState<'sessions' | 'files'>('sessions');
   const [filesCwd, setFilesCwd] = useState<string | null>(null);
@@ -97,7 +96,7 @@ export function Sidebar({ onBrowse, onNavigateFile, className }: SidebarProps) {
       {view === 'sessions' ? (
         <>
           <div className={styles.acpSidebarSessions}>
-            <SessionList onBrowse={onBrowse} onShowFiles={handleShowFiles} />
+            <SessionList onShowFiles={handleShowFiles} />
           </div>
           <SettingsMenu />
         </>

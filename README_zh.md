@@ -15,13 +15,12 @@
 - **多工作区支持** — 按工作目录（cwd）组织会话，可无缝切换工作区
 - **框架无关核心** — Zustand vanilla stores，零 React 依赖；支持 Vue、Svelte、Solid 或纯 JS
 - **多传输协议** — 每个 Agent 可独立配置 Stdio、HTTP、WebSocket 及自定义传输；附带 Tauri IPC 传输示例
-- **丰富的 UI 组件** — 工作区与会话列表（按目录和 Agent 分组）、聊天视图（回合分组）、Diff 视图、终端视图、权限弹窗、计划视图、思考视图、命令面板、登录弹窗等 15+ 组件
+- **丰富的 UI 组件** — 工作区与会话列表（按目录和 Agent 分组）、聊天视图（回合分组）、Diff 视图、权限弹窗、计划视图、思考视图、命令面板、登录弹窗等 15+ 组件
 - **流式交互体验** — 实时内容与思考过程流式展示，动画指示器，工具调用状态跟踪，Token 用量统计
 - **会话管理** — 完整 CRUD：创建、加载、切换、关闭会话，按工作区和 Agent 维度管理
 - **工具调用可视化** — 追踪 Agent 工具调用，展示状态、输入/输出、文件定位和差异对比
 - **认证** — 内置认证流程，包含 `LoginDialog` 组件，支持 env_var 和 terminal 两种认证方式，以及 `authenticate`/`authenticateWithEnv` 编程式 actions
 - **权限处理** — 基于 Promise 的权限流程，内置模态弹窗用于批准或拒绝工具调用请求
-- **终端集成** — 内嵌终端输出展示，通过 `onTerminal` 处理器管理终端生命周期，配合 `useTerminals` hook 使用
 - **主题系统** — 通过 CSS 自定义属性（`--acp-*` 设计令牌）提供暗色/亮色主题；通过 `data-acp-theme` 属性可扩展自定义主题
 - **国际化** — 内置 i18n 支持（英文、中文），基于 i18next，支持自定义语言扩展
 - **桌面端就绪** — 包含 Tauri 和 stdio 传输示例，可直接用于原生桌面应用开发
@@ -57,6 +56,7 @@ pnpm add @acp-components/core @acp-components/react
 import ReactDOM from 'react-dom/client';
 import {
   I18nProvider,
+  PlatformProvider,
   AcpProvider,
   Workbench,
   SessionList,
@@ -65,35 +65,41 @@ import {
   LoginDialog,
 } from '@acp-components/react';
 import { useAcpStore } from '@acp-components/react';
+// createWebPlatform 是宿主侧工厂；demo 内置实现见
+// examples/demo/src/webPlatform.ts。自定义宿主请自行实现。
+import { createWebPlatform } from './webPlatform';
 
 function App() {
   const activeSessionId = useAcpStore((s) => s.activeSessionId);
 
   return (
-    <I18nProvider>
-      <AcpProvider
-        agents={[
-          {
-            id: 'main',
-            name: '主 Agent',
-            transport: { type: 'websocket', url: 'ws://127.0.0.1:3100' },
-          },
-        ]}
-        theme="dark"
-        defaultCwd="/path/to/project"
-      >
-        <Workbench
-          sidebar={
-            <>
-              <SessionList onBrowse={async () => prompt('输入工作区路径:')} />
-            </>
-          }
-          main={<ChatView sessionId={activeSessionId} />}
-        />
-        <PermissionDialog sessionId={activeSessionId} />
-        <LoginDialog />
-      </AcpProvider>
-    </I18nProvider>
+    <PlatformProvider platform={createWebPlatform()}>
+      <I18nProvider>
+        <AcpProvider
+          agents={[
+            {
+              id: 'main',
+              name: '主 Agent',
+              transport: { type: 'websocket', url: 'ws://127.0.0.1:3100' },
+            },
+          ]}
+          theme="dark"
+          defaultCwd="/path/to/project"
+        >
+          <Workbench
+            sidebar={
+              <>
+                {/* 目录选择现由 SessionList 内部调用 usePlatform().openDirectoryPickerDialog() 驱动，无需 onBrowse prop */}
+                <SessionList />
+              </>
+            }
+            main={<ChatView sessionId={activeSessionId} />}
+          />
+          <PermissionDialog sessionId={activeSessionId} />
+          <LoginDialog />
+        </AcpProvider>
+      </I18nProvider>
+    </PlatformProvider>
   );
 }
 
@@ -111,7 +117,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
       id: 'craft',
       name: 'Craft Agent',
       transport: { type: 'websocket', url: 'ws://127.0.0.1:3100' },
-      clientCapabilities: { fs: { readTextFile: true, writeTextFile: true } },
     },
     {
       id: 'ask',
@@ -163,7 +168,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
 
 | 组件 | 说明 |
 |-----------|-------------|
-| `AcpProvider` | 顶层 Provider：并行连接多个 Agent，管理 Agent 生命周期，将会话更新分发到 stores，所有 Agent 就绪前显示加载动画。Props：`agents`、`theme`、`defaultCwd`、`onFileRead`、`onFileWrite`、`onTerminal` |
+| `AcpProvider` | 顶层 Provider：并行连接多个 Agent，管理 Agent 生命周期，将会话更新分发到 stores，所有 Agent 就绪前显示加载动画。Props：`agents`、`theme`、`defaultCwd`、`onExtMethod`、`onExtNotification` |
 | `Workbench` | 三栏布局（侧边栏、主区域、面板），基于 CSS Grid |
 | `SessionList` | 侧边栏工作区与会话列表：按工作区目录分组，工作区内按 Agent 分组展示会话，支持添加工作区/创建/选择/删除操作 |
 | `ChatView` | 主聊天区域：将消息分组为用户/Agent 回合，渲染计划、用量条和配置面板。Props：`sessionId`、`onNavigateFile` |
@@ -177,7 +182,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
 | `DiffView` | 文件变更的并排对比视图 |
 | `PermissionDialog` | 用于批准/拒绝工具权限请求的模态弹窗 |
 | `LoginDialog` | Agent 认证模态弹窗：支持 env_var 和 terminal 两种认证方式、环境变量表单输入、5 分钟超时 |
-| `TerminalView` | 内嵌终端输出展示 |
 | `ConnectionStatus` | 每个 Agent 的连接状态指示器，含 Agent 名称和版本 |
 | `UsageBar` | Token 用量进度条，展示上下文窗口消耗 |
 | `SessionConfigPanel` | 会话配置项下拉菜单 |
@@ -202,7 +206,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
 | `usePrompt(sessionId)` | 发送消息 `send(blocks)` 和取消 `cancel()`（自动路由到正确的 Agent client） |
 | `useToolCalls(sessionId)` | 某会话的等待中和已完成的工具调用 |
 | `usePermission(sessionId)` | 当前权限请求，包含 `respond(optionId)` 和 `deny()` 操作 |
-| `useTerminals(sessionId)` | 某会话的终端状态列表 |
 | `useConnectionStatus(agentId)` | 指定 Agent 的连接状态、Agent 信息（名称、版本） |
 | `useAllAgentStatuses()` | 所有 Agent 的聚合状态：各 Agent 独立状态及整体状态 |
 | `useAcpContext()` | 从 React Context 中获取 `getClient(agentId)`、Agent 列表、工作区及工作区管理操作 |
@@ -390,51 +393,6 @@ await addAgent({
 
 // 移除 Agent（自动清理其所有会话）
 await removeAgent('new-agent');
-```
-
-### 终端集成
-
-控制 Agent 如何创建和管理终端：
-
-```tsx
-<AcpProvider
-  agents={[...]}
-  onTerminal={{
-    create: async (params) => {
-      // params: { sessionId, command, args?, cwd? }
-      const proc = spawn(params.command, params.args ?? [], { cwd: params.cwd ?? undefined });
-      return {
-        terminalId: generateId(),
-        getOutput: async () => ({ output: allOutput }),
-        waitForExit: async () => new Promise((resolve) => proc.on('exit', resolve)),
-        kill: async () => proc.kill(),
-        release: async () => {},
-        onOutputChange: (fn) => proc.stdout.on('data', fn),
-        onExit: (fn) => proc.on('exit', fn),
-      };
-    },
-  }}
->
-```
-
-终端状态可通过 `useTerminals(sessionId)` hook 访问，并通过 `TerminalView` 组件渲染。
-
-### 文件系统集成
-
-控制 Agent 如何读写文件：
-
-```tsx
-<AcpProvider
-  agents={[...]}
-  onFileRead={async (req) => {
-    const content = await nativeFs.readTextFile(req.path);
-    return { content };
-  }}
-  onFileWrite={async (req) => {
-    await nativeFs.writeTextFile(req.path, req.content);
-    return {};
-  }}
->
 ```
 
 ### 工作区管理

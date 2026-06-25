@@ -11,10 +11,6 @@ import type {
   SessionUpdate,
   PermissionOption,
   ClientCapabilities,
-  CreateTerminalRequest,
-  TerminalOutputResponse,
-  WaitForTerminalExitResponse,
-  TerminalExitStatus,
   PlanEntry,
   AuthMethod,
   AvailableCommand,
@@ -110,30 +106,6 @@ export interface PermissionRequest {
   reject: () => void;
 }
 
-export interface TerminalState {
-  terminalId: string;
-  command: string;
-  args?: string[];
-  cwd?: string | null;
-  output: string;
-  exitStatus: TerminalExitStatus | null;
-  truncated: boolean;
-}
-
-export interface TerminalHandle {
-  readonly terminalId: string;
-  getOutput(): Promise<TerminalOutputResponse>;
-  waitForExit(): Promise<WaitForTerminalExitResponse>;
-  kill(): Promise<void>;
-  release(): Promise<void>;
-  onOutputChange(fn: (output: string) => void): () => void;
-  onExit(fn: (status: TerminalExitStatus | null) => void): () => void;
-}
-
-export interface TerminalHandler {
-  create(params: CreateTerminalRequest): Promise<TerminalHandle>;
-}
-
 export interface FileTreeNode {
   name: string;
   path: string;
@@ -158,4 +130,53 @@ export interface FileTreeWatchCallbacks {
   onWorkspaceChanged: (cwd: string) => void;
 }
 
-export type { ContentBlock, SessionId, SessionInfo, SessionUpdate, StopReason, ToolCall, ToolCallUpdate, ToolCallContent, Implementation, AgentCapabilities, PermissionOption, ClientCapabilities, CreateTerminalRequest, TerminalOutputResponse, WaitForTerminalExitResponse, TerminalExitStatus, PlanEntry, AuthMethod, AvailableCommand, PromptResponse, UsageUpdate, SessionConfigOption, PromptCapabilities, SessionConfigSelectOptions, SessionConfigSelectGroup, AuthMethodEnvVar, ToolCallLocation, ToolKind };
+// ---------------------------------------------------------------------------
+// Platform abstraction — atomic types consumed by the react-layer `Platform`
+// interface (defined in `@acp-components/react`). core itself does not depend
+// on React nor implement `Platform`; it only owns the shared primitive types
+// so the interface and each host factory can compose them.
+// ---------------------------------------------------------------------------
+
+/** Host runtime kind */
+export type PlatformKind = 'desktop' | 'web';
+
+/** Operating system hint; `undefined` when the host cannot determine it */
+export type PlatformOS = 'macos' | 'windows' | 'linux' | undefined;
+
+/**
+ * Async key-value storage. web wraps `localStorage`; tauri can back it with a
+ * shell command or a settings file. `getItemSync` is optional and only used by
+ * callers that need a synchronous read during React initialization (e.g.
+ * locale detection); hosts that cannot provide it leave it undefined and
+ * callers fall back to their own synchronous path.
+ */
+export interface AsyncStorage {
+  getItem(key: string): Promise<string | null>;
+  setItem(key: string, value: string): Promise<void>;
+  removeItem(key: string): Promise<void>;
+  /** Optional synchronous read for init-time lookups; may be omitted. */
+  getItemSync?(key: string): string | null;
+}
+
+/** Lifecycle status of an auto-updater */
+export type UpdaterStatus =
+  | 'idle'
+  | 'checking'
+  | 'available'
+  | 'downloading'
+  | 'installing'
+  | 'ready'
+  | 'error';
+
+/** Snapshot of the auto-updater's current state */
+export interface UpdaterState {
+  status: UpdaterStatus;
+  /** Version available/installed, when known */
+  version?: string;
+  /** Error message when `status === 'error'` */
+  error?: string;
+  /** Download/install progress in the range 0..1, when applicable */
+  progress?: number;
+}
+
+export type { ContentBlock, SessionId, SessionInfo, SessionUpdate, StopReason, ToolCall, ToolCallUpdate, ToolCallContent, Implementation, AgentCapabilities, PermissionOption, ClientCapabilities, PlanEntry, AuthMethod, AvailableCommand, PromptResponse, UsageUpdate, SessionConfigOption, PromptCapabilities, SessionConfigSelectOptions, SessionConfigSelectGroup, AuthMethodEnvVar, ToolCallLocation, ToolKind };

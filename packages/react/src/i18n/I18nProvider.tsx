@@ -3,15 +3,18 @@ import { initReactI18next, I18nextProvider } from 'react-i18next';
 import React, { useMemo, useEffect } from 'react';
 import { enUS } from './locales/en-US';
 import { zhCN } from './locales/zh-CN';
+import { usePlatform } from '../context/PlatformContext';
 import type { Resource } from 'i18next';
 
 const STORAGE_KEY = 'acp-i18n-locale';
 
-function detectLocale(defaultLocale: string): string {
+function detectLocale(defaultLocale: string, storageSync?: (key: string) => string | null): string {
+  // Prefer the platform's sync storage read; fall back to localStorage for hosts
+  // that cannot provide a synchronous reader.
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = storageSync?.(STORAGE_KEY) ?? localStorage.getItem(STORAGE_KEY);
     if (stored) return stored;
-  } catch { /* localStorage unavailable */ }
+  } catch { /* storage unavailable */ }
   if (typeof navigator !== 'undefined' && navigator.language) {
     const nav = navigator.language;
     if (nav.startsWith('zh')) return 'zh-CN';
@@ -57,16 +60,20 @@ export interface I18nProviderProps {
 }
 
 export function I18nProvider({ defaultLocale = 'en-US', customLocales, children }: I18nProviderProps) {
+  // I18nProvider sits inside PlatformProvider (platform is outermost in the
+  // host entry points), so usePlatform is safe here.
+  const { storage } = usePlatform();
+  const i18nStorage = storage('i18n');
+
   const i18n = useMemo(
-    () => createI18nInstance(detectLocale(defaultLocale), customLocales),
-    [defaultLocale, customLocales],
+    () => createI18nInstance(detectLocale(defaultLocale, i18nStorage.getItemSync), customLocales),
+    [defaultLocale, customLocales, i18nStorage],
   );
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, i18n.language);
-    } catch { /* localStorage unavailable */ }
-  }, [i18n.language]);
+    // Fire-and-forget; the sync read on next mount already covers persistence.
+    i18nStorage.setItem(STORAGE_KEY, i18n.language).catch(() => {});
+  }, [i18n.language, i18nStorage]);
 
   return React.createElement(I18nextProvider, { i18n }, children);
 }

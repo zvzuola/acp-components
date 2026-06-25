@@ -13,13 +13,12 @@ You can use the data layer alone to build UI component libraries with Vue, Svelt
 - **Multi-Workspace** — Organize sessions by working directory (cwd); switch between workspaces seamlessly
 - **Framework-Agnostic Core** — Zustand vanilla stores with zero React dependency; works with Vue, Svelte, Solid, or vanilla JS
 - **Multi-Transport** — Stdio, HTTP, WebSocket, and custom transports per agent; ships with a Tauri IPC transport example
-- **Rich UI Components** — Workspace & session list (grouped by directory then agent), chat view (with round grouping), diff view, terminal view, permission dialog, plan view, thought view, command palette, login dialog, and more — 15+ components
+- **Rich UI Components** — Workspace & session list (grouped by directory then agent), chat view (with round grouping), diff view, permission dialog, plan view, thought view, command palette, login dialog, and more — 15+ components
 - **Streaming UX** — Real-time content and thought streaming with animated indicators, live tool call status, and token usage tracking
 - **Session Management** — Full CRUD: create, load, switch, and close sessions scoped by workspace and agent
 - **Tool Call Visualization** — Track agent tool invocations with status, input/output, file locations, and diffs
 - **Authentication** — Built-in auth flow with `LoginDialog` component, env_var and terminal-based auth methods, and programmatic `authenticate`/`authenticateWithEnv` actions
 - **Permission Handling** — Promise-based permission flow with built-in modal dialog for approving or rejecting tool call requests
-- **Terminal Integration** — Embedded terminal output display with lifecycle management via `onTerminal` handler and `useTerminals` hook
 - **Theming** — Dark and light themes via CSS custom properties (`--acp-*` design tokens); extensible via `data-acp-theme` attribute
 - **Internationalization** — Built-in i18n support (en-US, zh-CN) via i18next, with custom locale extension
 - **Desktop Ready** — Includes Tauri and stdio transport examples for native desktop applications
@@ -55,6 +54,7 @@ pnpm add @acp-components/core @acp-components/react
 import ReactDOM from 'react-dom/client';
 import {
   I18nProvider,
+  PlatformProvider,
   AcpProvider,
   Workbench,
   SessionList,
@@ -63,35 +63,42 @@ import {
   LoginDialog,
 } from '@acp-components/react';
 import { useAcpStore } from '@acp-components/react';
+// createWebPlatform is a host-side factory; the demo ships one in
+// examples/demo/src/webPlatform.ts. Implement your own for a custom host.
+import { createWebPlatform } from './webPlatform';
 
 function App() {
   const activeSessionId = useAcpStore((s) => s.activeSessionId);
 
   return (
-    <I18nProvider>
-      <AcpProvider
-        agents={[
-          {
-            id: 'main',
-            name: 'Main Agent',
-            transport: { type: 'websocket', url: 'ws://127.0.0.1:3100' },
-          },
-        ]}
-        theme="dark"
-        defaultCwd="/path/to/project"
-      >
-        <Workbench
-          sidebar={
-            <>
-              <SessionList onBrowse={async () => prompt('Enter workspace path:')} />
-            </>
-          }
-          main={<ChatView sessionId={activeSessionId} />}
-        />
-        <PermissionDialog sessionId={activeSessionId} />
-        <LoginDialog />
-      </AcpProvider>
-    </I18nProvider>
+    <PlatformProvider platform={createWebPlatform()}>
+      <I18nProvider>
+        <AcpProvider
+          agents={[
+            {
+              id: 'main',
+              name: 'Main Agent',
+              transport: { type: 'websocket', url: 'ws://127.0.0.1:3100' },
+            },
+          ]}
+          theme="dark"
+          defaultCwd="/path/to/project"
+        >
+          <Workbench
+            sidebar={
+              <>
+                {/* Directory picking is now driven by usePlatform().openDirectoryPickerDialog()
+                    inside SessionList — no onBrowse prop needed. */}
+                <SessionList />
+              </>
+            }
+            main={<ChatView sessionId={activeSessionId} />}
+          />
+          <PermissionDialog sessionId={activeSessionId} />
+          <LoginDialog />
+        </AcpProvider>
+      </I18nProvider>
+    </PlatformProvider>
   );
 }
 
@@ -109,7 +116,6 @@ Connect to multiple agents in different modes simultaneously:
       id: 'craft',
       name: 'Craft Agent',
       transport: { type: 'websocket', url: 'ws://127.0.0.1:3100' },
-      clientCapabilities: { fs: { readTextFile: true, writeTextFile: true } },
     },
     {
       id: 'ask',
@@ -161,7 +167,7 @@ Each agent in the `agents` array gets its own transport configuration:
 
 | Component | Description |
 |-----------|-------------|
-| `AcpProvider` | Top-level provider: connects to multiple agents in parallel, manages agent lifecycle, wires session updates to stores, renders a loading spinner until all agents are ready. Props: `agents`, `theme`, `defaultCwd`, `onFileRead`, `onFileWrite`, `onTerminal` |
+| `AcpProvider` | Top-level provider: connects to multiple agents in parallel, manages agent lifecycle, wires session updates to stores, renders a loading spinner until all agents are ready. Props: `agents`, `theme`, `defaultCwd`, `onExtMethod`, `onExtNotification` |
 | `Workbench` | Three-panel layout (sidebar, main, panel) using CSS Grid |
 | `SessionList` | Sidebar workspace & session list: workspaces grouped by directory, sessions grouped by agent within each workspace, with add workspace / create / select / delete actions |
 | `ChatView` | Main chat area: groups messages into user/agent rounds, renders plan, usage bar, and config panel. Props: `sessionId`, `onNavigateFile` |
@@ -175,7 +181,6 @@ Each agent in the `agents` array gets its own transport configuration:
 | `DiffView` | Side-by-side diff viewer for file changes |
 | `PermissionDialog` | Modal for approving / rejecting tool permission requests |
 | `LoginDialog` | Modal for agent authentication: supports env_var and terminal-based auth methods, env var form input, 5-minute timeout |
-| `TerminalView` | Embedded terminal output display |
 | `ConnectionStatus` | Per-agent connection state indicator with agent name and version |
 | `UsageBar` | Token usage progress bar showing context window consumption |
 | `SessionConfigPanel` | Dropdown for session configuration options |
@@ -200,7 +205,6 @@ Each agent in the `agents` array gets its own transport configuration:
 | `usePrompt(sessionId)` | `send(blocks)` and `cancel()` for sending / canceling prompts (auto-resolves the correct agent client) |
 | `useToolCalls(sessionId)` | Pending and completed tool calls for a session |
 | `usePermission(sessionId)` | Current permission request with `respond(optionId)` and `deny()` actions |
-| `useTerminals(sessionId)` | Terminal states for a session |
 | `useConnectionStatus(agentId)` | Per-agent connection status, agent info (name, version) |
 | `useAllAgentStatuses()` | Aggregate status across all agents: individual statuses plus overall status |
 | `useAcpContext()` | Raw access to `getClient(agentId)`, agents list, workspaces, and workspace management actions from React context |
@@ -388,51 +392,6 @@ await addAgent({
 
 // Remove an agent (cleans up its sessions automatically)
 await removeAgent('new-agent');
-```
-
-### Terminal Integration
-
-Control how agents create and manage terminals:
-
-```tsx
-<AcpProvider
-  agents={[...]}
-  onTerminal={{
-    create: async (params) => {
-      // params: { sessionId, command, args?, cwd? }
-      const proc = spawn(params.command, params.args ?? [], { cwd: params.cwd ?? undefined });
-      return {
-        terminalId: generateId(),
-        getOutput: async () => ({ output: allOutput }),
-        waitForExit: async () => new Promise((resolve) => proc.on('exit', resolve)),
-        kill: async () => proc.kill(),
-        release: async () => {},
-        onOutputChange: (fn) => proc.stdout.on('data', fn),
-        onExit: (fn) => proc.on('exit', fn),
-      };
-    },
-  }}
->
-```
-
-Terminal states are accessible via the `useTerminals(sessionId)` hook and rendered with the `TerminalView` component.
-
-### File System Integration
-
-Control how agents read and write files:
-
-```tsx
-<AcpProvider
-  agents={[...]}
-  onFileRead={async (req) => {
-    const content = await nativeFs.readTextFile(req.path);
-    return { content };
-  }}
-  onFileWrite={async (req) => {
-    await nativeFs.writeTextFile(req.path, req.content);
-    return {};
-  }}
->
 ```
 
 ### Workspace Management

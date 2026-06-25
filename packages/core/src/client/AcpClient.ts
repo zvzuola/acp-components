@@ -18,16 +18,7 @@ import {
   type SetSessionConfigOptionRequest,
   type SetSessionConfigOptionResponse,
   type CancelNotification,
-  type ReadTextFileRequest,
-  type ReadTextFileResponse,
-  type WriteTextFileRequest,
-  type WriteTextFileResponse,
   type ClientCapabilities,
-  type CreateTerminalRequest,
-  type TerminalOutputRequest,
-  type ReleaseTerminalRequest,
-  type WaitForTerminalExitRequest,
-  type KillTerminalRequest,
   type CloseSessionRequest,
   type CloseSessionResponse,
   type DeleteSessionRequest,
@@ -40,12 +31,10 @@ import {
 import type { AgentCapabilities } from '@agentclientprotocol/sdk';
 import { StdioTransport, HttpTransport, WebSocketTransport } from '../transport';
 import type { AcpTransport } from '../transport';
-import type { ConnectionStatus, Implementation, TransportConfig, TerminalHandler } from '../types';
+import type { ConnectionStatus, Implementation, TransportConfig } from '../types';
 
 export type SessionUpdateHandler = (update: SessionNotification) => void;
 export type PermissionHandler = (request: RequestPermissionRequest) => Promise<RequestPermissionResponse>;
-export type FileReadHandler = (request: ReadTextFileRequest) => Promise<ReadTextFileResponse>;
-export type FileWriteHandler = (request: WriteTextFileRequest) => Promise<WriteTextFileResponse>;
 export type ExtMethodHandler = (method: string, params: Record<string, unknown>) => Promise<Record<string, unknown>>;
 export type ExtNotificationHandler = (method: string, params: Record<string, unknown>) => void;
 
@@ -76,10 +65,6 @@ export class AcpClient {
 
   private sessionUpdateHandlers = new Set<SessionUpdateHandler>();
   private permissionHandler: PermissionHandler | null = null;
-  private fileReadHandler: FileReadHandler | null = null;
-  private fileWriteHandler: FileWriteHandler | null = null;
-  private terminalHandler: TerminalHandler | null = null;
-  private terminalHandles = new Map<string, import('../types').TerminalHandle>();
   private extMethodHandler: ExtMethodHandler | null = null;
   private extNotificationHandler: ExtNotificationHandler | null = null;
   private statusHandlers = new Set<(status: ConnectionStatus) => void>();
@@ -123,18 +108,6 @@ export class AcpClient {
 
   setPermissionHandler(handler: PermissionHandler): void {
     this.permissionHandler = handler;
-  }
-
-  setFileReadHandler(handler: FileReadHandler): void {
-    this.fileReadHandler = handler;
-  }
-
-  setFileWriteHandler(handler: FileWriteHandler): void {
-    this.fileWriteHandler = handler;
-  }
-
-  setTerminalHandler(handler: TerminalHandler): void {
-    this.terminalHandler = handler;
   }
 
   setExtMethodHandler(handler: ExtMethodHandler): void {
@@ -185,58 +158,6 @@ export class AcpClient {
         return Promise.resolve({
           outcome: { outcome: 'selected', optionId: params.options[0]?.optionId ?? '' },
         });
-      },
-      readTextFile: (params: ReadTextFileRequest) => {
-        if (this.fileReadHandler) {
-          return this.fileReadHandler(params);
-        }
-        return Promise.reject(new Error('readTextFile not supported'));
-      },
-      writeTextFile: (params: WriteTextFileRequest) => {
-        if (this.fileWriteHandler) {
-          return this.fileWriteHandler(params);
-        }
-        return Promise.reject(new Error('writeTextFile not supported'));
-      },
-      createTerminal: (params: CreateTerminalRequest) => {
-        if (this.terminalHandler) {
-          return this.terminalHandler.create(params).then((handle) => {
-            this.terminalHandles.set(handle.terminalId, handle);
-            return { terminalId: handle.terminalId };
-          });
-        }
-        return Promise.reject(new Error('terminal not supported'));
-      },
-      terminalOutput: (params: TerminalOutputRequest) => {
-        const handle = this.terminalHandles.get(params.terminalId);
-        if (handle) {
-          return handle.getOutput();
-        }
-        return Promise.reject(new Error(`terminal ${params.terminalId} not found`));
-      },
-      releaseTerminal: (params: ReleaseTerminalRequest) => {
-        const handle = this.terminalHandles.get(params.terminalId);
-        if (handle) {
-          return handle.release().then(() => {
-            this.terminalHandles.delete(params.terminalId);
-            return {};
-          });
-        }
-        return Promise.resolve({});
-      },
-      waitForTerminalExit: (params: WaitForTerminalExitRequest) => {
-        const handle = this.terminalHandles.get(params.terminalId);
-        if (handle) {
-          return handle.waitForExit();
-        }
-        return Promise.reject(new Error(`terminal ${params.terminalId} not found`));
-      },
-      killTerminal: (params: KillTerminalRequest) => {
-        const handle = this.terminalHandles.get(params.terminalId);
-        if (handle) {
-          return handle.kill().then(() => ({}));
-        }
-        return Promise.reject(new Error(`terminal ${params.terminalId} not found`));
       },
       extMethod: (method: string, params: Record<string, unknown>) => {
         if (this.extMethodHandler) {
@@ -362,11 +283,6 @@ export class AcpClient {
   }
 
   disconnect(): void {
-    for (const [, handle] of this.terminalHandles) {
-      try { handle.release(); } catch { /* best effort */ }
-    }
-    this.terminalHandles.clear();
-
     this.transport?.disconnect();
     // connection.closed handler fires async → setStatus + closeHandlers + clear
     this.connection = null;

@@ -45,102 +45,12 @@ import { PermissionDialog } from '@acp-components/react';
 import { LoginDialog } from '@acp-components/react';
 import { FileViewer } from '@acp-components/react';
 import { I18nProvider } from '@acp-components/react';
+import { PlatformProvider } from '@acp-components/react';
 import { useAcpStore } from '@acp-components/react';
 import { useAcpContext } from '@acp-components/react';
 import { useFileViewer } from '@acp-components/react';
-import type { FileTreeNode, FileTreeWatchCallbacks } from '@acp-components/react';
-
-// ---------------------------------------------------------------------------
-// Workspace cache — persists workspace paths to localStorage
-// ---------------------------------------------------------------------------
-
-const WORKSPACE_CACHE_KEY = 'acp-demo-workspaces';
-
-function getCachedWorkspaces(): string[] {
-  try {
-    const raw = localStorage.getItem(WORKSPACE_CACHE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveCachedWorkspaces(paths: string[]): void {
-  localStorage.setItem(WORKSPACE_CACHE_KEY, JSON.stringify(paths));
-}
-
-// ---------------------------------------------------------------------------
-// Server-backed file system API
-// The bridge server (examples/server) exposes:
-//   GET /api/readdir?path=...       → FileTreeNode[]
-//   GET /api/watch?cwd=...          → SSE stream of file change events
-// Vite dev proxy forwards /api/* → http://127.0.0.1:3100
-// ---------------------------------------------------------------------------
-
-async function serverReadDirectory(path: string): Promise<FileTreeNode[]> {
-  const res = await fetch(`/api/readdir?path=${encodeURIComponent(path)}`);
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? `HTTP ${res.status}`);
-  }
-  return res.json();
-}
-
-async function serverReadFileContent(path: string): Promise<string> {
-  const res = await fetch(`/api/readfile?path=${encodeURIComponent(path)}`);
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? `HTTP ${res.status}`);
-  }
-  const data = await res.json() as { content: string };
-  return data.content;
-}
-
-function createServerFileWatcher(callbacks: FileTreeWatchCallbacks): () => void {
-  const controllers = new Map<string, AbortController>();
-
-  return (function makeWatcher() {
-    // Watch is started per-workspace via the returned subscribe function below.
-    // We return a cleanup that aborts all active SSE connections.
-    const cleanup = () => {
-      for (const ctrl of controllers.values()) ctrl.abort();
-      controllers.clear();
-    };
-
-    // Expose subscribe on the cleanup function so the provider can call it
-    (cleanup as unknown as { subscribe: (cwd: string) => void }).subscribe = (cwd: string) => {
-      if (controllers.has(cwd)) return; // already watching
-      const ctrl = new AbortController();
-      controllers.set(cwd, ctrl);
-
-      const url = `/api/watch?cwd=${encodeURIComponent(cwd)}`;
-      const es = new EventSource(url);
-
-      es.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data) as { type: string; cwd: string; path: string };
-          if (data.type === 'directory') {
-            callbacks.onDirectoryChanged(data.cwd, data.path);
-          } else {
-            callbacks.onWorkspaceChanged(data.cwd);
-          }
-        } catch {
-          // ignore malformed SSE events
-        }
-      };
-
-      es.onerror = () => {
-        // EventSource auto-reconnects; on hard failure the browser logs it
-        es.close();
-        controllers.delete(cwd);
-      };
-
-      ctrl.signal.addEventListener('abort', () => es.close());
-    };
-
-    return cleanup;
-  })();
-}
+import { usePlatform } from '@acp-components/react';
+import { createWebPlatform } from './webPlatform';
 
 // In web environments, stdio transport is unavailable (can't spawn child processes).
 // Use WebSocket transport connected to the acp-server backend, which bridges
@@ -155,27 +65,22 @@ function AppInner() {
   const activeSessionId = useAcpStore((s) => s.activeSessionId);
   const workspaces = useAcpStore((s) => s.workspaces);
   const { addWorkspace } = useAcpContext();
+  const platform = usePlatform();
   const loadedRef = useRef(false);
   const fileViewer = useFileViewer();
 
-  // Load cached workspaces on mount (once)
+  // Load cached workspaces on mount (once), then persist subsequent changes.
   useEffect(() => {
     if (loadedRef.current) return;
     loadedRef.current = true;
-    for (const cwd of getCachedWorkspaces()) {
-      addWorkspace(cwd);
-    }
-  }, [addWorkspace]);
+    platform.loadWorkspaces?.().then((paths) => {
+      for (const cwd of paths) addWorkspace(cwd);
+    }).catch(console.error);
+  }, [platform, addWorkspace]);
 
-  // Sync workspace changes to cache
   useEffect(() => {
-    saveCachedWorkspaces(Array.from(workspaces.keys()));
-  }, [workspaces]);
-
-  const handleBrowse = async () => {
-    const path = window.prompt('Enter project directory path:', '');
-    return path?.trim() || null;
-  };
+    platform.saveWorkspaces?.(Array.from(workspaces.keys())).catch(console.error);
+  }, [platform, workspaces]);
 
   const hasOpenFiles = fileViewer.openFiles.length > 0;
 
@@ -184,7 +89,6 @@ function AppInner() {
       <Workbench
         sidebar={
           <Sidebar
-            onBrowse={handleBrowse}
             onNavigateFile={fileViewer.openFile}
           />
         }
@@ -213,36 +117,31 @@ function AppInner() {
 
 function App() {
   return (
-    <I18nProvider>
-      <AcpProvider
-        agents={[{
-          id: 'opencode',
-          name: 'OpenCode',
-          transport: {
-            type: 'websocket',
-            url: 'ws://127.0.0.1:3100',
-          },
-        }
-        ]}
-        theme="dark"
-        onExtMethod={async (method, params) => {
-          console.log(`[ext-method] agent → client: ${method}`, params);
-          throw new Error(`Unknown extension method: ${method}`);
-        }}
-        onExtNotification={(method, params) => {
-          console.log(`[ext-notification] agent → client: ${method}`, params);
-        }}
-        fileSystem={{
-          onDirectoryRead: serverReadDirectory,
-          onFileContentRead: serverReadFileContent,
-          onFileTreeWatch: ({ onDirectoryChanged, onWorkspaceChanged }) => {
-            return createServerFileWatcher({ onDirectoryChanged, onWorkspaceChanged });
-          },
-        }}
-      >
-        <AppInner />
-      </AcpProvider>
-    </I18nProvider>
+    <PlatformProvider platform={createWebPlatform()}>
+      <I18nProvider>
+        <AcpProvider
+          agents={[{
+            id: 'opencode',
+            name: 'OpenCode',
+            transport: {
+              type: 'websocket',
+              url: 'ws://127.0.0.1:3100',
+            },
+          }
+          ]}
+          theme="dark"
+          onExtMethod={async (method, params) => {
+            console.log(`[ext-method] agent → client: ${method}`, params);
+            throw new Error(`Unknown extension method: ${method}`);
+          }}
+          onExtNotification={(method, params) => {
+            console.log(`[ext-notification] agent → client: ${method}`, params);
+          }}
+        >
+          <AppInner />
+        </AcpProvider>
+      </I18nProvider>
+    </PlatformProvider>
   );
 }
 

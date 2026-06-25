@@ -11,7 +11,7 @@ function getReader(cwd: string): DirectoryReadHandler {
   if (!fn) {
     throw new Error(
       `DirectoryReadHandler not registered for workspace "${cwd}". ` +
-      'Pass onDirectoryRead to createFileSystemProvider options.'
+      'Register a reader via Platform.readDirectory (mounted automatically by <PlatformFileTreeAuto>) or fileTreeStore.setReader before loading the tree.'
     );
   }
   return fn;

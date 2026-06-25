@@ -73,14 +73,6 @@ export const zhCN = {
   'diff.title': '差异',
   'diff.emptyState': '无差异可显示',
 
-  // TerminalView
-  'terminal.title': '终端',
-  'terminal.empty': '无活动终端',
-  'terminal.command': '命令:',
-  'terminal.running': '运行中...',
-  'terminal.signaled': '信号',
-  'terminal.truncated': '输出已截断',
-
   // AcpProvider
   'loading.connecting': '正在连接智能体...',
 

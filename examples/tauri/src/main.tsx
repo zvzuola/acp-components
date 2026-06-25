@@ -8,11 +8,13 @@ import { FileViewer } from '@acp-components/react';
 import { PermissionDialog } from '@acp-components/react';
 import { LoginDialog } from '@acp-components/react';
 import { I18nProvider } from '@acp-components/react';
+import { PlatformProvider } from '@acp-components/react';
 import { useAcpStore } from '@acp-components/react';
+import { useAcpContext } from '@acp-components/react';
 import { useFileViewer } from '@acp-components/react';
-import type { FileTreeNode } from '@acp-components/react';
+import { usePlatform } from '@acp-components/react';
 import { TauriIpcTransport } from './tauriIpcTransport';
-import { TauriTerminalHandler } from './tauriTerminal';
+import { createTauriPlatform } from './tauriPlatform';
 
 // Tauri IPC transport: the Rust backend spawns the agent process and bridges
 // stdin/stdout through Tauri commands and events. No WebSocket server needed.
@@ -20,45 +22,11 @@ import { TauriTerminalHandler } from './tauriTerminal';
 // To customize the agent binary or arguments:
 //   new TauriIpcTransport({ command: 'opencode', args: ['acp'] })
 
-const transportConfig = {
-  type: 'custom' as const,
-  transport: new TauriIpcTransport({
-    agentId: 'default',
-    command: 'npx',
-    args: ['opencode-ai@latest', 'acp'],
-  }),
-};
-
-const terminalHandler = new TauriTerminalHandler();
-
-// ---------------------------------------------------------------------------
-// Tauri native file system — backs the sidebar file tree and file viewer
-// ---------------------------------------------------------------------------
-
-async function tauriReadDirectory(path: string): Promise<FileTreeNode[]> {
-  const { readDir } = await import('@tauri-apps/plugin-fs');
-  const entries = await readDir(path);
-  const base = path.replace(/\\/g, '/').replace(/\/+$/, '');
-  return entries.map((entry) => ({
-    name: entry.name,
-    path: `${base}/${entry.name}`,
-    kind: (entry.isDirectory ? 'directory' : 'file') as 'directory' | 'file',
-  }));
-}
-
-async function tauriReadFileContent(path: string): Promise<string> {
-  const { readTextFile } = await import('@tauri-apps/plugin-fs');
-  return await readTextFile(path);
-}
-
-// ---------------------------------------------------------------------------
-// App
-// ---------------------------------------------------------------------------
-
 function AppInner() {
   const activeSessionId = useAcpStore((s) => s.activeSessionId);
   const workspaces = useAcpStore((s) => s.workspaces);
-  const addWorkspace = useAcpStore((s) => s.addWorkspace);
+  const { addWorkspace } = useAcpContext();
+  const platform = usePlatform();
   const fileViewer = useFileViewer();
 
   // -------------------------------------------------------------------------
@@ -71,25 +39,23 @@ function AppInner() {
 
   // Load cached workspaces on first mount
   useEffect(() => {
-    (async () => {
-      try {
-        const { invoke } = await import('@tauri-apps/api/core');
-        const result = await invoke<{ workspaces: string[] }>('load_workspaces');
-        if (result.workspaces.length > 0) {
-          for (const cwd of result.workspaces) {
-            addWorkspace(cwd);
-          }
-          lastSavedKeys.current = JSON.stringify(result.workspaces.slice().sort());
+    platform.loadWorkspaces?.()
+      .then((paths) => {
+        if (paths.length > 0) {
+          for (const cwd of paths) addWorkspace(cwd);
+          lastSavedKeys.current = JSON.stringify(paths.slice().sort());
         } else {
           lastSavedKeys.current = '[]';
         }
-      } catch (e) {
+      })
+      .catch((e) => {
         console.error('[workspaces] Failed to load cached workspaces:', e);
         lastSavedKeys.current = '[]';
-      }
-      initialized.current = true;
-    })();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+      })
+      .finally(() => {
+        initialized.current = true;
+      });
+  }, [platform, addWorkspace]);
 
   // Persist workspace changes after initialization
   useEffect(() => {
@@ -97,22 +63,10 @@ function AppInner() {
     const keys = JSON.stringify(Array.from(workspaces.keys()).sort());
     if (keys === lastSavedKeys.current) return;
     lastSavedKeys.current = keys;
-    (async () => {
-      try {
-        const { invoke } = await import('@tauri-apps/api/core');
-        await invoke('save_workspaces', {
-          args: { workspaces: Array.from(workspaces.keys()) },
-        });
-      } catch (e) {
-        console.error('[workspaces] Failed to save workspaces:', e);
-      }
-    })();
-  }, [workspaces]);
-
-  const handleBrowse = async () => {
-    const { open } = await import('@tauri-apps/plugin-dialog');
-    return (await open({ directory: true })) ?? null;
-  };
+    platform.saveWorkspaces?.(Array.from(workspaces.keys())).catch((e) => {
+      console.error('[workspaces] Failed to save workspaces:', e);
+    });
+  }, [platform, workspaces]);
 
   const hasOpenFiles = fileViewer.openFiles.length > 0;
 
@@ -121,7 +75,6 @@ function AppInner() {
       <Workbench
         sidebar={
           <Sidebar
-            onBrowse={handleBrowse}
             onNavigateFile={fileViewer.openFile}
           />
         }
@@ -148,32 +101,48 @@ function AppInner() {
   );
 }
 
+/**
+ * Assemble AcpProvider with the platform-derived agent transport. Lives inside
+ * PlatformProvider so it can pull `platform` via usePlatform(). The AcpProvider
+ * itself does NOT receive a Platform object — agent data layer and native
+ * capabilities are kept orthogonal per the design (§3.4).
+ */
+function AcpAssembly() {
+  return (
+    <AcpProvider
+      agents={[{
+        id: 'default',
+        name: 'OpenCode',
+        transport: {
+          type: 'custom',
+          transport: new TauriIpcTransport({
+            agentId: 'default',
+            command: 'npx',
+            args: ['opencode-ai@latest', 'acp'],
+          }),
+        },
+      }]}
+      theme="dark"
+      onExtMethod={async (method, params) => {
+        console.log(`[ext-method] agent → client: ${method}`, params);
+        throw new Error(`Unknown extension method: ${method}`);
+      }}
+      onExtNotification={(method, params) => {
+        console.log(`[ext-notification] agent → client: ${method}`, params);
+      }}
+    >
+      <AppInner />
+    </AcpProvider>
+  );
+}
+
 function App() {
   return (
-    <I18nProvider>
-      <AcpProvider
-        agents={[{
-          id: 'default',
-          name: 'OpenCode',
-          transport: transportConfig,
-        }]}
-        theme="dark"
-        onTerminal={terminalHandler}
-        onExtMethod={async (method, params) => {
-          console.log(`[ext-method] agent → client: ${method}`, params);
-          throw new Error(`Unknown extension method: ${method}`);
-        }}
-        onExtNotification={(method, params) => {
-          console.log(`[ext-notification] agent → client: ${method}`, params);
-        }}
-        fileSystem={{
-          onDirectoryRead: tauriReadDirectory,
-          onFileContentRead: tauriReadFileContent,
-        }}
-      >
-        <AppInner />
-      </AcpProvider>
-    </I18nProvider>
+    <PlatformProvider platform={createTauriPlatform()}>
+      <I18nProvider>
+        <AcpAssembly />
+      </I18nProvider>
+    </PlatformProvider>
   );
 }
 

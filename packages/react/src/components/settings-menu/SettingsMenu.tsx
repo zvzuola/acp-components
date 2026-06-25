@@ -6,6 +6,7 @@ import {
 } from '@ant-design/icons';
 import { useI18n } from '../../i18n';
 import { useSettings } from '../../context/SettingsContext';
+import { usePlatform } from '../../context/PlatformContext';
 import { Dropdown } from '../dropdown';
 import styles from './settings-menu.module.scss';
 
@@ -27,6 +28,7 @@ function ToggleSwitch({ on }: { on: boolean }) {
 export function SettingsMenu({ className }: SettingsMenuProps) {
   const { t, i18n } = useI18n();
   const { theme, setTheme } = useSettings();
+  const { storage } = usePlatform();
 
   const currentLang = i18n.language?.startsWith('zh') ? 'zh-CN' : 'en-US';
 
@@ -36,8 +38,8 @@ export function SettingsMenu({ className }: SettingsMenuProps) {
 
   const switchLanguage = useCallback((lang: string) => {
     i18n.changeLanguage(lang);
-    try { localStorage.setItem('acp-i18n-locale', lang); } catch { /* noop */ }
-  }, [i18n]);
+    storage('i18n').setItem('acp-i18n-locale', lang).catch(() => {});
+  }, [i18n, storage]);
 
   return (
     <div className={`${styles.acpSettingsMenu}${className ? ` ${className}` : ''}`}>

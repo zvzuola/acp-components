@@ -15,7 +15,6 @@ import {
 import type { ToolCallState, SessionId } from '@acp-components/core';
 import type { ToolCallLocation } from '@acp-components/core';
 import { DiffView } from '../diff-view';
-import { TerminalView } from '../terminal-view';
 import { useI18n } from '../../i18n';
 import styles from './tool-call.module.scss';
 
@@ -78,7 +77,7 @@ function LocationChip({ loc, onNavigate }: { loc: ToolCallLocation; onNavigate?:
   );
 }
 
-export const ToolCallCard = React.memo(function ToolCallCard({ sessionId, toolCall, onNavigate, expanded, onExpandedChange }: ToolCallCardProps) {
+export const ToolCallCard = React.memo(function ToolCallCard({ toolCall, onNavigate, expanded, onExpandedChange }: ToolCallCardProps) {
   const hasContent = toolCall.content && toolCall.content.length > 0;
   const hasLocations = toolCall.locations && toolCall.locations.length > 0;
   const { t } = useI18n();
@@ -124,10 +123,6 @@ export const ToolCallCard = React.memo(function ToolCallCard({ sessionId, toolCa
                     diffs={[{ path: d.path, oldText: d.oldText ?? undefined, newText: d.newText }]}
                   />
                 );
-              }
-              case 'terminal': {
-                const term = item as unknown as { terminalId: string };
-                return <TerminalView key={i} sessionId={sessionId} terminalId={term.terminalId} />;
               }
               default:
                 return null;

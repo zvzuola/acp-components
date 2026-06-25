@@ -2,9 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { AcpContext } from '../../context/AcpContext';
 import { SettingsContext } from '../../context/SettingsContext';
 import { useAcpProvider } from '../../hooks/useAcpProvider';
-import { useFileSystemProvider } from '../../hooks/useFileSystemProvider';
 import { acpStore } from '@acp-components/core';
-import type { AgentConfig, TerminalHandler, FileSystemProviderOptions } from '@acp-components/core';
+import type { AgentConfig } from '@acp-components/core';
 import type { ExtMethodHandler, ExtNotificationHandler } from '@acp-components/core';
 import { useI18n } from '../../i18n';
 import styles from './loading.module.scss';
@@ -13,38 +12,23 @@ export interface AcpProviderProps {
   agents: AgentConfig[];
   theme?: 'light' | 'dark';
   children: React.ReactNode;
-  onTerminal?: TerminalHandler;
   onExtMethod?: ExtMethodHandler;
   onExtNotification?: ExtNotificationHandler;
   defaultCwd?: string;
-  /** Unified file system options: file tree browsing + ACP file read/write handlers */
-  fileSystem?: FileSystemProviderOptions;
-  /** Host-provided file open handler. When set, built-in FileViewer is bypassed — host opens the file in its own editor. */
-  onOpenFile?: (path: string, line?: number | null) => void;
-}
-
-function FileSystemProviderWrapper({ options, children }: { options: FileSystemProviderOptions; children: React.ReactNode }) {
-  useFileSystemProvider(options);
-  return <>{children}</>;
 }
 
 export function AcpProvider({
   agents,
   theme: initialTheme = 'dark',
   children,
-  onTerminal,
   onExtMethod,
   onExtNotification,
   defaultCwd = '',
-  fileSystem,
-  onOpenFile,
 }: AcpProviderProps) {
   const provider = useAcpProvider({
     agents,
-    onTerminal,
     onExtMethod,
     onExtNotification,
-    fileSystem,
   });
   const { t } = useI18n();
 
@@ -66,6 +50,9 @@ export function AcpProvider({
 
   const settingsValue = useMemo(() => ({ theme, setTheme }), [theme]);
 
+  // AcpContext carries ONLY agent data-layer values. Native capabilities
+  // (file open, file content read, directory pickers, …) live on Platform and
+  // are accessed via usePlatform() — the two contexts are orthogonal.
   const contextValue = useMemo(() => ({
     getClient: provider.getClient,
     agents: provider.agents,
@@ -75,9 +62,7 @@ export function AcpProvider({
     addWorkspace: provider.addWorkspace,
     removeWorkspace: provider.removeWorkspace,
     isReady: provider.isReady,
-    onOpenFile,
-    onFileContentRead: fileSystem?.onFileContentRead,
-  }), [provider, onOpenFile, fileSystem?.onFileContentRead]);
+  }), [provider]);
 
   // Sync defaultCwd to store once on mount
   React.useEffect(() => {
@@ -97,7 +82,7 @@ export function AcpProvider({
     );
   }
 
-  const content = (
+  return (
     <SettingsContext.Provider value={settingsValue}>
       <AcpContext.Provider value={contextValue}>
         <div>
@@ -106,11 +91,4 @@ export function AcpProvider({
       </AcpContext.Provider>
     </SettingsContext.Provider>
   );
-
-  // Only wrap with FileSystemProvider when onDirectoryRead is provided (file tree capability)
-  return fileSystem?.onDirectoryRead ? (
-    <FileSystemProviderWrapper options={fileSystem}>
-      {content}
-    </FileSystemProviderWrapper>
-  ) : content;
 }

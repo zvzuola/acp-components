@@ -1,6 +1,6 @@
 import { createStore } from 'zustand/vanilla';
-import type { Message, ToolCallState, PermissionRequest, TerminalState } from '../types';
-import type { SessionId, ContentBlock, StopReason, PlanEntry, UsageUpdate, SessionConfigOption, AvailableCommand, TerminalExitStatus } from '@agentclientprotocol/sdk';
+import type { Message, ToolCallState, PermissionRequest } from '../types';
+import type { SessionId, ContentBlock, StopReason, PlanEntry, UsageUpdate, SessionConfigOption, AvailableCommand } from '@agentclientprotocol/sdk';
 import { generateId } from '../utils/id';
 
 interface SessionData {
@@ -12,7 +12,6 @@ interface SessionData {
   usage: UsageUpdate | null;
   configOptions: SessionConfigOption[];
   availableCommands: AvailableCommand[];
-  terminals: Map<string, TerminalState>;
 }
 
 interface SessionStoreState {
@@ -38,11 +37,6 @@ interface SessionStoreState {
   setAvailableCommands: (sessionId: SessionId, commands: AvailableCommand[]) => void;
   setPartExpanded: (sessionId: SessionId, messageId: string, partIndex: number, expanded: boolean) => void;
   setToolCallExpanded: (sessionId: SessionId, toolCallId: string, expanded: boolean) => void;
-
-  addTerminal: (sessionId: SessionId, terminal: TerminalState) => void;
-  updateTerminalOutput: (sessionId: SessionId, terminalId: string, output: string, truncated: boolean) => void;
-  updateTerminalExit: (sessionId: SessionId, terminalId: string, exitStatus: TerminalExitStatus | null) => void;
-  removeTerminal: (sessionId: SessionId, terminalId: string) => void;
 }
 
 function createSessionData(): SessionData {
@@ -55,7 +49,6 @@ function createSessionData(): SessionData {
     usage: null,
     configOptions: [],
     availableCommands: [],
-    terminals: new Map(),
   };
 }
 
@@ -467,55 +460,6 @@ export const sessionStore = createStore<SessionStoreState>((set) => ({
 
       const next = new Map(s.sessions);
       next.set(sessionId, { ...data, pendingToolCalls, messages });
-      return { sessions: next };
-    }),
-
-  addTerminal: (sessionId, terminal) =>
-    set((s) => {
-      const data = s.sessions.get(sessionId);
-      if (!data) return s;
-      const terminals = new Map(data.terminals);
-      terminals.set(terminal.terminalId, terminal);
-      const next = new Map(s.sessions);
-      next.set(sessionId, { ...data, terminals });
-      return { sessions: next };
-    }),
-
-  updateTerminalOutput: (sessionId, terminalId, output, truncated) =>
-    set((s) => {
-      const data = s.sessions.get(sessionId);
-      if (!data) return s;
-      const existing = data.terminals.get(terminalId);
-      if (!existing) return s;
-      const terminals = new Map(data.terminals);
-      terminals.set(terminalId, { ...existing, output, truncated });
-      const next = new Map(s.sessions);
-      next.set(sessionId, { ...data, terminals });
-      return { sessions: next };
-    }),
-
-  updateTerminalExit: (sessionId, terminalId, exitStatus) =>
-    set((s) => {
-      const data = s.sessions.get(sessionId);
-      if (!data) return s;
-      const existing = data.terminals.get(terminalId);
-      if (!existing) return s;
-      const terminals = new Map(data.terminals);
-      terminals.set(terminalId, { ...existing, exitStatus });
-      const next = new Map(s.sessions);
-      next.set(sessionId, { ...data, terminals });
-      return { sessions: next };
-    }),
-
-  removeTerminal: (sessionId, terminalId) =>
-    set((s) => {
-      const data = s.sessions.get(sessionId);
-      if (!data) return s;
-      if (!data.terminals.has(terminalId)) return s;
-      const terminals = new Map(data.terminals);
-      terminals.delete(terminalId);
-      const next = new Map(s.sessions);
-      next.set(sessionId, { ...data, terminals });
       return { sessions: next };
     }),
 }));

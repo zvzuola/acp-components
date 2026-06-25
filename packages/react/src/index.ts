@@ -32,8 +32,6 @@ export { Select } from './components/select';
 export type { SelectProps, SelectOption, SelectOptionGroup } from './components/select';
 export { CommandPalette } from './components/command-palette';
 export type { CommandPaletteProps } from './components/command-palette/CommandPalette';
-export { TerminalView } from './components/terminal-view';
-export type { TerminalViewProps } from './components/terminal-view/TerminalView';
 export { FileTree } from './components/file-tree';
 export type { FileTreeProps, FileTreeNode } from './components/file-tree/FileTree';
 export { FileViewer } from './components/file-viewer';
@@ -61,16 +59,17 @@ export { usePrompt } from './hooks/usePrompt';
 export { useToolCalls } from './hooks/useToolCalls';
 export { usePermission } from './hooks/usePermission';
 export { useConnectionStatus, useAllAgentStatuses } from './hooks/useConnectionStatus';
-export { useTerminals } from './hooks/useTerminals';
 export { useExtensions } from './hooks/useExtensions';
 export { useFileTree } from './hooks/useFileTree';
 export { useFileViewer } from './hooks/useFileViewer';
 export type { OpenFileEntry, UseFileViewerReturn } from './hooks/useFileViewer';
-export { useFileSystemProvider } from './hooks/useFileSystemProvider';
 export { useResizable } from './hooks/useResizable';
 export type { UseResizableOptions, UseResizableReturn } from './hooks/useResizable';
 export { AcpContext, useAcpContext } from './context/AcpContext';
 export type { AcpContextValue } from './context/AcpContext';
+export { PlatformContext, usePlatform } from './context/PlatformContext';
+export type { Platform, Updater, PlatformProviderProps } from './context/PlatformContext';
+export { PlatformProvider } from './components/platform';
 export { useSettings } from './context/SettingsContext';
 export type { SettingsContextValue } from './context/SettingsContext';
 
@@ -86,11 +85,13 @@ export type {
   AgentConfig,
   AgentConnection,
   WorkspaceState,
-  TerminalState,
   DirectoryReadHandler,
   FileTreeWatchCallbacks,
-  FileSystemProviderOptions,
-  FileSystemProviderInstance,
+  AsyncStorage,
+  UpdaterState,
+  UpdaterStatus,
+  PlatformKind,
+  PlatformOS,
 } from '@acp-components/core';
 
 // i18n

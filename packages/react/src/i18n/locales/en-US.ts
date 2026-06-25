@@ -73,14 +73,6 @@ export const enUS = {
   'diff.title': 'Diff',
   'diff.emptyState': 'No diffs to display',
 
-  // TerminalView
-  'terminal.title': 'Terminal',
-  'terminal.empty': 'No active terminals',
-  'terminal.command': 'Command:',
-  'terminal.running': 'Running...',
-  'terminal.signaled': 'SIG',
-  'terminal.truncated': 'Output truncated',
-
   // AcpProvider
   'loading.connecting': 'Connecting to agents...',
 

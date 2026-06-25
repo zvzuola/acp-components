@@ -4,6 +4,7 @@ import { useStore } from 'zustand/react';
 import { sessionStore } from '@acp-components/core';
 import { useSessions } from '../../hooks/useSessions';
 import { useAcpStore } from '../../hooks/useAcpStore';
+import { usePlatform } from '../../context/PlatformContext';
 import { useI18n } from '../../i18n';
 import type { SessionMeta, WorkspaceState } from '@acp-components/core';
 import type { SessionId } from '@acp-components/core';
@@ -16,7 +17,6 @@ import styles from './session-list.module.scss';
 type SessionStatusType = 'running' | 'needs-action' | null;
 
 export interface SessionListProps {
-  onBrowse?: () => Promise<string | null>;
   onShowFiles?: (cwd: string) => void;
 }
 
@@ -314,15 +314,13 @@ function WorkspaceGroup({ cwd, workspace, isWorkspaceActive, onShowFiles }: {
 // SessionList — top-level orchestrator
 // ---------------------------------------------------------------------------
 
-export function SessionList({ onBrowse, onShowFiles }: SessionListProps) {
+export function SessionList({ onShowFiles }: SessionListProps) {
   const { activeSessionId } = useSessions();
   const agents = useAcpStore((s) => s.agents);
   const workspaces = useAcpStore((s) => s.workspaces);
   const addWorkspace = useAcpStore((s) => s.addWorkspace);
   const { t } = useI18n();
-  const [adding, setAdding] = useState(false);
-  const [inputValue, setInputValue] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
+  const { openDirectoryPickerDialog } = usePlatform();
 
   const agentList = Array.from(agents.values());
   const workspaceList = Array.from(workspaces.entries());
@@ -337,62 +335,25 @@ export function SessionList({ onBrowse, onShowFiles }: SessionListProps) {
   }, [activeSessionId, workspaces]);
 
   const handleAddClick = useCallback(() => {
-    if (onBrowse) {
-      onBrowse().then((dir) => {
+    openDirectoryPickerDialog()
+      .then((dir) => {
         if (dir) addWorkspace(dir);
-      }).catch(console.error);
-    } else {
-      setAdding(true);
-      setInputValue('');
-    }
-  }, [onBrowse, addWorkspace]);
-
-  const handleInputKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      const trimmed = inputValue.trim();
-      if (trimmed) addWorkspace(trimmed);
-      setAdding(false);
-      setInputValue('');
-    } else if (e.key === 'Escape') {
-      setAdding(false);
-      setInputValue('');
-    }
-  }, [inputValue, addWorkspace]);
-
-  const handleInputBlur = useCallback(() => {
-    const trimmed = inputValue.trim();
-    if (trimmed) addWorkspace(trimmed);
-    setAdding(false);
-    setInputValue('');
-  }, [inputValue, addWorkspace]);
+      })
+      .catch(console.error);
+  }, [openDirectoryPickerDialog, addWorkspace]);
 
   return (
     <div className={styles.acpSessionList}>
       <div className={styles.acpSessionListHeader}>
         <span className={styles.acpSessionListTitle}>{t('sessionList.title')}</span>
-        {adding ? (
-          <input
-            ref={inputRef}
-            className={styles.acpSessionListInput}
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleInputKeyDown}
-            onBlur={handleInputBlur}
-            placeholder={t('sessionList.addWorkspacePlaceholder')}
-            autoFocus
-            aria-label={t('sessionList.addWorkspaceAriaLabel')}
-          />
-        ) : (
-          <button
-            className={styles.acpSessionListNewBtn}
-            onClick={handleAddClick}
-            aria-label={t('sessionList.addWorkspace')}
-            title={t('sessionList.addWorkspace')}
-          >
-            <PlusOutlined />
-          </button>
-        )}
+        <button
+          className={styles.acpSessionListNewBtn}
+          onClick={handleAddClick}
+          aria-label={t('sessionList.addWorkspace')}
+          title={t('sessionList.addWorkspace')}
+        >
+          <PlusOutlined />
+        </button>
       </div>
       <div className={styles.acpSessionListItems} role="listbox" aria-label={t('sessionList.title')}>
         {agentList.length === 0 && (

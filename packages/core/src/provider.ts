@@ -1,11 +1,10 @@
 import { AcpClient } from './client/AcpClient';
-import type { FileReadHandler, FileWriteHandler, ExtMethodHandler, ExtNotificationHandler } from './client/AcpClient';
+import type { ExtMethodHandler, ExtNotificationHandler } from './client/AcpClient';
 import { acpStore } from './store/acpStore';
 import { sessionStore } from './store/sessionStore';
-import type { ToolCallState, TerminalHandler, TerminalState } from './types';
+import type { ToolCallState } from './types';
 import type { AgentConfig } from './types';
-import type { FileSystemProviderOptions } from './fileSystem/provider';
-import type { RequestPermissionResponse, ClientCapabilities, CreateTerminalRequest, TerminalExitStatus, ContentBlock } from '@agentclientprotocol/sdk';
+import type { RequestPermissionResponse, ClientCapabilities, ContentBlock } from '@agentclientprotocol/sdk';
 import type { PermissionRequest } from './types';
 
 function generateMsgId(): string {
@@ -34,11 +33,8 @@ function isTextBlock(block: ContentBlock): block is ContentBlock & { type: 'text
 
 export interface MultiAgentProviderOptions {
   agents: AgentConfig[];
-  onTerminal?: TerminalHandler;
   onExtMethod?: ExtMethodHandler;
   onExtNotification?: ExtNotificationHandler;
-  /** Unified file system options: file tree browsing + ACP file read/write handlers */
-  fileSystem?: FileSystemProviderOptions;
 }
 
 export interface MultiAgentProviderInstance {
@@ -288,32 +284,11 @@ function setupSessionUpdateHandler(client: AcpClient): () => void {
 
 function buildCapabilities(
   clientCapabilities: ClientCapabilities | undefined,
-  fileReadHandler: FileReadHandler | undefined,
-  fileWriteHandler: FileWriteHandler | undefined,
-  terminalHandler: TerminalHandler | undefined,
 ): ClientCapabilities | undefined {
-  const caps: ClientCapabilities = {
-    ...clientCapabilities,
-    fs: {
-      ...clientCapabilities?.fs,
-      ...(fileReadHandler ? { readTextFile: true } : {}),
-      ...(fileWriteHandler ? { writeTextFile: true } : {}),
-    },
-    ...(terminalHandler ? { terminal: true } : {}),
-    auth: {
-      ...clientCapabilities?.auth,
-      ...(terminalHandler ? { terminal: true } : {}),
-    },
-  };
-  const hasFsCaps = caps.fs?.readTextFile || caps.fs?.writeTextFile;
-  return hasFsCaps || caps.terminal || caps.auth?.terminal ? caps : undefined;
+  return clientCapabilities;
 }
 
-export function createAcpProvider({ agents, onTerminal, onExtMethod, onExtNotification, fileSystem }: MultiAgentProviderOptions): MultiAgentProviderInstance {
-  // Resolve file handlers from unified fileSystem options
-  const scopedFileReadHandler = fileSystem?.onFileRead;
-  const scopedFileWriteHandler = fileSystem?.onFileWrite;
-  const scopedTerminalHandler = onTerminal;
+export function createAcpProvider({ agents, onExtMethod, onExtNotification }: MultiAgentProviderOptions): MultiAgentProviderInstance {
   const scopedExtMethodHandler = onExtMethod;
   const scopedExtNotificationHandler = onExtNotification;
   const scopedClientRegistry = new Map<string, AcpClient>();
@@ -359,44 +334,6 @@ export function createAcpProvider({ agents, onTerminal, onExtMethod, onExtNotifi
     // Permission handler
     scopedSetupPermissionHandler(client);
 
-    // Terminal handler
-    if (scopedTerminalHandler) {
-      const storeBridge: TerminalHandler = {
-        create: async (params: CreateTerminalRequest) => {
-          const handle = await scopedTerminalHandler!.create(params);
-          const state: TerminalState = {
-            terminalId: handle.terminalId,
-            command: params.command,
-            args: params.args,
-            cwd: params.cwd,
-            output: '',
-            exitStatus: null,
-            truncated: false,
-          };
-          sessionStore.getState().addTerminal(params.sessionId, state);
-
-          handle.onOutputChange((output) => {
-            sessionStore.getState().updateTerminalOutput(params.sessionId, handle.terminalId, output, false);
-          });
-
-          handle.onExit((exitStatus: TerminalExitStatus | null) => {
-            sessionStore.getState().updateTerminalExit(params.sessionId, handle.terminalId, exitStatus);
-          });
-
-          return handle;
-        },
-      };
-      client.setTerminalHandler(storeBridge);
-    }
-
-    // File handlers
-    if (scopedFileReadHandler) {
-      client.setFileReadHandler(scopedFileReadHandler);
-    }
-    if (scopedFileWriteHandler) {
-      client.setFileWriteHandler(scopedFileWriteHandler);
-    }
-
     // Extension handlers
     if (scopedExtMethodHandler) {
       client.setExtMethodHandler(scopedExtMethodHandler);
@@ -412,7 +349,7 @@ export function createAcpProvider({ agents, onTerminal, onExtMethod, onExtNotifi
 
     // Connect and initialize
     await client.connect(config.transport);
-    const mergedCaps = buildCapabilities(config.clientCapabilities, scopedFileReadHandler, scopedFileWriteHandler, scopedTerminalHandler);
+    const mergedCaps = buildCapabilities(config.clientCapabilities);
     const initRes = await client.initialize(config.clientInfo, mergedCaps);
 
     acpStore.getState().updateAgent(config.id, {

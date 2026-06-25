@@ -1,5 +1,5 @@
 export { AcpClient } from './client/AcpClient';
-export type { FileReadHandler, FileWriteHandler, SessionUpdateHandler, PermissionHandler, ExtMethodHandler, ExtNotificationHandler } from './client/AcpClient';
+export type { SessionUpdateHandler, PermissionHandler, ExtMethodHandler, ExtNotificationHandler } from './client/AcpClient';
 export { StdioTransport, HttpTransport, WebSocketTransport } from './transport';
 export type { AcpTransport, Stream, AnyMessage } from './transport';
 export { acpStore } from './store/acpStore';
@@ -8,8 +8,6 @@ export { fileTreeStore, findNodeByPath } from './store/fileTreeStore';
 export type { WorkspaceFileTreeState } from './store/fileTreeStore';
 export { createAcpProvider } from './provider';
 export type { MultiAgentProviderOptions, MultiAgentProviderInstance } from './provider';
-export { createFileSystemProvider } from './fileSystem/provider';
-export type { FileSystemProviderOptions, FileSystemProviderInstance } from './fileSystem/provider';
 export { createSession, loadSession, selectSession, closeSession, deleteSession, forkSession, refreshSessions, loadMoreSessions, setSessionConfigOption, authenticate, authenticateWithEnv } from './actions/sessions';
 export { sendPrompt, cancelPrompt } from './actions/prompt';
 export { respondToPermission, denyPermission } from './actions/permission';
@@ -29,12 +27,14 @@ export type {
   AgentConnection,
   WorkspaceState,
   Implementation,
-  TerminalState,
-  TerminalHandle,
-  TerminalHandler,
   FileTreeNode,
   DirectoryReadHandler,
   FileTreeWatchCallbacks,
+  PlatformKind,
+  PlatformOS,
+  AsyncStorage,
+  UpdaterState,
+  UpdaterStatus,
 } from './types';
-export type { ContentBlock, SessionId, SessionInfo, StopReason, ToolCall, ToolCallUpdate, ToolCallContent, AgentCapabilities, SessionUpdate, ClientCapabilities, CreateTerminalRequest, TerminalOutputResponse, WaitForTerminalExitResponse, TerminalExitStatus, PlanEntry, AuthMethod, AvailableCommand, PromptResponse, UsageUpdate, SessionConfigOption, PromptCapabilities, SessionConfigSelectOptions, SessionConfigSelectGroup, AuthMethodEnvVar, ToolCallLocation, ToolKind } from './types';
+export type { ContentBlock, SessionId, SessionInfo, StopReason, ToolCall, ToolCallUpdate, ToolCallContent, AgentCapabilities, SessionUpdate, ClientCapabilities, PlanEntry, AuthMethod, AvailableCommand, PromptResponse, UsageUpdate, SessionConfigOption, PromptCapabilities, SessionConfigSelectOptions, SessionConfigSelectGroup, AuthMethodEnvVar, ToolCallLocation, ToolKind } from './types';
 export { RequestError } from './types';

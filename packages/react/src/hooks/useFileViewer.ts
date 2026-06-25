@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { useAcpContext } from '../context/AcpContext';
+import { usePlatform } from '../context/PlatformContext';
 
 // ---------------------------------------------------------------------------
 // Language detection from file extension
@@ -171,7 +171,7 @@ export interface UseFileViewerReturn {
 // ---------------------------------------------------------------------------
 
 export function useFileViewer(): UseFileViewerReturn {
-  const { onOpenFile, onFileContentRead } = useAcpContext();
+  const { onOpenFile, readFileContent } = usePlatform();
   const [openFiles, setOpenFiles] = useState<OpenFileEntry[]>([]);
   const [activeFilePath, setActiveFilePath] = useState<string | null>(null);
   const [revealLine, setRevealLine] = useState<number | null>(null);
@@ -210,9 +210,9 @@ export function useFileViewer(): UseFileViewerReturn {
       setActiveFilePath(path);
 
       // Fetch content asynchronously
-      if (onFileContentRead && !inflightRef.current.has(path)) {
+      if (readFileContent && !inflightRef.current.has(path)) {
         inflightRef.current.add(path);
-        onFileContentRead(path)
+        readFileContent(path)
           .then((content) => {
             setOpenFiles((curr) =>
               curr.map((f) =>
@@ -231,7 +231,7 @@ export function useFileViewer(): UseFileViewerReturn {
           .finally(() => {
             inflightRef.current.delete(path);
           });
-      } else if (!onFileContentRead) {
+      } else if (!readFileContent) {
         // No reader configured
         setOpenFiles((curr) =>
           curr.map((f) =>
@@ -244,7 +244,7 @@ export function useFileViewer(): UseFileViewerReturn {
 
       return [...prev, entry];
     });
-  }, [onOpenFile, onFileContentRead]);
+  }, [onOpenFile, readFileContent]);
 
   const closeFile = useCallback((path: string) => {
     setOpenFiles((prev) => {
