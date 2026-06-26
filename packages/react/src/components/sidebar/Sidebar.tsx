@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useAcpStore } from '../../hooks/useAcpStore';
 import { useFileTree } from '../../hooks/useFileTree';
@@ -31,7 +31,16 @@ function FileTreeView({ cwd, onNavigateFile, onBack }: {
   onBack: () => void;
 }) {
   const { t } = useI18n();
-  const { files, loading, error, onExpand, onCollapse } = useFileTree({ cwd });
+  const { files, loading, error, load, onExpand, onCollapse } = useFileTree({ cwd });
+
+  // Lazy-load on first view. The active workspace is pre-loaded by
+  // <PlatformFileTreeAuto>, but a workspace opened via the "show files" button
+  // may never have been loaded — fetch its root tree on mount when empty.
+  useEffect(() => {
+    if (files.length === 0 && !loading && !error) {
+      load();
+    }
+  }, [cwd, files.length, loading, error, load]);
 
   return (
     <div className={styles.acpSidebarFiles}>

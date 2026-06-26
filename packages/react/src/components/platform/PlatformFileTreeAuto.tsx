@@ -8,16 +8,41 @@ import {
 } from '@acp-components/core';
 import { usePlatform } from '../../context/PlatformContext';
 
+type AcpStoreState = ReturnType<typeof acpStore.getState>;
+
+/**
+ * Derive the cwd of the workspace that contains the active session, or `null`
+ * when there is no active session (or it belongs to a workspace that no longer
+ * exists). Extracted as a pure selector so it can be shared between the seed
+ * pass and the subscription callback.
+ */
+function selectActiveCwd(state: AcpStoreState): string | null {
+  if (!state.activeSessionId) return null;
+  for (const [cwd, ws] of state.workspaces) {
+    if (ws.sessions.has(state.activeSessionId)) return cwd;
+  }
+  return null;
+}
+
 /**
  * Mount-once wrapper that drives the per-workspace file tree from the host
  * `Platform`.
  *
  * Renders nothing. On mount it:
  *  1. Registers `platform.readDirectory` as the directory reader for each
- *     workspace and auto-loads its root tree when the workspace appears.
- *  2. Tears down file-tree state when a workspace is removed.
- *  3. Subscribes to `platform.watchFileTree` (when provided) and forwards
- *     directory / workspace change events to the file-tree actions.
+ *     workspace (cheap — no I/O) so trees can be loaded on demand.
+ *  2. Auto-loads the root tree **only for the active workspace** (the one
+ *     holding the current `activeSessionId`). Other workspaces are NOT
+ *     pre-loaded — they load lazily when first viewed (see `FileTreeView`),
+ *     avoiding eager directory reads for every workspace on startup.
+ *  3. When the active workspace changes, loads the newly-active workspace's
+ *     tree (its previous tree state, if any, is retained so expanded
+ *     directories are preserved when the user returns).
+ *  4. Tears down file-tree state when a workspace is removed.
+ *  5. Subscribes to `platform.watchFileTree` (when provided) **only for the
+ *     active workspace**, swapping the subscription as the active workspace
+ *     changes, and forwards directory / workspace change events to the
+ *     file-tree actions.
  *
  * Mounted by default inside `<PlatformProvider>` (its `autoFileTree` prop); it
  * reads the platform via `usePlatform()`, so any location beneath the provider
@@ -33,13 +58,22 @@ export function PlatformFileTreeAuto() {
   const platform = usePlatform();
   const { readDirectory, watchFileTree } = platform;
 
-  // Register reader + auto-load on workspace add; clean up on workspace remove.
+  // Register reader for every workspace; auto-load ONLY the active workspace.
   useEffect(() => {
     const knownCwds = new Set<string>();
 
-    const seed = (cwd: string) => {
+    // Register the directory reader for a workspace without triggering a load.
+    const register = (cwd: string) => {
       knownCwds.add(cwd);
       fileTreeStore.getState().initWorkspace(cwd, readDirectory);
+    };
+
+    // Load a workspace's root tree if it is not already loaded. Safe to call
+    // repeatedly — `loadFileTree` re-reads the root, which also serves as a
+    // refresh; we guard with a `loaded` check to avoid redundant work.
+    const ensureLoaded = (cwd: string) => {
+      const ws = fileTreeStore.getState().workspaces.get(cwd);
+      if (ws && (ws.loading || (ws.rootNodes.length > 0 && !ws.error))) return;
       loadFileTree(cwd).catch(() => {
         /* surfaced via fileTreeStore error state */
       });
@@ -49,21 +83,36 @@ export function PlatformFileTreeAuto() {
     // does not emit the current state on subscribe, and React runs descendant
     // effects before ancestor effects — so a workspace added by a child (e.g.
     // AcpProvider's defaultCwd effect, or one pre-populated in the store before
-    // this component mounts) would be missed without this synchronous seed pass.
-    for (const [cwd] of acpStore.getState().workspaces) {
-      if (!knownCwds.has(cwd)) seed(cwd);
+    // this component mounts) would be missed without this synchronous pass.
+    const initialState = acpStore.getState();
+    for (const [cwd] of initialState.workspaces) {
+      if (!knownCwds.has(cwd)) register(cwd);
     }
+    const initialActiveCwd = selectActiveCwd(initialState);
+    if (initialActiveCwd) ensureLoaded(initialActiveCwd);
+
+    // Track the last active cwd so we only load on actual change. Initialized
+    // from the seeded state; the subscription callback compares against it.
+    let lastActiveCwd = initialActiveCwd;
 
     const unsubscribe = acpStore.subscribe((state) => {
+      // Register readers for newly-appeared workspaces.
       for (const [cwd] of state.workspaces) {
-        if (!knownCwds.has(cwd)) seed(cwd);
+        if (!knownCwds.has(cwd)) register(cwd);
       }
+      // Tear down readers for removed workspaces.
       for (const cwd of knownCwds) {
         if (!state.workspaces.has(cwd)) {
           knownCwds.delete(cwd);
           fileTreeStore.getState().removeWorkspace(cwd);
         }
       }
+      // Load the active workspace's tree (only) whenever it changes.
+      const activeCwd = selectActiveCwd(state);
+      if (activeCwd && activeCwd !== lastActiveCwd) {
+        ensureLoaded(activeCwd);
+      }
+      lastActiveCwd = activeCwd;
     });
 
     return () => {
@@ -74,7 +123,10 @@ export function PlatformFileTreeAuto() {
     };
   }, [readDirectory]);
 
-  // Wire up the host file-tree watcher, if the platform provides one.
+  // Wire up the host file-tree watcher, if the platform provides one. Only the
+  // active workspace is watched — when the active workspace changes we
+  // unsubscribe the old one and subscribe the new one, so background workspaces
+  // do not each open a watcher connection.
   useEffect(() => {
     if (!watchFileTree) return;
 
@@ -87,9 +139,33 @@ export function PlatformFileTreeAuto() {
       },
     };
 
-    const result = watchFileTree(callbacks);
+    const watcher = watchFileTree(callbacks);
+
+    // A host that does not support watching returns `void` — nothing to wire.
+    if (!watcher) return;
+
+    // Track which cwd is currently subscribed so we can swap on change.
+    let current: string | null = null;
+    const sync = (next: string | null) => {
+      if (next === current) return;
+      if (current) watcher.unsubscribe(current);
+      current = next;
+      if (current) watcher.subscribe(current);
+    };
+
+    // Seed from the state already present at setup (subscribe doesn't emit the
+    // current state, and descendant effects run before this ancestor effect).
+    sync(selectActiveCwd(acpStore.getState()));
+
+    const unsubscribeStore = acpStore.subscribe((state) => {
+      sync(selectActiveCwd(state));
+    });
+
     return () => {
-      if (typeof result === 'function') result();
+      unsubscribeStore();
+      if (current) watcher.unsubscribe(current);
+      current = null;
+      watcher.dispose();
     };
   }, [watchFileTree]);
 

@@ -130,6 +130,27 @@ export interface FileTreeWatchCallbacks {
   onWorkspaceChanged: (cwd: string) => void;
 }
 
+/**
+ * Handle returned by `Platform.watchFileTree` for per-workspace subscriptions.
+ *
+ * File-tree watching is per-workspace: a host typically opens one native watch
+ * (e.g. an SSE stream / `fs.watch` / a Tauri event listener) per cwd. The host
+ * creates the watcher once via `watchFileTree(callbacks)`, then the caller
+ * subscribes each workspace as it appears and unsubscribes as it is removed,
+ * finally calling `dispose()` to tear everything down.
+ *
+ * Each callback (`onDirectoryChanged` / `onWorkspaceChanged`) carries the cwd in
+ * its payload, so the caller does not need to correlate subscriptions to events.
+ */
+export interface FileTreeWatcher {
+  /** Begin watching a workspace cwd. Idempotent for the same cwd. */
+  subscribe(cwd: string): void;
+  /** Stop watching a workspace cwd. Idempotent / no-op if not subscribed. */
+  unsubscribe(cwd: string): void;
+  /** Stop all subscriptions and release resources. */
+  dispose(): void;
+}
+
 // ---------------------------------------------------------------------------
 // Platform abstraction — atomic types consumed by the react-layer `Platform`
 // interface (defined in `@acp-components/react`). core itself does not depend

@@ -3,6 +3,7 @@ import type {
   AsyncStorage,
   FileTreeNode,
   FileTreeWatchCallbacks,
+  FileTreeWatcher,
 } from '@acp-components/react';
 
 // ---------------------------------------------------------------------------
@@ -45,18 +46,12 @@ async function serverReadFileContent(path: string): Promise<string> {
   return data.content;
 }
 
-function createServerFileWatcher(callbacks: FileTreeWatchCallbacks): () => void {
+function createServerFileWatcher(callbacks: FileTreeWatchCallbacks): FileTreeWatcher {
+  // One SSE EventSource per watched cwd — the server opens a chokidar watcher
+  // per /api/watch?cwd=... request and tears it down when the stream closes.
   const controllers = new Map<string, AbortController>();
 
-  // Watch is started per-workspace via the returned subscribe function below.
-  // We return a cleanup that aborts all active SSE connections.
-  const cleanup = () => {
-    for (const ctrl of controllers.values()) ctrl.abort();
-    controllers.clear();
-  };
-
-  // Expose subscribe on the cleanup function so the provider can call it.
-  (cleanup as unknown as { subscribe: (cwd: string) => void }).subscribe = (cwd: string) => {
+  const subscribe = (cwd: string) => {
     if (controllers.has(cwd)) return; // already watching
     const ctrl = new AbortController();
     controllers.set(cwd, ctrl);
@@ -83,10 +78,24 @@ function createServerFileWatcher(callbacks: FileTreeWatchCallbacks): () => void 
       controllers.delete(cwd);
     };
 
+    // Aborting (via unsubscribe/dispose) closes the EventSource, which ends the
+    // SSE stream and lets the server clean up its chokidar watcher.
     ctrl.signal.addEventListener('abort', () => es.close());
   };
 
-  return cleanup;
+  const unsubscribe = (cwd: string) => {
+    const ctrl = controllers.get(cwd);
+    if (!ctrl) return;
+    ctrl.abort();
+    controllers.delete(cwd);
+  };
+
+  const dispose = () => {
+    for (const ctrl of controllers.values()) ctrl.abort();
+    controllers.clear();
+  };
+
+  return { subscribe, unsubscribe, dispose };
 }
 
 // ---------------------------------------------------------------------------

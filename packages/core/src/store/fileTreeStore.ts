@@ -44,6 +44,16 @@ function isPathPrefix(parentPath: string, childPath: string): boolean {
   return sep === '/' || sep === '\\';
 }
 
+/**
+ * Compare two absolute paths for equality, ignoring trailing path separators.
+ * The workspace `cwd` (the store key) may carry a trailing separator while a
+ * directory reader / watcher typically returns one without (e.g. Node's
+ * `path.dirname` strips it), so a naive `===` would miss the root case.
+ */
+function isSamePath(a: string, b: string): boolean {
+  return a.replace(/[/\\]+$/, '') === b.replace(/[/\\]+$/, '');
+}
+
 function findAndReplace(
   nodes: FileTreeNode[],
   path: string,
@@ -161,11 +171,17 @@ export const fileTreeStore = createStore<FileTreeStoreState>((set) => ({
     set((state) => {
       const workspaces = new Map(state.workspaces);
       const ws = getOrInit(workspaces, cwd);
-      const rootNodes = findAndReplace(ws.rootNodes, path, (node) => ({
-        ...node,
-        children,
-        loaded: true,
-      }));
+      // The workspace root itself is not a child node — `rootNodes` ARE the
+      // root's children. A watcher reporting a change at the project root
+      // (path === cwd) therefore must replace `rootNodes` directly rather than
+      // search for a node whose `path` equals the cwd.
+      const rootNodes = isSamePath(path, cwd)
+        ? children
+        : findAndReplace(ws.rootNodes, path, (node) => ({
+            ...node,
+            children,
+            loaded: true,
+          }));
       workspaces.set(cwd, { ...ws, rootNodes });
       return { workspaces };
     });

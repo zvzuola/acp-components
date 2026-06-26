@@ -87,6 +87,7 @@ export type {
   WorkspaceState,
   DirectoryReadHandler,
   FileTreeWatchCallbacks,
+  FileTreeWatcher,
   AsyncStorage,
   UpdaterState,
   UpdaterStatus,

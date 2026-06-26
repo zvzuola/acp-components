@@ -38,6 +38,7 @@ export type {
   FileTreeNode,
   DirectoryReadHandler,
   FileTreeWatchCallbacks,
+  FileTreeWatcher,
   PlatformKind,
   PlatformOS,
   AsyncStorage,

@@ -6,6 +6,7 @@ import type {
   PlatformOS,
   FileTreeNode,
   FileTreeWatchCallbacks,
+  FileTreeWatcher,
 } from '@acp-components/core';
 
 /**
@@ -37,7 +38,7 @@ export interface Updater {
  *
  * Several methods are optional and may be left `undefined` by a host that does
  * not support them (`updater`, `restart`, `exportDebugLogs`, `notify`,
- * `openLink`, `onOpenFile`, `writeFileContent`, `watchFileTree`, `terminal`,
+ * `openLink`, `onOpenFile`, `writeFileContent`, `watchFileTree`,
  * `loadWorkspaces`, `saveWorkspaces`). Callers guard with `?.`.
  */
 export interface Platform {
@@ -61,8 +62,13 @@ export interface Platform {
   readFileContent(path: string): Promise<string>;
   /** Write text content to a file. Optional — hosts may be read-only. */
   writeFileContent?(path: string, content: string): Promise<void>;
-  /** Subscribe to file-tree changes; return an unsubscribe function. */
-  watchFileTree?(callbacks: FileTreeWatchCallbacks): (() => void) | void;
+  /**
+   * Subscribe to file-tree changes. Watching is per-workspace: the host creates
+   * the watcher once, then the caller `subscribe(cwd)`s each workspace as it
+   * appears, `unsubscribe(cwd)`s as it is removed, and `dispose()`s on teardown.
+   * A host that does not support watching may omit this or return `void`.
+   */
+  watchFileTree?(callbacks: FileTreeWatchCallbacks): FileTreeWatcher | void;
 
   // —— Persistence ——
   /** Named async KV storage. web: localStorage; tauri: shell command / file. */
