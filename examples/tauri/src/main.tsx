@@ -27,7 +27,9 @@ function AppInner() {
   const workspaces = useAcpStore((s) => s.workspaces);
   const { addWorkspace } = useAcpContext();
   const platform = usePlatform();
-  const fileViewer = useFileViewer();
+  // Show the panel only when at least one file is open. File-open state lives
+  // in the global fileViewer store, wired automatically by <PlatformProvider>.
+  const { openFiles } = useFileViewer();
 
   // -------------------------------------------------------------------------
   // Workspace persistence — cache opened workspaces so they are automatically
@@ -68,32 +70,12 @@ function AppInner() {
     });
   }, [platform, workspaces]);
 
-  const hasOpenFiles = fileViewer.openFiles.length > 0;
-
   return (
     <>
       <Workbench
-        sidebar={
-          <Sidebar
-            onNavigateFile={fileViewer.openFile}
-          />
-        }
-        main={
-          <ChatView
-            sessionId={activeSessionId}
-            onNavigateFile={fileViewer.openFile}
-          />
-        }
-        panel={hasOpenFiles ? (
-          <FileViewer
-            openFiles={fileViewer.openFiles}
-            activeFile={fileViewer.activeFile}
-            onCloseFile={fileViewer.closeFile}
-            onSelectFile={fileViewer.setActiveFile}
-            revealLine={fileViewer.revealLine}
-            onRevealLineConsumed={fileViewer.clearRevealLine}
-          />
-        ) : undefined}
+        sidebar={<Sidebar />}
+        main={<ChatView sessionId={activeSessionId} />}
+        panel={openFiles.length > 0 ? <FileViewer /> : undefined}
       />
       <PermissionDialog sessionId={activeSessionId} />
       <LoginDialog />

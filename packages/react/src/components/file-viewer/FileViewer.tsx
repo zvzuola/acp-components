@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { CloseOutlined } from '@ant-design/icons';
-import type { OpenFileEntry } from '../../hooks/useFileViewer';
+import { useFileViewer } from '../../hooks/useFileViewer';
 import { getMonacoTheme } from '../../utils/monacoTheme';
 import { useI18n } from '../../i18n';
 import styles from './file-viewer.module.scss';
@@ -10,18 +10,6 @@ import styles from './file-viewer.module.scss';
 // ---------------------------------------------------------------------------
 
 export interface FileViewerProps {
-  /** Open file entries (tabs) */
-  openFiles: OpenFileEntry[];
-  /** Currently active file */
-  activeFile: OpenFileEntry | null;
-  /** Close a file tab */
-  onCloseFile: (path: string) => void;
-  /** Switch active tab */
-  onSelectFile: (path: string) => void;
-  /** Line to reveal in the editor */
-  revealLine?: number | null;
-  /** Called after revealLine has been consumed */
-  onRevealLineConsumed?: () => void;
   /** Additional CSS class */
   className?: string;
 }
@@ -47,16 +35,10 @@ function loadMonaco(): Promise<MonacoModule> {
 // FileViewer component
 // ---------------------------------------------------------------------------
 
-export function FileViewer({
-  openFiles,
-  activeFile,
-  onCloseFile,
-  onSelectFile,
-  revealLine,
-  onRevealLineConsumed,
-  className,
-}: FileViewerProps) {
+export function FileViewer({ className }: FileViewerProps) {
   const { t } = useI18n();
+  const { openFiles, activeFile, closeFile, setActiveFile, revealLine, clearRevealLine } =
+    useFileViewer();
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<import('monaco-editor').editor.IStandaloneCodeEditor | null>(null);
   const modelRef = useRef<import('monaco-editor').editor.ITextModel | null>(null);
@@ -169,18 +151,18 @@ export function FileViewer({
           editorRef.current.revealLineInCenter(revealLine);
           editorRef.current.focus();
         }
-        onRevealLineConsumed?.();
+        clearRevealLine();
       });
     }
-  }, [revealLine, activeFile?.path]);
+  }, [revealLine, activeFile?.path, clearRevealLine]);
 
   // Handle tab close (stop propagation)
   const handleTabClose = useCallback(
     (e: React.MouseEvent, path: string) => {
       e.stopPropagation();
-      onCloseFile(path);
+      closeFile(path);
     },
-    [onCloseFile],
+    [closeFile],
   );
 
   // Get filename from path
@@ -207,7 +189,7 @@ export function FileViewer({
           <button
             key={file.path}
             className={`${styles.acpFileViewerTab}${file.path === activeFile?.path ? ` ${styles.acpFileViewerTabActive}` : ''}`}
-            onClick={() => onSelectFile(file.path)}
+            onClick={() => setActiveFile(file.path)}
             role="tab"
             aria-selected={file.path === activeFile?.path}
             title={file.path}
@@ -225,7 +207,7 @@ export function FileViewer({
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
                   e.stopPropagation();
-                  onCloseFile(file.path);
+                  closeFile(file.path);
                 }
               }}
             >

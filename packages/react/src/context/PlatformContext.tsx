@@ -109,4 +109,11 @@ export interface PlatformProviderProps {
    * host wires its own file-tree setup (custom reader, bespoke watcher).
    */
   autoFileTree?: boolean;
+  /**
+   * When `true` (default), mount `<PlatformFileViewerAuto />` inside the
+   * provider so `platform.readFileContent` / `platform.onOpenFile` are wired to
+   * the global file-viewer store automatically — zero-config. Set `false` when
+   * the host wires its own file-viewer setup.
+   */
+  autoFileViewer?: boolean;
 }

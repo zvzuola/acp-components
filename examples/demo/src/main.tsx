@@ -67,7 +67,9 @@ function AppInner() {
   const { addWorkspace } = useAcpContext();
   const platform = usePlatform();
   const loadedRef = useRef(false);
-  const fileViewer = useFileViewer();
+  // Show the panel only when at least one file is open. File-open state lives
+  // in the global fileViewer store; we subscribe via the hook.
+  const { openFiles } = useFileViewer();
 
   // Load cached workspaces on mount (once), then persist subsequent changes.
   useEffect(() => {
@@ -82,32 +84,12 @@ function AppInner() {
     platform.saveWorkspaces?.(Array.from(workspaces.keys())).catch(console.error);
   }, [platform, workspaces]);
 
-  const hasOpenFiles = fileViewer.openFiles.length > 0;
-
   return (
     <>
       <Workbench
-        sidebar={
-          <Sidebar
-            onNavigateFile={fileViewer.openFile}
-          />
-        }
-        main={
-          <ChatView
-            sessionId={activeSessionId}
-            onNavigateFile={fileViewer.openFile}
-          />
-        }
-        panel={hasOpenFiles ? (
-          <FileViewer
-            openFiles={fileViewer.openFiles}
-            activeFile={fileViewer.activeFile}
-            onCloseFile={fileViewer.closeFile}
-            onSelectFile={fileViewer.setActiveFile}
-            revealLine={fileViewer.revealLine}
-            onRevealLineConsumed={fileViewer.clearRevealLine}
-          />
-        ) : undefined}
+        sidebar={<Sidebar />}
+        main={<ChatView sessionId={activeSessionId} />}
+        panel={openFiles.length > 0 ? <FileViewer /> : undefined}
       />
       <PermissionDialog sessionId={activeSessionId} />
       <LoginDialog />

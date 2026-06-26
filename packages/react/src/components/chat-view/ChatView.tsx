@@ -2,6 +2,7 @@ import React, { useRef, useMemo, useState, useCallback, useEffect } from 'react'
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { useSessionMessages, useSessionIsStreaming, useSessionPlan, useSessionAvailableCommands } from '../../hooks/useSession';
 import { useAcpStore } from '../../hooks/useAcpStore';
+import { useFileViewer } from '../../hooks/useFileViewer';
 import type { SessionId } from '@acp-components/core';
 import type { Message } from '@acp-components/core';
 import { MessageBubble } from './MessageBubble';
@@ -16,6 +17,11 @@ import styles from './chat-view.module.scss';
 
 export interface ChatViewProps {
   sessionId: SessionId | null;
+  /**
+   * Override the file-open handler. Defaults to the global `useFileViewer`
+   * `openFile` action (drives the built-in FileViewer). Provide this to route
+   * file navigation to a custom destination instead.
+   */
   onNavigateFile?: (path: string, line?: number | null) => void;
 }
 
@@ -129,6 +135,9 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
   const isStreaming = useSessionIsStreaming(sessionId);
   const plan = useSessionPlan(sessionId);
   const availableCommands = useSessionAvailableCommands(sessionId);
+  const { openFile: openFileAction } = useFileViewer();
+  // Host override takes precedence; otherwise route to the global file viewer.
+  const navigateFile = onNavigateFile ?? openFileAction;
   const sessionTitle = useAcpStore((s) => {
     if (!sessionId) return null;
     for (const ws of s.workspaces.values()) {
@@ -294,7 +303,7 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
                 sessionId={sessionId}
                 messages={round.agentMessages}
                 isStreaming={isLastRound && isStreaming}
-                onNavigateFile={onNavigateFile}
+                onNavigateFile={navigateFile}
               />
             )}
             {isLastRound && isStreaming && <StreamingIndicator />}
@@ -302,7 +311,7 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
         </div>
       );
     },
-    [sessionId, isStreaming, handleUserMessageEdit, onNavigateFile],
+    [sessionId, isStreaming, handleUserMessageEdit, navigateFile],
   );
 
   if (!sessionId) {

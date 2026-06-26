@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useAcpStore } from '../../hooks/useAcpStore';
 import { useFileTree } from '../../hooks/useFileTree';
+import { useFileViewer } from '../../hooks/useFileViewer';
 import { SessionList } from '../session-list';
 import { SettingsMenu } from '../settings-menu/SettingsMenu';
 import { FileTree } from '../file-tree';
@@ -9,6 +10,11 @@ import { useI18n } from '../../i18n';
 import styles from './sidebar.module.scss';
 
 export interface SidebarProps {
+  /**
+   * Override the file-open handler. Defaults to the global `useFileViewer`
+   * `openFile` action (drives the built-in FileViewer). Provide this to route
+   * file navigation to a custom destination instead.
+   */
   onNavigateFile?: (path: string, line?: number | null) => void;
   className?: string;
 }
@@ -69,6 +75,9 @@ function FileTreeView({ cwd, onNavigateFile, onBack }: {
 
 export function Sidebar({ onNavigateFile, className }: SidebarProps) {
   const { t } = useI18n();
+  const { openFile: openFileAction } = useFileViewer();
+  // Host override takes precedence; otherwise route to the global file viewer.
+  const navigateFile = onNavigateFile ?? openFileAction;
   const [view, setView] = useState<'sessions' | 'files'>('sessions');
   const [filesCwd, setFilesCwd] = useState<string | null>(null);
 
@@ -103,7 +112,7 @@ export function Sidebar({ onNavigateFile, className }: SidebarProps) {
       ) : cwdToShow ? (
         <FileTreeView
           cwd={cwdToShow}
-          onNavigateFile={onNavigateFile}
+          onNavigateFile={navigateFile}
           onBack={handleBackToSessions}
         />
       ) : (
