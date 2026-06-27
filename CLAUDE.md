@@ -53,7 +53,7 @@ Application Layer (Vite Demo / Tauri / Custom Apps)
        built on ↓
      @agentclientprotocol/sdk (ACP protocol types + ClientSideConnection)
 
-Platform Layer (orthogonal to the above): a `Platform` interface (defined in `@acp-components/react`) + `PlatformContext`/`usePlatform()` provide host-native capabilities (file tree, file read/write, directory dialogs, persistence, updater) to the UI. Each host (web demo, Tauri template) implements its own `Platform` (`createWebPlatform` / `createTauriPlatform`). core does NOT implement `Platform` — it only owns the shared primitive types (`PlatformKind`, `AsyncStorage`, `UpdaterState`, …).
+Platform Layer (orthogonal to the above): a `Platform` interface (defined in `@acp-components/react`) + `PlatformContext`/`usePlatform()` provide host-native capabilities (file tree, file read/write, directory dialogs, persistence, updater) to the UI. Each host (web demo, Tauri template) implements its own `Platform` (`createWebPlatform` / `createTauriPlatform`). core does NOT implement `Platform` — it only owns the shared primitive types (`PlatformKind`, `PlatformStorage`, `UpdaterState`, …).
 ```
 
 **Critical rules**:
@@ -116,7 +116,7 @@ SessionUpdate dispatch mapping (in `provider.ts:setupSessionUpdateHandler`):
 | `packages/core/src/store/sessionStore.ts` | Per-session Zustand store: messages, streaming, tool calls, plan, usage, config, commands (no terminal) |
 | `packages/core/src/store/fileTreeStore.ts` | Per-workspace Zustand store: file-tree state; reader injected from `Platform.readDirectory` |
 | `packages/core/src/actions/` | `sessions.ts`, `prompt.ts`, `permission.ts`, `fileTree.ts`, `extensions.ts` — imperative actions that route to the correct AcpClient via `clientRegistry` |
-| `packages/core/src/types/index.ts` | All shared types: `AgentConfig`, `TransportConfig`, `WorkspaceState`, `AgentConnection`, `PermissionRequest`, plus Platform primitives (`PlatformKind`, `AsyncStorage`, `UpdaterState`, …) |
+| `packages/core/src/types/index.ts` | All shared types: `AgentConfig`, `TransportConfig`, `WorkspaceState`, `AgentConnection`, `PermissionRequest`, plus Platform primitives (`PlatformKind`, `PlatformStorage`, `UpdaterState`, …) |
 | `packages/core/src/transport/` | `StdioTransport`, `HttpTransport`, `WebSocketTransport` + `AcpTransport` interface for custom transports |
 | `packages/react/src/context/AcpContext.ts` | React context providing `getClient(agentId)`, agents list, workspaces, workspace actions (agent data layer only) |
 | `packages/react/src/context/PlatformContext.tsx` | `Platform` interface + `PlatformContext` + `usePlatform()` — environment-agnostic native-capability contract (orthogonal to `AcpContext`) |

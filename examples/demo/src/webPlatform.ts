@@ -1,6 +1,6 @@
 import type {
   Platform,
-  AsyncStorage,
+  PlatformStorage,
   FileTreeNode,
   FileTreeWatchCallbacks,
   FileTreeWatcher,
@@ -102,7 +102,7 @@ function createServerFileWatcher(callbacks: FileTreeWatchCallbacks): FileTreeWat
 // localStorage-backed async storage + workspaces cache
 // ---------------------------------------------------------------------------
 
-function createLocalStorageStorage(name: string): AsyncStorage {
+function createLocalStorageStorage(name: string): PlatformStorage {
   // Namespacing keeps separate logical stores (i18n, workspaces, …) isolated.
   const prefix = name ? `acp:${name}:` : 'acp:';
   return {

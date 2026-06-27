@@ -41,7 +41,7 @@ export type {
   FileTreeWatcher,
   PlatformKind,
   PlatformOS,
-  AsyncStorage,
+  PlatformStorage,
   UpdaterState,
   UpdaterStatus,
 } from './types';

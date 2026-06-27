@@ -88,7 +88,7 @@ export type {
   DirectoryReadHandler,
   FileTreeWatchCallbacks,
   FileTreeWatcher,
-  AsyncStorage,
+  PlatformStorage,
   UpdaterState,
   UpdaterStatus,
   PlatformKind,

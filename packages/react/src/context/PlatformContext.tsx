@@ -1,6 +1,6 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type {
-  AsyncStorage,
+  PlatformStorage,
   UpdaterState,
   PlatformKind,
   PlatformOS,
@@ -72,7 +72,7 @@ export interface Platform {
 
   // —— Persistence ——
   /** Named async KV storage. web: localStorage; tauri: shell command / file. */
-  storage(name?: string): AsyncStorage;
+  storage(name?: string): PlatformStorage;
   /** Load persisted workspace paths (optional). */
   loadWorkspaces?(): Promise<string[]>;
   /** Persist workspace paths (optional). */

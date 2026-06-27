@@ -1,6 +1,6 @@
 import type {
   Platform,
-  AsyncStorage,
+  PlatformStorage,
   FileTreeNode,
 } from '@acp-components/react';
 
@@ -80,7 +80,7 @@ async function tauriOpenDirectoryPickerDialog(): Promise<string | null> {
 // localStorage-backed storage (webview context)
 // ---------------------------------------------------------------------------
 
-function createTauriStorage(name: string): AsyncStorage {
+function createTauriStorage(name: string): PlatformStorage {
   const prefix = name ? `acp:${name}:` : 'acp:';
   return {
     getItem: async (key) => {
