@@ -14,7 +14,7 @@
     "build:core": "pnpm --filter @acp-components/core build",
     "build:react": "pnpm --filter @acp-components/react build",
     "test": "pnpm --filter @acp-components/core test && pnpm --filter @acp-components/react test",
-    "lint": "eslint packages/*/src --ext .ts,.tsx",
+    "lint": "eslint \"packages/*/src/**/*.{ts,tsx}\"",
     "publish:core": "pnpm --filter @acp-components/core publish --access public",
     "publish:react": "pnpm --filter @acp-components/react publish --access public",
     "publish:all": "pnpm publish:core && pnpm publish:react"
@@ -23,6 +23,10 @@
     "node": ">=18"
   },
   "devDependencies": {
-    "cross-env": "^10.1.0"
+    "@eslint/js": "^9.39.4",
+    "cross-env": "^10.1.0",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "typescript-eslint": "^8.62.0"
   }
 }

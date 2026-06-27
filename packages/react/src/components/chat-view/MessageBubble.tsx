@@ -22,7 +22,7 @@ function renderContent(content: ContentBlock) {
   switch (content.type) {
     case 'text':
       return <Markdown>{(content as { text: string }).text}</Markdown>;
-    case 'resource':
+    case 'resource': {
       const res = content as { resource: { uri: string; text?: string; mimeType?: string } };
       const rawName = res.resource.uri.split('/').pop() || res.resource.uri;
       const fileName = decodeURIComponent(rawName);
@@ -34,7 +34,8 @@ function renderContent(content: ContentBlock) {
           </div>
         </div>
       );
-    case 'resource_link':
+    }
+    case 'resource_link': {
       const link = content as { uri: string; name: string };
       return (
         <div className={styles.acpMessageBubbleResource}>
@@ -42,6 +43,7 @@ function renderContent(content: ContentBlock) {
           <span className={styles.acpMessageBubbleResourceName}>{link.name || link.uri}</span>
         </div>
       );
+    }
     case 'image': {
       const img = content as { data: string; mimeType: string; uri?: string | null };
       const src = `data:${img.mimeType};base64,${img.data}`;

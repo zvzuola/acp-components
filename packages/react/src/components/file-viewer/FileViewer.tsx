@@ -140,6 +140,9 @@ export function FileViewer({ className }: FileViewerProps) {
     const model = monaco.editor.createModel(activeFile.content, activeFile.language);
     modelRef.current = model;
     editorRef.current.setModel(model);
+    // Field-level deps are intentional: we rebuild the model only when these
+    // specific fields change, not on every `activeFile` reference change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [monaco, activeFile?.path, activeFile?.loading, activeFile?.error, activeFile?.content]);
 
   // Reveal line when requested

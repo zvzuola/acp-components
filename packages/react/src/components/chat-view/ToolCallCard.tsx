@@ -15,7 +15,6 @@ import {
 import type { ToolCallState, SessionId } from '@acp-components/core';
 import type { ToolCallLocation } from '@acp-components/core';
 import { DiffView } from '../diff-view';
-import { useI18n } from '../../i18n';
 import styles from './tool-call.module.scss';
 
 export interface ToolCallCardProps {
@@ -80,7 +79,6 @@ function LocationChip({ loc, onNavigate }: { loc: ToolCallLocation; onNavigate?:
 export const ToolCallCard = React.memo(function ToolCallCard({ toolCall, onNavigate, expanded, onExpandedChange }: ToolCallCardProps) {
   const hasContent = toolCall.content && toolCall.content.length > 0;
   const hasLocations = toolCall.locations && toolCall.locations.length > 0;
-  const { t } = useI18n();
 
   return (
     <div className={styles.acpToolCall}>

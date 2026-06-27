@@ -28,7 +28,9 @@ export const ThoughtView = React.memo(function ThoughtView({ thought, isStreamin
   const { t } = useI18n();
   const prevStreamingRef = useRef(false);
 
-  // Auto-expand during streaming, auto-collapse when streaming ends
+  // Auto-expand during streaming, auto-collapse when streaming ends.
+  // `onExpandedChange` is intentionally omitted: we only want to fire on
+  // `isStreaming` transitions, not whenever the parent passes a new callback.
   useEffect(() => {
     if (isStreaming && !prevStreamingRef.current) {
       onExpandedChange(true);
@@ -36,6 +38,7 @@ export const ThoughtView = React.memo(function ThoughtView({ thought, isStreamin
       onExpandedChange(false);
     }
     prevStreamingRef.current = isStreaming;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isStreaming]);
 
   const hasContent = thought.length > 0 && thought.some(

@@ -24,8 +24,6 @@ export async function sendPrompt(client: AcpClient, sessionId: SessionId, conten
       store.setStopReason(sessionId, res.stopReason);
     }
     return res;
-  } catch (err) {
-    throw err;
   } finally {
     store.setIsStreaming(sessionId, false);
   }

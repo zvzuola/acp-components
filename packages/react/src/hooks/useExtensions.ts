@@ -1,14 +1,9 @@
 import { useCallback } from 'react';
 import { useAcpContext } from '../context/AcpContext';
 import { callExtMethod as coreCallExtMethod, sendExtNotification as coreSendExtNotification } from '@acp-components/core';
-import type { AcpClient } from '@acp-components/core';
 
 export function useExtensions() {
   const { getClient } = useAcpContext();
-
-  const getClientByName = useCallback((agentId: string): AcpClient | null => {
-    return getClient(agentId);
-  }, [getClient]);
 
   const callExtMethod = useCallback(async (
     agentId: string,

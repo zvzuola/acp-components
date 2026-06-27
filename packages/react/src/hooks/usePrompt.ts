@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react';
 import { useAcpContext } from '../context/AcpContext';
-import { useAcpStore } from './useAcpStore';
 import { sendPrompt, cancelPrompt, acpStore } from '@acp-components/core';
 import type { SessionId, ContentBlock, PromptResponse } from '@acp-components/core';
 

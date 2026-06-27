@@ -174,7 +174,6 @@ export function FileTree({
   files,
   onNavigate,
   className,
-  showRoot,
   onExpand,
   onCollapse,
 }: FileTreeProps) {
