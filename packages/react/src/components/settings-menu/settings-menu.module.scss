@@ -90,7 +90,10 @@
   box-shadow: var(--acp-color-knob-shadow);
   transition: transform var(--acp-duration-normal) var(--acp-ease-spring);
 
+  // When ON, the track fills with the inverted accent (near-white on dark /
+  // near-black on light), so the knob must invert to stay visible.
   .acp-settings-toggle--on & {
     transform: translateX(14px);
+    background: var(--acp-color-text-inverse);
   }
 }

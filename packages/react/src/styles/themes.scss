@@ -6,89 +6,100 @@
 // with values for every token listed under "Token Reference" below.
 //
 // Token Reference (by role):
-//   Bg: primary, secondary, tertiary, hover, glass, input, code, overlay, selected, danger
+//   Bg: primary, secondary, tertiary, hover, glass (opaque, no blur), input, code, overlay, selected, danger
 //   Text: primary, secondary, muted, inverse, danger
 //   Border: default, subtle, accent
 //   Accent: default, hover, muted, text
 //   Status: success, warning, error, info (+ muted / bg variants)
 //   Bubble: user-bg, user-text, agent-bg, agent-text
-//   Surface: knob, knob-shadow, shadow-xs..lg
-//   Radius: xs, sm, md, lg, xl
+//   Surface: knob, knob-shadow, shadow-xs..lg (flat, single-layer)
+//   Radius: xs(4), sm(6), md(8), lg(12), xl(16)
 //   Font: sans, mono
 //   Motion: duration-fast/normal/slow, ease-out/in-out/spring
+//
+// Design language: Vercel-style — pure neutral (zinc) palette, INVERTED accent
+// (near-white on dark / near-black on light — monochrome CTA), flat surfaces
+// (no glassmorphism / gradients / heavy shadows), Geist typography, small radii.
+// Background tiers spread for clear black-vs-gray / white-vs-gray separation.
+// Links keep a distinct teal (--acp-color-accent-text); semantic status colors
+// (green/amber/red) preserved so color is never the only signal.
 // =============================================================================
 
 // ---------------------------------------------------------------------------
-// DARK THEME (default) — "Midnight"
-// GitHub Dark palette + One Dark Pro blue accent.
-// Cool slate backgrounds with glass sidebars. Clean, modern, professional.
+// DARK THEME (default) — "Graphite"
+// Vercel-style design language: pure neutral (zinc) scale, INVERTED accent
+// (near-white on dark / near-black on light — monochrome CTA, marketing-style),
+// flat surfaces (no glassmorphism / gradients / heavy shadows), Geist typography.
+// Background tiers spread for clear black-vs-gray separation (primary→secondary
+// +6% lightness). Semantic status colors preserved (green/amber/red) so color
+// is never the only signal; links keep a distinct teal for click affordance.
 // ---------------------------------------------------------------------------
 :root,
 [data-acp-theme='dark'] {
-  // ── Backgrounds ───────────────────────────────────────────────────────
-  --acp-color-bg-primary: #0d1117;
-  --acp-color-bg-secondary: #161b22;
-  --acp-color-bg-tertiary: #1c2128;
-  --acp-color-bg-hover: #252b33;
-  --acp-color-bg-glass: rgba(22, 27, 34, 0.86);
-  --acp-color-bg-input: #0d1117;
-  --acp-color-bg-code: #0d1117;
-  --acp-color-bg-overlay: rgba(0, 0, 0, 0.55);
-  --acp-color-bg-selected: rgba(97, 175, 239, 0.12);
-  --acp-color-bg-danger: rgba(248, 81, 73, 0.12);
+  // ── Backgrounds (zinc scale, spread for visible black-vs-gray tiers) ──
+  --acp-color-bg-primary: #0a0a0a;
+  --acp-color-bg-secondary: #1a1a1a;
+  --acp-color-bg-tertiary: #242424;
+  --acp-color-bg-hover: #333333;
+  --acp-color-bg-glass: #1a1a1a;
+  --acp-color-bg-input: #0a0a0a;
+  --acp-color-bg-code: #0a0a0a;
+  --acp-color-bg-overlay: rgba(0, 0, 0, 0.6);
+  --acp-color-bg-selected: rgba(255, 255, 255, 0.08);
+  --acp-color-bg-danger: rgba(249, 79, 79, 0.1);
 
-  // ── Text ──────────────────────────────────────────────────────────────
-  --acp-color-text-primary: #e6edf3;
-  --acp-color-text-secondary: #8b949e;
-  --acp-color-text-muted: #6e7681;
-  --acp-color-text-inverse: #0d1117;
-  --acp-color-text-danger: #f85149;
+  // ── Text (softened — AA-grade, not AAA; ~10:1 primary for comfort) ───
+  --acp-color-text-primary: #c9c9c9;
+  --acp-color-text-secondary: #8a8a8a;
+  --acp-color-text-muted: #6a6a6a;
+  --acp-color-text-inverse: #0a0a0a;
+  --acp-color-text-danger: #f94f4f;
 
   // ── Borders ───────────────────────────────────────────────────────────
-  --acp-color-border: rgba(255, 255, 255, 0.13);
-  --acp-color-border-subtle: rgba(255, 255, 255, 0.07);
-  --acp-color-border-accent: rgba(97, 175, 239, 0.3);
+  --acp-color-border: rgba(255, 255, 255, 0.12);
+  --acp-color-border-subtle: rgba(255, 255, 255, 0.06);
+  --acp-color-border-accent: rgba(255, 255, 255, 0.28);
 
-  // ── Accent (vibrant blue) ─────────────────────────────────────────────
-  --acp-color-accent: #61afef;
-  --acp-color-accent-hover: #75bdf3;
-  --acp-color-accent-muted: rgba(97, 175, 239, 0.12);
-  --acp-color-accent-text: #82c7ff;
+  // ── Accent (inverted — soft off-white on dark) ───────────────────────
+  --acp-color-accent: #d4d4d4;
+  --acp-color-accent-hover: #e5e5e5;
+  --acp-color-accent-muted: rgba(255, 255, 255, 0.07);
+  --acp-color-accent-text: #5eead4; // teal — links keep a distinct click color
 
   // ── Status ────────────────────────────────────────────────────────────
-  --acp-color-success: #3fb950;
-  --acp-color-success-muted: rgba(63, 185, 80, 0.12);
-  --acp-color-success-bg: rgba(63, 185, 80, 0.08);
-  --acp-color-warning: #d29922;
-  --acp-color-warning-muted: rgba(210, 153, 34, 0.12);
-  --acp-color-error: #f85149;
-  --acp-color-error-muted: rgba(248, 81, 73, 0.12);
-  --acp-color-error-bg: rgba(248, 81, 73, 0.08);
-  --acp-color-info: #58a6ff;
-  --acp-color-info-muted: rgba(88, 166, 255, 0.12);
+  --acp-color-success: #50e3c2;
+  --acp-color-success-muted: rgba(80, 227, 194, 0.12);
+  --acp-color-success-bg: rgba(80, 227, 194, 0.08);
+  --acp-color-warning: #f5a623;
+  --acp-color-warning-muted: rgba(245, 166, 35, 0.12);
+  --acp-color-error: #f94f4f;
+  --acp-color-error-muted: rgba(249, 79, 79, 0.12);
+  --acp-color-error-bg: rgba(249, 79, 79, 0.08);
+  --acp-color-info: #5eead4;
+  --acp-color-info-muted: rgba(94, 234, 212, 0.12);
 
   // ── Message bubbles ───────────────────────────────────────────────────
-  --acp-color-user-bubble: #161b22;
-  --acp-color-user-text: #e6edf3;
+  --acp-color-user-bubble: #1f1f1f;
+  --acp-color-user-text: #c9c9c9;
   --acp-color-agent-bubble: transparent;
-  --acp-color-agent-text: #e6edf3;
+  --acp-color-agent-text: #c9c9c9;
 
   // ── Surface ───────────────────────────────────────────────────────────
-  --acp-color-knob: #ffffff;
-  --acp-color-knob-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  --acp-color-knob: #c9c9c9;
+  --acp-color-knob-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 
-  // ── Surface elevation ─────────────────────────────────────────────────
-  --acp-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.5);
-  --acp-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.05);
-  --acp-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
-  --acp-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.07);
+  // ── Surface elevation (flat: thin, single-layer, never haloed) ────────
+  --acp-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --acp-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--acp-color-border-subtle);
+  --acp-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--acp-color-border-subtle);
+  --acp-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 0 1px var(--acp-color-border-subtle);
 
-  // ── Radius ────────────────────────────────────────────────────────────
+  // ── Radius (Vercel: small, tight) ─────────────────────────────────────
   --acp-radius-xs: 4px;
   --acp-radius-sm: 6px;
-  --acp-radius-md: 10px;
-  --acp-radius-lg: 14px;
-  --acp-radius-xl: 20px;
+  --acp-radius-md: 8px;
+  --acp-radius-lg: 12px;
+  --acp-radius-xl: 16px;
 
   // ── Typography ────────────────────────────────────────────────────────
   --acp-font-sans: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -106,75 +117,77 @@
 }
 
 // ---------------------------------------------------------------------------
-// LIGHT THEME — "Dawn"
-// GitHub Light palette + matching blue accent.
-// Clean white base with bright blue interactions. Crisp, professional.
+// LIGHT THEME — "Paper"
+// Vercel-style light: pure white base, zinc neutrals, INVERTED accent
+// (near-black on light — monochrome CTA), flat surfaces, Geist typography.
+// Background tiers spread for clear white-vs-gray separation. Links keep a
+// distinct teal; semantic status colors preserved.
 // ---------------------------------------------------------------------------
 [data-acp-theme='light'] {
-  // ── Backgrounds ───────────────────────────────────────────────────────
+  // ── Backgrounds (zinc scale, spread for visible white-vs-gray tiers) ──
   --acp-color-bg-primary: #ffffff;
-  --acp-color-bg-secondary: #f6f8fa;
-  --acp-color-bg-tertiary: #eaeef2;
-  --acp-color-bg-hover: #dde3e8;
-  --acp-color-bg-glass: rgba(255, 255, 255, 0.84);
+  --acp-color-bg-secondary: #f4f4f5;
+  --acp-color-bg-tertiary: #e4e4e7;
+  --acp-color-bg-hover: #d4d4d8;
+  --acp-color-bg-glass: #ffffff;
   --acp-color-bg-input: #ffffff;
-  --acp-color-bg-code: #f6f8fa;
-  --acp-color-bg-overlay: rgba(0, 0, 0, 0.25);
-  --acp-color-bg-selected: rgba(37, 99, 235, 0.08);
-  --acp-color-bg-danger: rgba(207, 34, 46, 0.08);
+  --acp-color-bg-code: #f4f4f5;
+  --acp-color-bg-overlay: rgba(0, 0, 0, 0.4);
+  --acp-color-bg-selected: rgba(0, 0, 0, 0.06);
+  --acp-color-bg-danger: rgba(224, 0, 0, 0.08);
 
-  // ── Text ──────────────────────────────────────────────────────────────
-  --acp-color-text-primary: #1f2328;
-  --acp-color-text-secondary: #656d76;
-  --acp-color-text-muted: #8b949e;
+  // ── Text (softened — AA-grade, not AAA; ~10:1 primary for comfort) ───
+  --acp-color-text-primary: #3d3d3d;
+  --acp-color-text-secondary: #6a6a6a;
+  --acp-color-text-muted: #8f8f8f;
   --acp-color-text-inverse: #ffffff;
-  --acp-color-text-danger: #cf222e;
+  --acp-color-text-danger: #e00;
 
   // ── Borders ───────────────────────────────────────────────────────────
   --acp-color-border: rgba(0, 0, 0, 0.12);
-  --acp-color-border-subtle: rgba(0, 0, 0, 0.07);
-  --acp-color-border-accent: rgba(37, 99, 235, 0.25);
+  --acp-color-border-subtle: rgba(0, 0, 0, 0.06);
+  --acp-color-border-accent: rgba(0, 0, 0, 0.28);
 
-  // ── Accent (bright blue) ──────────────────────────────────────────────
-  --acp-color-accent: #2563eb;
-  --acp-color-accent-hover: #1d4ed8;
-  --acp-color-accent-muted: rgba(37, 99, 235, 0.08);
-  --acp-color-accent-text: #1d4ed8;
+  // ── Accent (inverted — soft off-black on light) ──────────────────────
+  --acp-color-accent: #3d3d3d;
+  --acp-color-accent-hover: #1a1a1a;
+  --acp-color-accent-muted: rgba(0, 0, 0, 0.05);
+  --acp-color-accent-text: #0d9488; // teal — links keep a distinct click color
 
   // ── Status ────────────────────────────────────────────────────────────
-  --acp-color-success: #1a7f37;
-  --acp-color-success-muted: rgba(26, 127, 55, 0.08);
-  --acp-color-success-bg: rgba(26, 127, 55, 0.06);
+  --acp-color-success: #0a8754;
+  --acp-color-success-muted: rgba(10, 135, 84, 0.1);
+  --acp-color-success-bg: rgba(10, 135, 84, 0.06);
   --acp-color-warning: #9a6700;
-  --acp-color-warning-muted: rgba(154, 103, 0, 0.08);
-  --acp-color-error: #cf222e;
-  --acp-color-error-muted: rgba(207, 34, 46, 0.08);
-  --acp-color-error-bg: rgba(207, 34, 46, 0.06);
-  --acp-color-info: #2563eb;
-  --acp-color-info-muted: rgba(37, 99, 235, 0.08);
+  --acp-color-warning-muted: rgba(154, 103, 0, 0.1);
+  --acp-color-error: #e00;
+  --acp-color-error-muted: rgba(224, 0, 0, 0.1);
+  --acp-color-error-bg: rgba(224, 0, 0, 0.06);
+  --acp-color-info: #0d9488;
+  --acp-color-info-muted: rgba(13, 148, 136, 0.1);
 
-  // ── Message bubbles ───────────────────────────────────────────────────
-  --acp-color-user-bubble: #2563eb;
-  --acp-color-user-text: #ffffff;
-  --acp-color-agent-bubble: #f0f0f0;
-  --acp-color-agent-text: #1f2328;
+  // ── Message bubbles (light gray bubble + dark text — not black-on-white) ──
+  --acp-color-user-bubble: #f0f0f0;
+  --acp-color-user-text: #3d3d3d;
+  --acp-color-agent-bubble: transparent;
+  --acp-color-agent-text: #3d3d3d;
 
   // ── Surface ───────────────────────────────────────────────────────────
-  --acp-color-knob: #ffffff;
-  --acp-color-knob-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  --acp-color-knob: #3d3d3d;
+  --acp-color-knob-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 
-  // ── Surface elevation ─────────────────────────────────────────────────
-  --acp-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --acp-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.03);
-  --acp-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
-  --acp-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  // ── Surface elevation (flat: thin, single-layer) ──────────────────────
+  --acp-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --acp-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.08), 0 0 0 1px var(--acp-color-border-subtle);
+  --acp-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1), 0 0 0 1px var(--acp-color-border-subtle);
+  --acp-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12), 0 0 0 1px var(--acp-color-border-subtle);
 
-  // ── Radius ────────────────────────────────────────────────────────────
+  // ── Radius (Vercel: small, tight) ─────────────────────────────────────
   --acp-radius-xs: 4px;
   --acp-radius-sm: 6px;
-  --acp-radius-md: 10px;
-  --acp-radius-lg: 14px;
-  --acp-radius-xl: 20px;
+  --acp-radius-md: 8px;
+  --acp-radius-lg: 12px;
+  --acp-radius-xl: 16px;
 
   // ── Typography ────────────────────────────────────────────────────────
   --acp-font-sans: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;

@@ -17,12 +17,15 @@
   font-weight: 600;
   cursor: pointer;
   transition: border-color var(--acp-duration-fast) var(--acp-ease-out),
-              color var(--acp-duration-fast) var(--acp-ease-out),
-              box-shadow var(--acp-duration-fast) var(--acp-ease-out);
+              color var(--acp-duration-fast) var(--acp-ease-out);
 
   &:hover {
     border-color: var(--acp-color-accent);
     color: var(--acp-color-accent);
+  }
+
+  &:focus-visible {
+    border-color: var(--acp-color-accent);
     box-shadow: 0 0 0 3px var(--acp-color-accent-muted);
   }
 

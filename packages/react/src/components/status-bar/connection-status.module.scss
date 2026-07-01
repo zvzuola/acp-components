@@ -21,11 +21,9 @@
 
     &--connected {
       background: var(--acp-color-success);
-      box-shadow: 0 0 6px var(--acp-color-success);
     }
     &--connecting {
       background: var(--acp-color-warning);
-      box-shadow: 0 0 6px var(--acp-color-warning);
       animation: acp-pulse 1.5s infinite;
     }
     &--disconnected {
@@ -33,7 +31,6 @@
     }
     &--error {
       background: var(--acp-color-error);
-      box-shadow: 0 0 6px var(--acp-color-error);
     }
   }
 }

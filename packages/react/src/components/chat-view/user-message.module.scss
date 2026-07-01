@@ -29,9 +29,7 @@
   justify-content: center;
   width: 20px;
   height: 20px;
-  background: var(--acp-color-bg-glass);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: var(--acp-color-bg-secondary);
   border: 1px solid var(--acp-color-border-subtle);
   border-radius: var(--acp-radius-xs);
   color: var(--acp-color-text-secondary);

@@ -77,10 +77,10 @@
     letter-spacing: -0.01em;
     transition: background var(--acp-duration-fast) var(--acp-ease-out),
                 color var(--acp-duration-fast) var(--acp-ease-out),
-                transform var(--acp-duration-fast) var(--acp-ease-out);
+                opacity var(--acp-duration-fast) var(--acp-ease-out);
 
     &:active {
-      transform: scale(0.97);
+      opacity: 0.85;
     }
 
     &--deny {

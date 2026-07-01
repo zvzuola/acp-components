@@ -62,8 +62,7 @@
   flex-direction: column;
   gap: 4px;
   transition: background var(--acp-duration-fast) var(--acp-ease-out),
-              border-color var(--acp-duration-fast) var(--acp-ease-out),
-              transform var(--acp-duration-fast) var(--acp-ease-out);
+              border-color var(--acp-duration-fast) var(--acp-ease-out);
 
   &:hover:not(:disabled) {
     background: var(--acp-color-bg-hover);
@@ -71,7 +70,7 @@
   }
 
   &:active:not(:disabled) {
-    transform: scale(0.98);
+    background: var(--acp-color-bg-tertiary);
   }
 
   &:disabled {
@@ -130,8 +129,7 @@
 }
 
 .acp-login-dialog-env-var-optional {
-  color: var(--acp-color-text-tertiary, var(--acp-color-text-secondary));
-  opacity: 0.7;
+  color: var(--acp-color-text-muted);
   margin-left: 4px;
 }
 
@@ -146,8 +144,7 @@
   transition: border-color var(--acp-duration-fast) var(--acp-ease-out);
 
   &::placeholder {
-    color: var(--acp-color-text-tertiary, var(--acp-color-text-secondary));
-    opacity: 0.6;
+    color: var(--acp-color-text-muted);
   }
 
   &:focus {
@@ -183,15 +180,14 @@
   border: 1px solid var(--acp-color-border);
   color: var(--acp-color-text-primary);
   transition: background var(--acp-duration-fast) var(--acp-ease-out),
-              color var(--acp-duration-fast) var(--acp-ease-out),
-              transform var(--acp-duration-fast) var(--acp-ease-out);
+              color var(--acp-duration-fast) var(--acp-ease-out);
 
   &:hover:not(:disabled) {
     background: var(--acp-color-bg-hover);
   }
 
   &:active:not(:disabled) {
-    transform: scale(0.97);
+    background: var(--acp-color-bg-tertiary);
   }
 
   &:disabled {
@@ -208,17 +204,16 @@
   cursor: pointer;
   background: var(--acp-color-accent);
   border: 1px solid var(--acp-color-accent);
-  color: var(--acp-color-text-on-accent);
+  color: var(--acp-color-text-inverse);
   transition: background var(--acp-duration-fast) var(--acp-ease-out),
-              transform var(--acp-duration-fast) var(--acp-ease-out);
+              opacity var(--acp-duration-fast) var(--acp-ease-out);
 
   &:hover:not(:disabled) {
-    background: var(--acp-color-accent-hover, var(--acp-color-accent));
-    filter: brightness(1.1);
+    background: var(--acp-color-accent-hover);
   }
 
   &:active:not(:disabled) {
-    transform: scale(0.97);
+    opacity: 0.85;
   }
 
   &:disabled {
