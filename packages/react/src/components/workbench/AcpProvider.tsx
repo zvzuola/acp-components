@@ -50,14 +50,13 @@ export function AcpProvider({
   // AcpContext carries ONLY agent data-layer values. Native capabilities
   // (file open, file content read, directory pickers, …) live on Platform and
   // are accessed via usePlatform() — the two contexts are orthogonal.
+  // Workspace state (list / add / remove) is exposed via `useWorkspaces()`,
+  // not this context.
   const contextValue = useMemo(() => ({
     getClient: provider.getClient,
     agents: provider.agents,
-    workspaces: provider.workspaces,
     addAgent: provider.addAgent,
     removeAgent: provider.removeAgent,
-    addWorkspace: provider.addWorkspace,
-    removeWorkspace: provider.removeWorkspace,
     isReady: provider.isReady,
   }), [provider]);
 

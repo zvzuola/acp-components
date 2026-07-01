@@ -54,6 +54,7 @@ export { useAcpProvider } from './hooks/useAcpProvider';
 export { useAcpStore } from './hooks/useAcpStore';
 export { useSessionStore } from './hooks/useSessionStore';
 export { useSessions } from './hooks/useSessions';
+export { useWorkspaces } from './hooks/useWorkspaces';
 export { useSessionMessages, useSessionIsStreaming, useSessionPlan, useSessionAvailableCommands, useSessionPendingToolCalls, useSessionPendingPermissions, useSessionConfigOptions, useSessionUsage } from './hooks/useSession';
 export { usePrompt } from './hooks/usePrompt';
 export { useToolCalls } from './hooks/useToolCalls';

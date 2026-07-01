@@ -2,7 +2,7 @@ export { AcpClient } from './client/AcpClient';
 export type { SessionUpdateHandler, PermissionHandler, ExtMethodHandler, ExtNotificationHandler } from './client/AcpClient';
 export { StdioTransport, HttpTransport, WebSocketTransport } from './transport';
 export type { AcpTransport, Stream, AnyMessage } from './transport';
-export { acpStore } from './store/acpStore';
+export { acpStore, findWorkspaceBySession } from './store/acpStore';
 export { sessionStore } from './store/sessionStore';
 export { fileTreeStore, findNodeByPath } from './store/fileTreeStore';
 export type { WorkspaceFileTreeState } from './store/fileTreeStore';

@@ -4,6 +4,7 @@ import { useStore } from 'zustand/react';
 import { sessionStore } from '@acp-components/core';
 import { useSessions } from '../../hooks/useSessions';
 import { useAcpStore } from '../../hooks/useAcpStore';
+import { useWorkspaces } from '../../hooks/useWorkspaces';
 import { usePlatform } from '../../context/PlatformContext';
 import { useI18n } from '../../i18n';
 import type { SessionMeta, WorkspaceState } from '@acp-components/core';
@@ -315,25 +316,14 @@ function WorkspaceGroup({ cwd, workspace, isWorkspaceActive, onShowFiles }: {
 // ---------------------------------------------------------------------------
 
 export function SessionList({ onShowFiles }: SessionListProps) {
-  const { activeSessionId } = useSessions();
   const agents = useAcpStore((s) => s.agents);
-  const workspaces = useAcpStore((s) => s.workspaces);
-  const addWorkspace = useAcpStore((s) => s.addWorkspace);
+  const { workspaces, addWorkspace, activeWorkspaceCwd } = useWorkspaces();
   const { t } = useI18n();
   const { dialogs } = usePlatform();
   const openFilePicker = dialogs?.openFilePicker;
 
   const agentList = Array.from(agents.values());
-  const workspaceList = Array.from(workspaces.entries());
-
-  // Derive the workspace containing the active session
-  const activeWorkspaceCwd = useMemo(() => {
-    if (!activeSessionId) return null;
-    for (const [cwd, ws] of workspaces) {
-      if (ws.sessions.has(activeSessionId)) return cwd;
-    }
-    return null;
-  }, [activeSessionId, workspaces]);
+  const workspaceList = workspaces.map((ws) => [ws.cwd, ws] as const);
 
   const handleAddClick = useCallback(() => {
     // Pick a directory (default) — the picker may be absent on a minimal host.
