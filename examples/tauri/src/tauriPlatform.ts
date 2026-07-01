@@ -10,10 +10,15 @@ import type {
 // Agent transport (TauriIpcTransport) is configured separately via
 // AgentConfig.transport on AcpProvider — it is NOT part of Platform.
 //
-// Capabilities are adapted from @tauri-apps/plugin-* (FS / dialog) and Rust
-// shell commands (load_workspaces / save_workspaces). Updater / restart /
-// exportDebugLogs / external editor are declared on the interface but omitted
-// here (interface-only); wire them up when adopting tauri-plugin-updater etc.
+// Capabilities are adapted from @tauri-apps/plugin-* (FS / dialog). Updater /
+// restart / exportLogs / external-editor events are declared on the interface
+// but omitted here (interface-only); wire them up when adopting
+// tauri-plugin-updater etc.
+//
+// Workspace persistence is no longer on Platform — it lives in the
+// `useWorkspacesPersistence` hook, backed by `storage('workspaces')`
+// (webview localStorage). The Rust `load_workspaces` / `save_workspaces`
+// commands are therefore no longer called from the frontend.
 // ---------------------------------------------------------------------------
 
 function detectOs(): 'macos' | 'windows' | 'linux' | undefined {
@@ -52,27 +57,18 @@ async function tauriWriteFileContent(path: string, content: string): Promise<voi
 }
 
 // ---------------------------------------------------------------------------
-// Workspace persistence — Rust shell commands
+// Native file picker — @tauri-apps/plugin-dialog
 // ---------------------------------------------------------------------------
 
-async function tauriLoadWorkspaces(): Promise<string[]> {
-  const { invoke } = await import('@tauri-apps/api/core');
-  const result = await invoke<{ workspaces: string[] }>('load_workspaces');
-  return result.workspaces;
-}
-
-async function tauriSaveWorkspaces(paths: string[]): Promise<void> {
-  const { invoke } = await import('@tauri-apps/api/core');
-  await invoke('save_workspaces', { args: { workspaces: paths } });
-}
-
-// ---------------------------------------------------------------------------
-// Native directory picker — @tauri-apps/plugin-dialog
-// ---------------------------------------------------------------------------
-
-async function tauriOpenDirectoryPickerDialog(): Promise<string | null> {
+async function tauriOpenFilePicker(opts?: {
+  directory?: boolean;
+  title?: string;
+}): Promise<string | null> {
   const { open } = await import('@tauri-apps/plugin-dialog');
-  const selected = await open({ directory: true });
+  const selected = await open({
+    directory: opts?.directory ?? true,
+    title: opts?.title,
+  });
   return typeof selected === 'string' ? selected : null;
 }
 
@@ -123,33 +119,34 @@ export function createTauriPlatform(): Platform {
     platform: 'desktop',
     os: detectOs(),
 
-    openLink: (url) => {
-      // The webview can open external links directly; Tauri's shell plugin is
-      // not pulled in to avoid adding a new dependency.
-      window.open(url, '_blank', 'noopener,noreferrer');
+    fs: {
+      readDirectory: tauriReadDirectory,
+      readFileContent: tauriReadFileContent,
+      writeFileContent: tauriWriteFileContent,
+      // Native file-tree watcher not wired in the Tauri template yet; the file
+      // tree is still browsable/refreshable on demand. Add when adopting a
+      // tauri watcher plugin.
+      // watchFileTree: undefined,
     },
 
-    openDirectoryPickerDialog: tauriOpenDirectoryPickerDialog,
-
-    notify: async (title, _description) => {
-      // No tauri-plugin-notification dependency yet; surface to the console.
-      // Wire up a native notification when that plugin is adopted.
-      console.info(`[notify] ${title}`);
+    dialogs: {
+      openLink: (url: string) => {
+        // The webview can open external links directly; Tauri's shell plugin is
+        // not pulled in to avoid adding a new dependency.
+        window.open(url, '_blank', 'noopener,noreferrer');
+      },
+      openFilePicker: tauriOpenFilePicker,
+      notify: async (title: string, _description?: string) => {
+        // No tauri-plugin-notification dependency yet; surface to the console.
+        // Wire up a native notification when that plugin is adopted.
+        console.info(`[notify] ${title}`);
+      },
     },
 
-    readDirectory: tauriReadDirectory,
-    readFileContent: tauriReadFileContent,
-    writeFileContent: tauriWriteFileContent,
-    // Native file-tree watcher not wired in the Tauri template yet; the file
-    // tree is still browsable/refreshable on demand. Add when adopting a
-    // tauri watcher plugin.
-    // watchFileTree: undefined,
+    storage: (name?: string) => createTauriStorage(name ?? ''),
 
-    storage: (name) => createTauriStorage(name ?? ''),
-    loadWorkspaces: tauriLoadWorkspaces,
-    saveWorkspaces: tauriSaveWorkspaces,
-
-    // updater / restart / exportDebugLogs / onOpenFile — interface-only, omitted.
-    // Wire them up when adopting tauri-plugin-updater / shell / notification etc.
+    // openExternalEditor / updater / system (restart, exportLogs) —
+    // interface-only, omitted. Wire them up when adopting tauri-plugin-shell /
+    // tauri-plugin-updater etc.
   };
 }

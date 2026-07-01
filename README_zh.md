@@ -84,12 +84,11 @@ function App() {
             },
           ]}
           theme="dark"
-          defaultCwd="/path/to/project"
         >
           <Workbench
             sidebar={
               <>
-                {/* 目录选择现由 SessionList 内部调用 usePlatform().openDirectoryPickerDialog() 驱动，无需 onBrowse prop */}
+                {/* 目录选择现由 SessionList 内部调用 usePlatform().dialogs?.openFilePicker() 驱动，无需 onBrowse prop */}
                 <SessionList />
               </>
             }
@@ -168,7 +167,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
 
 | 组件 | 说明 |
 |-----------|-------------|
-| `AcpProvider` | 顶层 Provider：并行连接多个 Agent，管理 Agent 生命周期，将会话更新分发到 stores，所有 Agent 就绪前显示加载动画。Props：`agents`、`theme`、`defaultCwd`、`onExtMethod`、`onExtNotification` |
+| `AcpProvider` | 顶层 Provider：并行连接多个 Agent，管理 Agent 生命周期，将会话更新分发到 stores，所有 Agent 就绪前显示加载动画。Props：`agents`、`theme`、`onExtMethod`、`onExtNotification` |
 | `Workbench` | 三栏布局（侧边栏、主区域、面板），基于 CSS Grid |
 | `SessionList` | 侧边栏工作区与会话列表：按工作区目录分组，工作区内按 Agent 分组展示会话，支持添加工作区/创建/选择/删除操作 |
 | `ChatView` | 主聊天区域：将消息分组为用户/Agent 回合，渲染计划、用量条和配置面板。Props：`sessionId`、`onNavigateFile` |

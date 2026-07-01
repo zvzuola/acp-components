@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import { AcpProvider } from '@acp-components/react';
 import { Workbench } from '@acp-components/react';
@@ -10,9 +9,7 @@ import { LoginDialog } from '@acp-components/react';
 import { I18nProvider } from '@acp-components/react';
 import { PlatformProvider } from '@acp-components/react';
 import { useAcpStore } from '@acp-components/react';
-import { useAcpContext } from '@acp-components/react';
 import { useFileViewer } from '@acp-components/react';
-import { usePlatform } from '@acp-components/react';
 import { TauriIpcTransport } from './tauriIpcTransport';
 import { createTauriPlatform } from './tauriPlatform';
 
@@ -24,51 +21,11 @@ import { createTauriPlatform } from './tauriPlatform';
 
 function AppInner() {
   const activeSessionId = useAcpStore((s) => s.activeSessionId);
-  const workspaces = useAcpStore((s) => s.workspaces);
-  const { addWorkspace } = useAcpContext();
-  const platform = usePlatform();
   // Show the panel only when at least one file is open. File-open state lives
   // in the global fileViewer store, wired automatically by <PlatformProvider>.
+  // Workspace load/save is driven automatically by <PlatformWorkspacesAuto>
+  // (mounted inside <PlatformProvider>).
   const { openFiles } = useFileViewer();
-
-  // -------------------------------------------------------------------------
-  // Workspace persistence — cache opened workspaces so they are automatically
-  // restored on the next app launch.
-  // -------------------------------------------------------------------------
-
-  const initialized = useRef(false);
-  const lastSavedKeys = useRef<string>('');
-
-  // Load cached workspaces on first mount
-  useEffect(() => {
-    platform.loadWorkspaces?.()
-      .then((paths) => {
-        if (paths.length > 0) {
-          for (const cwd of paths) addWorkspace(cwd);
-          lastSavedKeys.current = JSON.stringify(paths.slice().sort());
-        } else {
-          lastSavedKeys.current = '[]';
-        }
-      })
-      .catch((e) => {
-        console.error('[workspaces] Failed to load cached workspaces:', e);
-        lastSavedKeys.current = '[]';
-      })
-      .finally(() => {
-        initialized.current = true;
-      });
-  }, [platform, addWorkspace]);
-
-  // Persist workspace changes after initialization
-  useEffect(() => {
-    if (!initialized.current) return;
-    const keys = JSON.stringify(Array.from(workspaces.keys()).sort());
-    if (keys === lastSavedKeys.current) return;
-    lastSavedKeys.current = keys;
-    platform.saveWorkspaces?.(Array.from(workspaces.keys())).catch((e) => {
-      console.error('[workspaces] Failed to save workspaces:', e);
-    });
-  }, [platform, workspaces]);
 
   return (
     <>

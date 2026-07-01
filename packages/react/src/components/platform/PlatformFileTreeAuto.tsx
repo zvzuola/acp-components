@@ -26,10 +26,10 @@ function selectActiveCwd(state: AcpStoreState): string | null {
 
 /**
  * Mount-once wrapper that drives the per-workspace file tree from the host
- * `Platform`.
+ * `Platform.fs`.
  *
  * Renders nothing. On mount it:
- *  1. Registers `platform.readDirectory` as the directory reader for each
+ *  1. Registers `platform.fs.readDirectory` as the directory reader for each
  *     workspace (cheap — no I/O) so trees can be loaded on demand.
  *  2. Auto-loads the root tree **only for the active workspace** (the one
  *     holding the current `activeSessionId`). Other workspaces are NOT
@@ -39,7 +39,7 @@ function selectActiveCwd(state: AcpStoreState): string | null {
  *     tree (its previous tree state, if any, is retained so expanded
  *     directories are preserved when the user returns).
  *  4. Tears down file-tree state when a workspace is removed.
- *  5. Subscribes to `platform.watchFileTree` (when provided) **only for the
+ *  5. Subscribes to `platform.fs.watchFileTree` (when provided) **only for the
  *     active workspace**, swapping the subscription as the active workspace
  *     changes, and forwards directory / workspace change events to the
  *     file-tree actions.
@@ -56,10 +56,14 @@ function selectActiveCwd(state: AcpStoreState): string | null {
  */
 export function PlatformFileTreeAuto() {
   const platform = usePlatform();
-  const { readDirectory, watchFileTree } = platform;
+  const fs = platform.fs;
+  const readDirectory = fs?.readDirectory;
+  const watchFileTree = fs?.watchFileTree;
 
   // Register reader for every workspace; auto-load ONLY the active workspace.
+  // No-op when the host provides no `fs` slice (or no `readDirectory`).
   useEffect(() => {
+    if (!readDirectory) return;
     const knownCwds = new Set<string>();
 
     // Register the directory reader for a workspace without triggering a load.

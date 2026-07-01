@@ -82,12 +82,11 @@ function App() {
             },
           ]}
           theme="dark"
-          defaultCwd="/path/to/project"
         >
           <Workbench
             sidebar={
               <>
-                {/* Directory picking is now driven by usePlatform().openDirectoryPickerDialog()
+                {/* Directory picking is now driven by usePlatform().dialogs?.openFilePicker()
                     inside SessionList — no onBrowse prop needed. */}
                 <SessionList />
               </>
@@ -167,7 +166,7 @@ Each agent in the `agents` array gets its own transport configuration:
 
 | Component | Description |
 |-----------|-------------|
-| `AcpProvider` | Top-level provider: connects to multiple agents in parallel, manages agent lifecycle, wires session updates to stores, renders a loading spinner until all agents are ready. Props: `agents`, `theme`, `defaultCwd`, `onExtMethod`, `onExtNotification` |
+| `AcpProvider` | Top-level provider: connects to multiple agents in parallel, manages agent lifecycle, wires session updates to stores, renders a loading spinner until all agents are ready. Props: `agents`, `theme`, `onExtMethod`, `onExtNotification` |
 | `Workbench` | Three-panel layout (sidebar, main, panel) using CSS Grid |
 | `SessionList` | Sidebar workspace & session list: workspaces grouped by directory, sessions grouped by agent within each workspace, with add workspace / create / select / delete actions |
 | `ChatView` | Main chat area: groups messages into user/agent rounds, renders plan, usage bar, and config panel. Props: `sessionId`, `onNavigateFile` |

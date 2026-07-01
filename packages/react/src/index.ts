@@ -63,12 +63,21 @@ export { useExtensions } from './hooks/useExtensions';
 export { useFileTree } from './hooks/useFileTree';
 export { useFileViewer } from './hooks/useFileViewer';
 export type { OpenFileEntry, UseFileViewerReturn } from './hooks/useFileViewer';
+export { loadWorkspaces, saveWorkspaces } from './components/platform/PlatformWorkspacesAuto';
 export { useResizable } from './hooks/useResizable';
 export type { UseResizableOptions, UseResizableReturn } from './hooks/useResizable';
 export { AcpContext, useAcpContext } from './context/AcpContext';
 export type { AcpContextValue } from './context/AcpContext';
 export { PlatformContext, usePlatform } from './context/PlatformContext';
-export type { Platform, Updater, PlatformProviderProps } from './context/PlatformContext';
+export type {
+  Platform,
+  FileSystem,
+  Dialogs,
+  OpenExternalEditor,
+  PlatformSystem,
+  Updater,
+  PlatformProviderProps,
+} from './context/PlatformContext';
 export { PlatformProvider } from './components/platform';
 export { useSettings } from './context/SettingsContext';
 export type { SettingsContextValue } from './context/SettingsContext';

@@ -320,7 +320,8 @@ export function SessionList({ onShowFiles }: SessionListProps) {
   const workspaces = useAcpStore((s) => s.workspaces);
   const addWorkspace = useAcpStore((s) => s.addWorkspace);
   const { t } = useI18n();
-  const { openDirectoryPickerDialog } = usePlatform();
+  const { dialogs } = usePlatform();
+  const openFilePicker = dialogs?.openFilePicker;
 
   const agentList = Array.from(agents.values());
   const workspaceList = Array.from(workspaces.entries());
@@ -335,12 +336,14 @@ export function SessionList({ onShowFiles }: SessionListProps) {
   }, [activeSessionId, workspaces]);
 
   const handleAddClick = useCallback(() => {
-    openDirectoryPickerDialog()
+    // Pick a directory (default) — the picker may be absent on a minimal host.
+    if (!openFilePicker) return;
+    openFilePicker({ directory: true })
       .then((dir) => {
         if (dir) addWorkspace(dir);
       })
       .catch(console.error);
-  }, [openDirectoryPickerDialog, addWorkspace]);
+  }, [openFilePicker, addWorkspace]);
 
   return (
     <div className={styles.acpSessionList}>

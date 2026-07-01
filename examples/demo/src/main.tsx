@@ -1,5 +1,4 @@
 import ReactDOM from 'react-dom/client';
-import { useEffect, useRef } from 'react';
 // @ts-expect-error Vite worker imports — types not available for ?worker suffix
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 // @ts-expect-error Vite worker imports
@@ -47,9 +46,7 @@ import { FileViewer } from '@acp-components/react';
 import { I18nProvider } from '@acp-components/react';
 import { PlatformProvider } from '@acp-components/react';
 import { useAcpStore } from '@acp-components/react';
-import { useAcpContext } from '@acp-components/react';
 import { useFileViewer } from '@acp-components/react';
-import { usePlatform } from '@acp-components/react';
 import { createWebPlatform } from './webPlatform';
 
 // In web environments, stdio transport is unavailable (can't spawn child processes).
@@ -63,26 +60,11 @@ import { createWebPlatform } from './webPlatform';
 
 function AppInner() {
   const activeSessionId = useAcpStore((s) => s.activeSessionId);
-  const workspaces = useAcpStore((s) => s.workspaces);
-  const { addWorkspace } = useAcpContext();
-  const platform = usePlatform();
-  const loadedRef = useRef(false);
   // Show the panel only when at least one file is open. File-open state lives
   // in the global fileViewer store; we subscribe via the hook.
+  // Workspace load/save is driven automatically by <PlatformWorkspacesAuto>
+  // (mounted inside <PlatformProvider>).
   const { openFiles } = useFileViewer();
-
-  // Load cached workspaces on mount (once), then persist subsequent changes.
-  useEffect(() => {
-    if (loadedRef.current) return;
-    loadedRef.current = true;
-    platform.loadWorkspaces?.().then((paths) => {
-      for (const cwd of paths) addWorkspace(cwd);
-    }).catch(console.error);
-  }, [platform, addWorkspace]);
-
-  useEffect(() => {
-    platform.saveWorkspaces?.(Array.from(workspaces.keys())).catch(console.error);
-  }, [platform, workspaces]);
 
   return (
     <>

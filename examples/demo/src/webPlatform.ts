@@ -17,11 +17,9 @@ import type {
 //
 // Capabilities the browser cannot back natively fall back to browser APIs:
 //   - directory picker  → window.prompt (user confirms keeping this)
-//   - workspace cache   → localStorage
-//   - terminal / updater / external editor → unsupported (omitted)
+//   - workspace cache   → storage('workspaces') (localStorage-backed)
+//   - updater / restart / exportLogs → unsupported (omitted)
 // ---------------------------------------------------------------------------
-
-const WORKSPACE_CACHE_KEY = 'acp-demo-workspaces';
 
 // ---------------------------------------------------------------------------
 // Server-backed file system
@@ -99,7 +97,7 @@ function createServerFileWatcher(callbacks: FileTreeWatchCallbacks): FileTreeWat
 }
 
 // ---------------------------------------------------------------------------
-// localStorage-backed async storage + workspaces cache
+// localStorage-backed async storage
 // ---------------------------------------------------------------------------
 
 function createLocalStorageStorage(name: string): PlatformStorage {
@@ -137,25 +135,6 @@ function createLocalStorageStorage(name: string): PlatformStorage {
   };
 }
 
-async function loadWorkspaces(): Promise<string[]> {
-  // Legacy (pre-platform) cache stored under a non-namespaced key; keep reading
-  // it so existing users don't lose their workspaces on upgrade.
-  try {
-    const raw = localStorage.getItem(WORKSPACE_CACHE_KEY);
-    return raw ? (JSON.parse(raw) as string[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-async function saveWorkspaces(paths: string[]): Promise<void> {
-  try {
-    localStorage.setItem(WORKSPACE_CACHE_KEY, JSON.stringify(paths));
-  } catch {
-    /* noop */
-  }
-}
-
 // ---------------------------------------------------------------------------
 // Factory
 // ---------------------------------------------------------------------------
@@ -165,37 +144,44 @@ export function createWebPlatform(): Platform {
     platform: 'web',
     os: undefined,
 
-    openLink: (url) => {
-      window.open(url, '_blank', 'noopener,noreferrer');
+    fs: {
+      readDirectory: serverReadDirectory,
+      readFileContent: serverReadFileContent,
+      // Read-only web demo — no writeFileContent.
+      watchFileTree: (callbacks: FileTreeWatchCallbacks) => createServerFileWatcher(callbacks),
     },
 
-    openDirectoryPickerDialog: async () => {
-      // Browsers have no native directory picker; fall back to a text prompt.
-      const path = window.prompt('Enter project directory path:', '');
-      return path?.trim() || null;
-    },
-
-    notify: async (title, description) => {
-      // Best-effort web notification; silently no-op if disallowed.
-      try {
-        if (typeof Notification === 'undefined') return;
-        if (Notification.permission === 'granted') {
-          new Notification(title, { body: description });
-        } else if (Notification.permission === 'default') {
-          const perm = await Notification.requestPermission();
-          if (perm === 'granted') new Notification(title, { body: description });
+    dialogs: {
+      openLink: (url: string) => {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      },
+      openFilePicker: async (opts?: { directory?: boolean; title?: string }) => {
+        // Browsers have no native file/directory picker; fall back to a text
+        // prompt. (The `directory` flag is accepted for interface conformance
+        // but a prompt cannot distinguish — the demo only picks directories.)
+        void opts;
+        const path = window.prompt('Enter project directory path:', '');
+        return path?.trim() || null;
+      },
+      notify: async (title: string, description?: string) => {
+        // Best-effort web notification; silently no-op if disallowed.
+        try {
+          if (typeof Notification === 'undefined') return;
+          if (Notification.permission === 'granted') {
+            new Notification(title, { body: description });
+          } else if (Notification.permission === 'default') {
+            const perm = await Notification.requestPermission();
+            if (perm === 'granted') new Notification(title, { body: description });
+          }
+        } catch {
+          /* noop */
         }
-      } catch {
-        /* noop */
-      }
+      },
     },
 
-    readDirectory: serverReadDirectory,
-    readFileContent: serverReadFileContent,
-    watchFileTree: (callbacks) => createServerFileWatcher(callbacks),
+    storage: (name?: string) => createLocalStorageStorage(name ?? ''),
 
-    storage: (name) => createLocalStorageStorage(name ?? ''),
-    loadWorkspaces,
-    saveWorkspaces,
+    // openExternalEditor / updater / system (restart, exportLogs) —
+    // unsupported in a browser, omitted.
   };
 }

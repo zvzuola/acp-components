@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { AcpContext } from '../../context/AcpContext';
 import { SettingsContext } from '../../context/SettingsContext';
 import { useAcpProvider } from '../../hooks/useAcpProvider';
-import { acpStore } from '@acp-components/core';
 import type { AgentConfig } from '@acp-components/core';
 import type { ExtMethodHandler, ExtNotificationHandler } from '@acp-components/core';
 import { useI18n } from '../../i18n';
@@ -14,7 +13,6 @@ export interface AcpProviderProps {
   children: React.ReactNode;
   onExtMethod?: ExtMethodHandler;
   onExtNotification?: ExtNotificationHandler;
-  defaultCwd?: string;
 }
 
 export function AcpProvider({
@@ -23,7 +21,6 @@ export function AcpProvider({
   children,
   onExtMethod,
   onExtNotification,
-  defaultCwd = '',
 }: AcpProviderProps) {
   const provider = useAcpProvider({
     agents,
@@ -63,13 +60,6 @@ export function AcpProvider({
     removeWorkspace: provider.removeWorkspace,
     isReady: provider.isReady,
   }), [provider]);
-
-  // Sync defaultCwd to store once on mount
-  React.useEffect(() => {
-    if (defaultCwd) {
-      acpStore.getState().addWorkspace(defaultCwd);
-    }
-  }, [defaultCwd]);
 
   if (!provider.isReady) {
     return (

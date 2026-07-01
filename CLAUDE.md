@@ -53,7 +53,7 @@ Application Layer (Vite Demo / Tauri / Custom Apps)
        built on ↓
      @agentclientprotocol/sdk (ACP protocol types + ClientSideConnection)
 
-Platform Layer (orthogonal to the above): a `Platform` interface (defined in `@acp-components/react`) + `PlatformContext`/`usePlatform()` provide host-native capabilities (file tree, file read/write, directory dialogs, persistence, updater) to the UI. Each host (web demo, Tauri template) implements its own `Platform` (`createWebPlatform` / `createTauriPlatform`). core does NOT implement `Platform` — it only owns the shared primitive types (`PlatformKind`, `PlatformStorage`, `UpdaterState`, …).
+Platform Layer (orthogonal to the above): a `Platform` interface (defined in `@acp-components/react`) + `PlatformContext`/`usePlatform()` provide host-native capabilities to the UI. The interface is **sharded** into cohesive slices — `fs?` (readDirectory/readFileContent/writeFileContent?/watchFileTree?), `dialogs?` (openLink/openFilePicker/notify), `storage` (always required), `openExternalEditor?` (host takes over file opening, bypassing built-in FileViewer), `updater?`, `system?` (restart?/exportLogs?) — capability is expressed by slice / method presence; callers guard with `?.` at the use site. Each host (web demo, Tauri template) implements its own `Platform` (`createWebPlatform` / `createTauriPlatform`). Workspace load/save is NOT on `Platform` — it lives in the `useWorkspacesPersistence` hook, backed by `storage('workspaces')`. core does NOT implement `Platform` — it only owns the shared primitive types (`PlatformKind`, `PlatformStorage`, `UpdaterState`, …).
 ```
 
 **Critical rules**:
@@ -94,7 +94,7 @@ Agent → NDJSON stream → Transport.readable
           → user action → Actions → AcpClient.prompt/cancel → Transport.writable → Agent
 ```
 
-Native capabilities (file tree, file read/write, directory picker, persistence) flow on a **separate, orthogonal path**: `UI → usePlatform() → host Platform → native/host API`. They do not pass through `AcpProvider`. The per-workspace file tree is driven automatically by `<PlatformFileTreeAuto>` (mounted inside `<PlatformProvider>`), which registers `platform.readDirectory` as the reader for `fileTreeStore`.
+Native capabilities (file tree, file read/write, directory picker, persistence) flow on a **separate, orthogonal path**: `UI → usePlatform() → host Platform → native/host API`. They do not pass through `AcpProvider`. Three Auto components mounted inside `<PlatformProvider>` wire platform capabilities to core stores zero-config: `<PlatformWorkspacesAuto>` (loads/saves the workspace list via `platform.storage('workspaces')` — `AcpProvider` no longer takes a `defaultCwd`), `<PlatformFileTreeAuto>` (registers `platform.fs.readDirectory` as the reader for `fileTreeStore`), and `<PlatformFileViewerAuto>` (wires `platform.fs.readFileContent` / `platform.openExternalEditor` to `fileViewerStore`).
 
 SessionUpdate dispatch mapping (in `provider.ts:setupSessionUpdateHandler`):
 - `agent_message_chunk` / `user_message_chunk` → `store.appendContent()`
@@ -115,12 +115,12 @@ SessionUpdate dispatch mapping (in `provider.ts:setupSessionUpdateHandler`):
 | `packages/core/src/store/acpStore.ts` | Global Zustand store: agents, workspaces (sessions per workspace), activeSessionId, pendingAuth |
 | `packages/core/src/store/sessionStore.ts` | Per-session Zustand store: messages, streaming, tool calls, plan, usage, config, commands (no terminal) |
 | `packages/core/src/store/fileTreeStore.ts` | Per-workspace Zustand store: file-tree state; reader injected from `Platform.readDirectory` |
-| `packages/core/src/actions/` | `sessions.ts`, `prompt.ts`, `permission.ts`, `fileTree.ts`, `extensions.ts` — imperative actions that route to the correct AcpClient via `clientRegistry` |
+| `packages/core/src/actions/` | `sessions.ts`, `prompt.ts`, `permission.ts`, `fileTree.ts`, `extensions.ts` — imperative actions that take an explicit `AcpClient` arg. The React layer resolves the client for a session (via `useSessions`'s `getClientForSession` → `AcpContext.getClient(meta.agentId)`); core itself does no client routing |
 | `packages/core/src/types/index.ts` | All shared types: `AgentConfig`, `TransportConfig`, `WorkspaceState`, `AgentConnection`, `PermissionRequest`, plus Platform primitives (`PlatformKind`, `PlatformStorage`, `UpdaterState`, …) |
 | `packages/core/src/transport/` | `StdioTransport`, `HttpTransport`, `WebSocketTransport` + `AcpTransport` interface for custom transports |
 | `packages/react/src/context/AcpContext.ts` | React context providing `getClient(agentId)`, agents list, workspaces, workspace actions (agent data layer only) |
-| `packages/react/src/context/PlatformContext.tsx` | `Platform` interface + `PlatformContext` + `usePlatform()` — environment-agnostic native-capability contract (orthogonal to `AcpContext`) |
-| `packages/react/src/components/platform/` | `PlatformProvider` (injects Platform + auto-mounts file-tree driver) and `PlatformFileTreeAuto` (drives `fileTreeStore` from `platform.readDirectory`/`watchFileTree`) |
+| `packages/react/src/context/PlatformContext.tsx` | Sharded `Platform` interface (`fs?`/`dialogs?`/`storage`/`openExternalEditor?`/`updater?`/`system?`) + `PlatformContext` + `usePlatform()` — environment-agnostic native-capability contract (orthogonal to `AcpContext`) |
+| `packages/react/src/components/platform/` | `PlatformProvider` (injects Platform + auto-mounts file-tree/file-viewer drivers), `PlatformFileTreeAuto` (drives `fileTreeStore` from `platform.fs.readDirectory`/`watchFileTree`), `PlatformFileViewerAuto` (wires `platform.fs.readFileContent` + `platform.openExternalEditor` to `fileViewerStore`) |
 | `packages/react/src/hooks/` | All hooks wrapping `useSyncExternalStore` for acpStore/sessionStore/fileTreeStore subscriptions |
 | `packages/react/src/components/` | 15+ components, each in its own subdirectory (no `TerminalView` — terminal not provided by base) |
 
@@ -140,7 +140,7 @@ Implement `AcpTransport` interface (`connect/disconnect/onClose/onError`) and pa
 
 ### Platform Extension Point
 
-Implement the `Platform` interface (defined in `packages/react/src/context/PlatformContext.tsx`) and inject it via `<PlatformProvider platform={instance}>` at the app root (above `I18nProvider` and `AcpProvider`). Reference factories: `createWebPlatform()` (`examples/demo/src/webPlatform.ts`) and `createTauriPlatform()` (`examples/tauri/src/tauriPlatform.ts`). By default `PlatformProvider` mounts `<PlatformFileTreeAuto>`, which drives `fileTreeStore` from `platform.readDirectory` / `watchFileTree` — set `autoFileTree={false}` to wire your own file-tree setup.
+Implement the `Platform` interface (defined in `packages/react/src/context/PlatformContext.tsx`) and inject it via `<PlatformProvider platform={instance}>` at the app root (above `I18nProvider` and `AcpProvider`). Provide whichever slices your host backs (`fs` / `dialogs` / `openExternalEditor` / `updater` / `system`); `storage` is required. Capability is expressed by slice / method presence — callers guard with `?.`; no separate capability flags. Reference factories: `createWebPlatform()` (`examples/demo/src/webPlatform.ts`) and `createTauriPlatform()` (`examples/tauri/src/tauriPlatform.ts`). By default `PlatformProvider` mounts `<PlatformWorkspacesAuto>` (workspace load/save via `platform.storage('workspaces')`), `<PlatformFileTreeAuto>` (drives `fileTreeStore` from `platform.fs.readDirectory` / `watchFileTree`), and `<PlatformFileViewerAuto>` (wires `platform.fs.readFileContent` + `platform.openExternalEditor` to `fileViewerStore`) — set `autoWorkspaces={false}` / `autoFileTree={false}` / `autoFileViewer={false}` to wire your own. `AcpProvider` no longer takes `defaultCwd`; the initial workspace set comes from `<PlatformWorkspacesAuto>`.
 
 ## Style Rules
 

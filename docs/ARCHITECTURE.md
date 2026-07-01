@@ -75,7 +75,7 @@ acpStore
 
 Provider 是宿主进入组件库的主入口：
 
-- 输入：`agents: AgentConfig[]`（每位 Agent 含 id、name、transport、clientInfo、clientCapabilities）、`defaultCwd`、文件回调、主题。
+- 输入：`agents: AgentConfig[]`（每位 Agent 含 id、name、transport、clientInfo、clientCapabilities）、`theme`、扩展方法回调（`onExtMethod` / `onExtNotification`）。工作区初始状态不由 `AcpProvider` 提供——由 `<PlatformWorkspacesAuto>`（挂在 `<PlatformProvider>` 内）从 `platform.storage('workspaces')` 自动加载恢复。
 - 行为：并行建立多条连接、各自 initialize、注册各自的 session update、注册权限和文件回调、同步 store。
 - 输出：ready 后通过 Context 提供 `getClient(agentId)`、agents 列表、workspaces 及管理工作区/Agent 的 action 给 React 组件树。
 
