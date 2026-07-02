@@ -5,3 +5,4 @@ dist
 examples/tauri/src-tauri/target
 .DS_Store
 .bitfun/
+.claude

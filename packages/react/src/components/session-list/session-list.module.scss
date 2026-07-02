@@ -173,12 +173,9 @@
     align-items: center;
     justify-content: center;
     color: var(--acp-color-text-muted);
-    opacity: 0.65;
-    transition: color var(--acp-duration-fast) var(--acp-ease-out),
-                opacity var(--acp-duration-fast) var(--acp-ease-out);
+    transition: color var(--acp-duration-fast) var(--acp-ease-out);
 
     &--running {
-      opacity: 1;
       color: var(--acp-color-success);
       display: flex;
       align-items: center;
