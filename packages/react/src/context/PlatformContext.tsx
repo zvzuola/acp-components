@@ -59,6 +59,22 @@ export interface Dialogs {
 }
 
 /**
+ * Clipboard slice — system clipboard access (copy text, optionally read).
+ * Hosts that cannot back clipboard access (or only support write) omit the
+ * slice or the relevant methods; callers guard with `?.`.
+ */
+export interface Clipboard {
+  /** Write text to the system clipboard. */
+  writeText(text: string): Promise<void>;
+  /**
+   * Read text from the system clipboard. Optional — many hosts cannot read
+   * (browser permission restrictions, no plugin wired). Callers must handle
+   * absence / rejection.
+   */
+  readText?(): Promise<string>;
+}
+
+/**
  * External-editor integration. When provided, opening a file is delegated to
  * the host (e.g. it launches the user's `$EDITOR`) and the built-in
  * FileViewer is bypassed. Omit it to keep opening in-panel. This is a
@@ -69,8 +85,25 @@ export type OpenExternalEditor = (path: string, line?: number | null) => void;
 /**
  * System / lifecycle slice. All members optional — a host that cannot back
  * them (e.g. a browser) omits the whole slice or the relevant methods.
+ *
+ * `getLocale` centralizes locale detection so the UI never reaches for
+ * `navigator.language` directly: web delegates to the browser, a desktop host
+ * reads the OS system locale. `onLocaleChanged` lets a host push live changes
+ * (e.g. the user switches their system language while the app runs).
  */
 export interface PlatformSystem {
+  /**
+   * Current system locale, as a BCP-47 tag the host can determine (e.g.
+   * `navigator.language`, or the OS locale on desktop). `undefined` when the
+   * host cannot determine one — callers fall back to their own default.
+   */
+  getLocale?(): string | undefined;
+  /**
+   * Subscribe to system-locale changes. Returns an unsubscribe fn. Optional —
+   * hosts that cannot watch locale changes omit it; callers then rely on the
+   * initial `getLocale` snapshot only.
+   */
+  onLocaleChanged?(handler: (locale: string | undefined) => void): () => void;
   /** Restart the host application. */
   restart?(): Promise<void>;
   /** Export debug logs to an out-of-band destination. */
@@ -93,9 +126,9 @@ export interface PlatformSystem {
  * `Platform`.
  *
  * Capability is expressed by slice / method presence: `fs?`, `dialogs?`,
- * `updater?`, `system?`, `openExternalEditor?` are optional, and callers guard
- * with `?.` at the use site. `storage` is the one always-required slice (i18n
- * and workspace persistence both depend on it).
+ * `clipboard?`, `updater?`, `system?`, `openExternalEditor?` are optional, and
+ * callers guard with `?.` at the use site. `storage` is the one always-required
+ * slice (i18n and workspace persistence both depend on it).
  *
  * Note: workspace load/save was previously on this interface; it has moved to
  * the `useWorkspacesPersistence` hook, which is built on `storage`.
@@ -110,13 +143,15 @@ export interface Platform {
   fs?: FileSystem;
   /** User-interaction slice (links / pickers / notifications). */
   dialogs?: Dialogs;
+  /** System-clipboard access. Optional — callers guard with `?.`. */
+  clipboard?: Clipboard;
   /** Named async KV storage. web: localStorage; tauri: shell command / file. */
   storage(name?: string): PlatformStorage;
   /** External-editor delegate. When set, file opening is delegated to the host. */
   openExternalEditor?: OpenExternalEditor;
   /** Auto-updater handle. Optional. */
   updater?: Updater;
-  /** System / lifecycle capabilities. Optional. */
+  /** System / lifecycle capabilities (locale, restart, …). Optional. */
   system?: PlatformSystem;
 }
 

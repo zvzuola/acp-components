@@ -9,7 +9,7 @@
 - 让 Web、桌面、IDE 插件等宿主快速接入 ACP Agent。
 - 支持同时连接多个 Agent，按工作区（cwd）组织会话。
 - 把协议通信、状态管理和 UI 解耦。
-- 把文件、终端等高风险能力留在宿主侧治理。
+- 把文件等高风险能力留在宿主侧治理。
 - 支持后续替换传输、替换 UI 框架、扩展 Agent 能力。
 
 ## 2. 总体结构
@@ -22,14 +22,14 @@ flowchart TB
   Core --> Transport["AcpTransport × N<br/>每位 Agent 独立配置<br/>stdio / websocket / http / custom"]
   Transport --> Agent1["ACP Agent runtime 1"]
   Transport --> Agent2["ACP Agent runtime 2"]
-  Host -. "file / terminal / auth / policy" .-> Core
+  Host -. "file / auth / policy" .-> Core
 ```
 
 分层职责：
 
 | 层级 | 主要职责 |
 | --- | --- |
-| 宿主应用 | 配置 Agent 列表、选择传输、提供文件/终端能力、制定权限策略、组合布局 |
+| 宿主应用 | 配置 Agent 列表、选择传输、提供文件能力、制定权限策略、组合布局 |
 | `@acp-components/react` | React Provider、hooks、聊天/会话/权限/diff/状态组件、主题和 i18n |
 | `@acp-components/core` | 多 Agent provider、ACP client（每 Agent 一实例）、transport 抽象、store、actions、session update 分发 |
 | ACP SDK | 协议类型、握手和连接 |
@@ -138,7 +138,7 @@ Agent 推送的 `sessionUpdate` 统一在 core provider 层转换为 store actio
 | --- | --- | --- |
 | Provider + Context | `useAcpProvider`、`AcpContext` | 初始化多 Agent 连接、注入 `getClient(agentId)` 和 store 到组件树 |
 | Hooks | `useSessionMessages`、`useSessionIsStreaming`、`useSessions`、`usePrompt`、`useToolCalls`、`usePermission`、`useConnectionStatus`、`useAllAgentStatuses` 等 | 订阅 store 状态，暴露 action 给组件 |
-| Components | `workbench`、`chat-view`、`session-list`（按 Agent 分组）、`project-opener`、`status-bar`、`permission-dialog`、`diff-view`、`terminal-view`、`command-palette`、`session-config-panel` | 完整工作台布局及独立功能区块 |
+| Components | `workbench`、`chat-view`、`session-list`（按 Agent 分组）、`project-opener`、`status-bar`、`permission-dialog`、`diff-view`、`command-palette`、`session-config-panel` | 完整工作台布局及独立功能区块 |
 
 组件之间的通信通过 core 层的 store 完成，不直接互调。每个组件可按需独立使用，也可以拼成完整工作台。
 

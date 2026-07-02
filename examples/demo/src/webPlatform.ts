@@ -97,6 +97,21 @@ function createServerFileWatcher(callbacks: FileTreeWatchCallbacks): FileTreeWat
 }
 
 // ---------------------------------------------------------------------------
+// Locale detection — browser language. Lifted into a helper so `onLocaleChanged`
+// can re-read the snapshot without referencing the Platform object itself.
+// ---------------------------------------------------------------------------
+
+function detectBrowserLocale(): string | undefined {
+  try {
+    return typeof navigator !== 'undefined' && navigator.language
+      ? navigator.language
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // localStorage-backed async storage
 // ---------------------------------------------------------------------------
 
@@ -181,7 +196,36 @@ export function createWebPlatform(): Platform {
 
     storage: (name?: string) => createLocalStorageStorage(name ?? ''),
 
-    // openExternalEditor / updater / system (restart, exportLogs) —
-    // unsupported in a browser, omitted.
+    clipboard: {
+      writeText: async (text: string) => {
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch {
+          // Clipboard API unavailable / denied — silently no-op. UI surfaces
+          // its own failure state; the platform contract is best-effort.
+        }
+      },
+      readText: async () => {
+        try {
+          return await navigator.clipboard.readText();
+        } catch {
+          return '';
+        }
+      },
+    },
+
+    system: {
+      // Web delegates to the browser language; desktop hosts read the OS
+      // locale. Centralizing this here keeps `navigator` out of the UI.
+      getLocale: detectBrowserLocale,
+      onLocaleChanged: (handler: (locale: string | undefined) => void) => {
+        const onChange = () => handler(detectBrowserLocale());
+        window.addEventListener('languagechange', onChange);
+        return () => window.removeEventListener('languagechange', onChange);
+      },
+      // restart / exportLogs — unsupported in a browser, omitted.
+    },
+
+    // openExternalEditor / updater — unsupported in a browser, omitted.
   };
 }

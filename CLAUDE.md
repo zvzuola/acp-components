@@ -58,7 +58,7 @@ Platform Layer (orthogonal to the above): a `Platform` interface (defined in `@a
 
 **Critical rules**:
 - `@acp-components/core` has zero React dependency. It uses vanilla Zustand stores. React layer subscribes via `useSyncExternalStore`. Never add React imports to core.
-- `AcpClient`'s client-side callbacks are **only** `sessionUpdate` / `requestPermission` / `extMethod` / `extNotification`. Core does **not** implement ACP `readTextFile` / `writeTextFile` / `createTerminal` reverse calls — file/terminal capabilities were removed from core. File access is a UI-side capability consumed via `usePlatform()`; the terminal is not provided by the base at all.
+- `AcpClient`'s client-side callbacks are **only** `sessionUpdate` / `requestPermission` / `extMethod` / `extNotification`. File access is a UI-side capability consumed via `usePlatform()`.
 - `Platform` and `AcpContext` are orthogonal: `Platform`/`usePlatform()` for native capabilities, `AcpContext`/`useAcpContext()` for agent connection/session state. Agent transport is configured via `AgentConfig.transport` on `AcpProvider` and is **not** part of `Platform`.
 
 ### Multi-Agent & Multi-Workspace State Model
@@ -111,9 +111,9 @@ SessionUpdate dispatch mapping (in `provider.ts:setupSessionUpdateHandler`):
 | File | Role |
 |------|------|
 | `packages/core/src/provider.ts` | `createAcpProvider()` — multi-agent lifecycle orchestrator, session update dispatch, auto-refresh on workspace switch |
-| `packages/core/src/client/AcpClient.ts` | Per-agent wrapper around `ClientSideConnection`. Owns transport lifecycle, client-side callbacks (sessionUpdate/permission/extMethod/extNotification — **no** file/terminal), and ACP method calls |
+| `packages/core/src/client/AcpClient.ts` | Per-agent wrapper around `ClientSideConnection`. Owns transport lifecycle, client-side callbacks (sessionUpdate/permission/extMethod/extNotification), and ACP method calls |
 | `packages/core/src/store/acpStore.ts` | Global Zustand store: agents, workspaces (sessions per workspace), activeSessionId, pendingAuth |
-| `packages/core/src/store/sessionStore.ts` | Per-session Zustand store: messages, streaming, tool calls, plan, usage, config, commands (no terminal) |
+| `packages/core/src/store/sessionStore.ts` | Per-session Zustand store: messages, streaming, tool calls, plan, usage, config, commands |
 | `packages/core/src/store/fileTreeStore.ts` | Per-workspace Zustand store: file-tree state; reader injected from `Platform.readDirectory` |
 | `packages/core/src/actions/` | `sessions.ts`, `prompt.ts`, `permission.ts`, `fileTree.ts`, `extensions.ts` — imperative actions that take an explicit `AcpClient` arg. The React layer resolves the client for a session (via `useSessions`'s `getClientForSession` → `AcpContext.getClient(meta.agentId)`); core itself does no client routing |
 | `packages/core/src/types/index.ts` | All shared types: `AgentConfig`, `TransportConfig`, `WorkspaceState`, `AgentConnection`, `PermissionRequest`, plus Platform primitives (`PlatformKind`, `PlatformStorage`, `UpdaterState`, …) |
@@ -122,7 +122,7 @@ SessionUpdate dispatch mapping (in `provider.ts:setupSessionUpdateHandler`):
 | `packages/react/src/context/PlatformContext.tsx` | Sharded `Platform` interface (`fs?`/`dialogs?`/`storage`/`openExternalEditor?`/`updater?`/`system?`) + `PlatformContext` + `usePlatform()` — environment-agnostic native-capability contract (orthogonal to `AcpContext`) |
 | `packages/react/src/components/platform/` | `PlatformProvider` (injects Platform + auto-mounts file-tree/file-viewer drivers), `PlatformFileTreeAuto` (drives `fileTreeStore` from `platform.fs.readDirectory`/`watchFileTree`), `PlatformFileViewerAuto` (wires `platform.fs.readFileContent` + `platform.openExternalEditor` to `fileViewerStore`) |
 | `packages/react/src/hooks/` | All hooks wrapping `useSyncExternalStore` for acpStore/sessionStore/fileTreeStore subscriptions |
-| `packages/react/src/components/` | 15+ components, each in its own subdirectory (no `TerminalView` — terminal not provided by base) |
+| `packages/react/src/components/` | 15+ components, each in its own subdirectory |
 
 ### Permission Flow
 

@@ -145,8 +145,58 @@ export function createTauriPlatform(): Platform {
 
     storage: (name?: string) => createTauriStorage(name ?? ''),
 
-    // openExternalEditor / updater / system (restart, exportLogs) —
-    // interface-only, omitted. Wire them up when adopting tauri-plugin-shell /
-    // tauri-plugin-updater etc.
+    clipboard: {
+      // The webview exposes the Clipboard API; a native tauri-plugin-clipboard
+      // manager could back readImage/paste-history later, but plain text copy
+      // is well-served by the browser surface today.
+      writeText: async (text: string) => {
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch {
+          /* clipboard unavailable */
+        }
+      },
+      readText: async () => {
+        try {
+          return await navigator.clipboard.readText();
+        } catch {
+          return '';
+        }
+      },
+    },
+
+    system: {
+      // Locale mirrors the web fallback until a tauri locale plugin is wired
+      // in; the webview still reports the OS language via navigator.language.
+      getLocale: () => {
+        try {
+          return typeof navigator !== 'undefined' && navigator.language
+            ? navigator.language
+            : undefined;
+        } catch {
+          return undefined;
+        }
+      },
+      onLocaleChanged: (handler: (locale: string | undefined) => void) => {
+        const onChange = () => {
+          try {
+            handler(
+              typeof navigator !== 'undefined' && navigator.language
+                ? navigator.language
+                : undefined,
+            );
+          } catch {
+            handler(undefined);
+          }
+        };
+        window.addEventListener('languagechange', onChange);
+        return () => window.removeEventListener('languagechange', onChange);
+      },
+      // restart / exportLogs — interface-only, omitted (adopt tauri-plugin-*
+      // when needed).
+    },
+
+    // openExternalEditor / updater — interface-only, omitted. Wire them up
+    // when adopting tauri-plugin-shell / tauri-plugin-updater etc.
   };
 }

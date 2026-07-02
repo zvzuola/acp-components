@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { CopyOutlined, CheckOutlined, EditOutlined } from '@ant-design/icons';
 import { useI18n } from '../../i18n';
+import { usePlatform } from '../../context/PlatformContext';
 import styles from './user-message.module.scss';
 
 export interface UserMessageActionsProps {
@@ -11,6 +12,7 @@ export interface UserMessageActionsProps {
 export function UserMessageActions({ textContent, onEdit }: UserMessageActionsProps) {
   const [copied, setCopied] = useState(false);
   const { t } = useI18n();
+  const { clipboard } = usePlatform();
 
   useEffect(() => {
     if (!copied) return;
@@ -19,13 +21,16 @@ export function UserMessageActions({ textContent, onEdit }: UserMessageActionsPr
   }, [copied]);
 
   const handleCopy = useCallback(async () => {
+    // Delegated to the platform slice so hosts can back it with a native
+    // clipboard (e.g. tauri-plugin-clipboard-manager) instead of the browser
+    // API. Absent slice → no-op (the button stays a plain affordance).
     try {
-      await navigator.clipboard.writeText(textContent);
+      await clipboard?.writeText(textContent);
       setCopied(true);
     } catch {
-      // clipboard API unavailable, silently ignore
+      // clipboard write failed, silently ignore
     }
-  }, [textContent]);
+  }, [textContent, clipboard]);
 
   const handleEdit = useCallback(() => {
     onEdit(textContent);
