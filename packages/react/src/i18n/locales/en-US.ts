@@ -28,6 +28,16 @@ export const enUS = {
   'workbench.resizeSidebar': 'Resize sidebar',
   'workbench.resizePanel': 'Resize panel',
 
+  // SessionView
+  'sessionView.ariaLabel': 'Session view',
+  'sessionView.resizePanel': 'Resize side panel',
+  'sessionView.collapse': 'Collapse panel',
+  'sessionView.expand': 'Expand panel',
+  'sessionView.tabFiles': 'Files',
+  'sessionView.tabOpenedFiles': 'Opened',
+  'sessionView.closeTab': 'Close tab',
+  'sessionView.resizeFilesSplit': 'Resize opened files and file tree',
+
   // PermissionDialog
   'permission.ariaLabel': 'Permission required',
   'permission.title': 'Permission Required',
@@ -135,9 +145,5 @@ export const enUS = {
   'settings.language': 'Language',
 
   // Sidebar
-  'sidebar.sessionsTitle': 'Sessions',
-  'sidebar.filesTitle': 'Files',
-  'sidebar.backToSessions': 'Back to sessions',
-  'sidebar.showFiles': 'Show files',
   'sidebar.noWorkspace': 'Select a workspace',
 };

@@ -6,8 +6,14 @@ export { Workbench } from './components/workbench';
 export type { WorkbenchProps } from './components/workbench/Workbench';
 export { ResizeHandle } from './components/workbench';
 export type { ResizeHandleProps } from './components/workbench/ResizeHandle';
+export { SessionView } from './components/session-view';
+export type {
+  SessionViewProps,
+  SessionViewTab,
+  SessionViewTabId,
+} from './components/session-view/SessionView';
+export { SESSION_VIEW_TAB_FILES } from './components/session-view/SessionView';
 export { SessionList } from './components/session-list';
-export type { SessionListProps } from './components/session-list/SessionList';
 export { Sidebar } from './components/sidebar';
 export type { SidebarProps } from './components/sidebar/Sidebar';
 export { Markdown } from './components/markdown';

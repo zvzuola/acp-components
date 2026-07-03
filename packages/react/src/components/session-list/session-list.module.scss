@@ -298,10 +298,6 @@
 
   &:hover {
     background: var(--acp-color-bg-hover);
-
-    .acp-session-workspace-header__files-btn {
-      opacity: 1;
-    }
   }
 
   &:active {
@@ -321,30 +317,6 @@
     align-items: center;
     gap: 4px;
     flex-shrink: 0;
-  }
-
-  &__files-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    border: none;
-    border-radius: var(--acp-radius-xs);
-    background: transparent;
-    color: var(--acp-color-text-muted);
-    font-size: 12px;
-    cursor: pointer;
-    opacity: 0;
-    transition: opacity var(--acp-duration-fast) var(--acp-ease-out),
-                color var(--acp-duration-fast) var(--acp-ease-out),
-                background var(--acp-duration-fast) var(--acp-ease-out);
-
-    &:hover {
-      color: var(--acp-color-accent);
-      background: var(--acp-color-accent-muted);
-      opacity: 1;
-    }
   }
 
   &__folder {

@@ -39,14 +39,12 @@ self.MonacoEnvironment = {
 import { AcpProvider } from '@acp-components/react';
 import { Workbench } from '@acp-components/react';
 import { Sidebar } from '@acp-components/react';
-import { ChatView } from '@acp-components/react';
+import { SessionView } from '@acp-components/react';
 import { PermissionDialog } from '@acp-components/react';
 import { LoginDialog } from '@acp-components/react';
-import { FileViewer } from '@acp-components/react';
 import { I18nProvider } from '@acp-components/react';
 import { PlatformProvider } from '@acp-components/react';
 import { useAcpStore } from '@acp-components/react';
-import { useFileViewer } from '@acp-components/react';
 import { createWebPlatform } from './webPlatform';
 
 // In web environments, stdio transport is unavailable (can't spawn child processes).
@@ -60,18 +58,15 @@ import { createWebPlatform } from './webPlatform';
 
 function AppInner() {
   const activeSessionId = useAcpStore((s) => s.activeSessionId);
-  // Show the panel only when at least one file is open. File-open state lives
-  // in the global fileViewer store; we subscribe via the hook.
+  // SessionView composes the chat column (left) with a collapsible tabbed side
+  // panel (right) — built-in Files + Opened Files tabs, plus any injected tabs.
   // Workspace load/save is driven automatically by <PlatformWorkspacesAuto>
   // (mounted inside <PlatformProvider>).
-  const { openFiles } = useFileViewer();
-
   return (
     <>
       <Workbench
         sidebar={<Sidebar />}
-        main={<ChatView sessionId={activeSessionId} />}
-        panel={openFiles.length > 0 ? <FileViewer /> : undefined}
+        main={<SessionView sessionId={activeSessionId} />}
       />
       <PermissionDialog sessionId={activeSessionId} />
       <LoginDialog />

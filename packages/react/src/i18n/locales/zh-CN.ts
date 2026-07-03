@@ -28,6 +28,16 @@ export const zhCN = {
   'workbench.resizeSidebar': '调整侧边栏宽度',
   'workbench.resizePanel': '调整面板宽度',
 
+  // SessionView
+  'sessionView.ariaLabel': '会话视图',
+  'sessionView.resizePanel': '调整侧栏宽度',
+  'sessionView.collapse': '收起侧栏',
+  'sessionView.expand': '展开侧栏',
+  'sessionView.tabFiles': '文件',
+  'sessionView.tabOpenedFiles': '已打开',
+  'sessionView.closeTab': '关闭标签',
+  'sessionView.resizeFilesSplit': '调整已打开文件与文件树',
+
   // PermissionDialog
   'permission.ariaLabel': '需要授权',
   'permission.title': '需要授权',
@@ -135,9 +145,5 @@ export const zhCN = {
   'settings.language': '语言',
 
   // Sidebar
-  'sidebar.sessionsTitle': '会话',
-  'sidebar.filesTitle': '文件',
-  'sidebar.backToSessions': '返回会话',
-  'sidebar.showFiles': '显示文件',
   'sidebar.noWorkspace': '请选择工作区',
 };

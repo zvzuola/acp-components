@@ -1,0 +1,269 @@
+// =============================================================================
+// SessionView — two-column session layout (chat | collapsible tabbed panel)
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// Root container
+// ---------------------------------------------------------------------------
+.acp-session-view {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  background: var(--acp-color-bg-primary);
+  color: var(--acp-color-text-primary);
+  font-family: var(--acp-font-sans);
+  overflow: hidden;
+
+  // Collapsed: panel is unmounted; chat fills the width.
+  &--collapsed {
+    .acp-session-view__chat {
+      flex: 1 1 100%;
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Left column — chat
+// ---------------------------------------------------------------------------
+.acp-session-view__chat {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+// ---------------------------------------------------------------------------
+// Panel toggle button — floats at the top-right of the chat column
+// ---------------------------------------------------------------------------
+.acp-session-view__toggle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--acp-color-border-subtle);
+  border-radius: var(--acp-radius-sm);
+  background: var(--acp-color-bg-secondary);
+  color: var(--acp-color-text-secondary);
+  cursor: pointer;
+  transition:
+    background var(--acp-duration-fast) var(--acp-ease-out),
+    color var(--acp-duration-fast) var(--acp-ease-out),
+    border-color var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover {
+    background: var(--acp-color-bg-hover);
+    color: var(--acp-color-text-primary);
+    border-color: var(--acp-color-border-accent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--acp-color-accent);
+    outline-offset: 2px;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Right column — tabbed side panel
+// ---------------------------------------------------------------------------
+.acp-session-view__panel {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  // Match the chat column's primary canvas so the two columns read as one
+  // continuous surface; the ResizeHandle between them draws the divider.
+  background: var(--acp-color-bg-primary);
+  overflow: hidden;
+}
+
+// ---------------------------------------------------------------------------
+// Tab list
+// ---------------------------------------------------------------------------
+.acp-session-view__tabs {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: stretch;
+  min-height: 44px;
+  padding: 6px 8px 0;
+  gap: 2px;
+  border-bottom: 1px solid var(--acp-color-border-subtle);
+  background: var(--acp-color-bg-primary);
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  // Hide scrollbar on the tab strip while keeping wheel scroll.
+  &::-webkit-scrollbar {
+    height: 0;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Single tab
+// ---------------------------------------------------------------------------
+.acp-session-view__tab {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  max-width: 180px;
+  padding: 0 12px;
+  border: none;
+  // Top-only radius so an active/hover tab reads as a card connecting to the
+  // panel body below the strip's border.
+  border-radius: var(--acp-radius-sm) var(--acp-radius-sm) 0 0;
+  background: transparent;
+  color: var(--acp-color-text-secondary);
+  font-family: var(--acp-font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--acp-duration-fast) var(--acp-ease-out),
+    color var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover:not(&--disabled):not(&--active) {
+    background: var(--acp-color-bg-hover);
+    color: var(--acp-color-text-primary);
+  }
+
+  &:focus-visible {
+    outline: none;
+    background: var(--acp-color-bg-hover);
+    box-shadow: inset 0 -2px 0 var(--acp-color-accent);
+  }
+
+  // Active indicator
+  &--active {
+    color: var(--acp-color-text-primary);
+    background: var(--acp-color-bg-selected);
+    font-weight: 600;
+  }
+
+  &--disabled {
+    color: var(--acp-color-text-muted);
+    cursor: not-allowed;
+  }
+}
+
+.acp-session-view__tab-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  font-size: 13px;
+  color: var(--acp-color-text-muted);
+  flex-shrink: 0;
+}
+
+.acp-session-view__tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12.5px;
+}
+
+.acp-session-view__tab-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 2px;
+  border: none;
+  border-radius: var(--acp-radius-xs);
+  background: transparent;
+  color: var(--acp-color-text-muted);
+  font-size: 10px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background var(--acp-duration-fast) var(--acp-ease-out),
+    color var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover {
+    background: var(--acp-color-bg-hover);
+    color: var(--acp-color-text-primary);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Tab panel body
+// ---------------------------------------------------------------------------
+.acp-session-view__panel-body {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+
+  &:focus-visible {
+    outline: none;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Empty state
+// ---------------------------------------------------------------------------
+.acp-session-view__empty {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 12px;
+  color: var(--acp-color-text-muted);
+  font-size: 12px;
+  font-family: var(--acp-font-sans);
+  text-align: center;
+}
+
+// ---------------------------------------------------------------------------
+// Files tab — two-column body (opened files | file tree)
+// ---------------------------------------------------------------------------
+.acp-session-view__files-columns {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: row;
+  align-items: stretch;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.acp-session-view__files-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+
+  // Right column (file tree) absorbs the remaining width.
+  &:last-child {
+    flex: 1 1 0;
+  }
+}
+
+// Left column (opened files) — width is bound inline to the resizable value.
+.acp-session-view__files-col--opened {
+  flex: 0 0 auto;
+  border-right: none; // ResizeHandle draws the divider
+  background: var(--acp-color-bg-primary);
+}
