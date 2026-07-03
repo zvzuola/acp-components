@@ -41,8 +41,6 @@ export interface SessionViewTab {
 export interface SessionViewProps {
   /** Active session id — passed through to the built-in ChatView */
   sessionId: SessionId | null;
-  /** Override the file-open handler used by Files/Opened Files tabs */
-  onNavigateFile?: (path: string, line?: number | null) => void;
   /** Host-injected tabs (terminal, diff, etc.). Appear after the built-ins. */
   tabs?: SessionViewTab[];
   /** Controlled active tab id. Defaults to 'files'. */
@@ -169,7 +167,6 @@ function FilesTabBody({ cwd, onNavigate }: FilesTabBodyProps) {
 
 export function SessionView({
   sessionId,
-  onNavigateFile,
   tabs,
   activeTabId,
   onActiveTabChange,
@@ -184,8 +181,7 @@ export function SessionView({
 }: SessionViewProps) {
   const { t } = useI18n();
   const cwd = useActiveCwd(sessionId);
-  const { openFile: openFileAction } = useFileViewer();
-  const navigateFile = onNavigateFile ?? openFileAction;
+  const { openFile: navigateFile } = useFileViewer();
 
   // ── Panel expansion (controlled + default) ──────────────────────────
   const [internalOpen, setInternalOpen] = useState(true);
@@ -311,7 +307,7 @@ export function SessionView({
         >
           {isOpen ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />}
         </button>
-        <ChatView sessionId={sessionId} onNavigateFile={onNavigateFile} />
+        <ChatView sessionId={sessionId} onNavigateFile={navigateFile} />
       </div>
 
       {/* ── Right: collapsible tabbed panel ──────────────────────────── */}

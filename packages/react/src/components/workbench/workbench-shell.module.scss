@@ -1,0 +1,35 @@
+// =============================================================================
+// WorkbenchShell — composes Sidebar (nav + switchable body) with a main area
+// that swaps views based on the active nav item.
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// Main region wrapper — fills the Workbench main slot, lets the active view
+// manage its own scrolling.
+// ---------------------------------------------------------------------------
+.acp-workbench-shell__main {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--acp-color-bg-primary);
+}
+
+// ---------------------------------------------------------------------------
+// When SkillView is rendered in the main area (vs. the narrow sidebar), give
+// it a max-width reading column + comfortable padding so cards don't stretch
+// edge-to-edge on wide screens. The SessionView path needs no such wrapper
+// (it manages its own full-bleed two-column layout).
+// ---------------------------------------------------------------------------
+.acp-workbench-shell__main-skill-view {
+  flex: 1 1 0;
+  min-height: 0;
+  // SkillView already scrolls; constrain the card column for readability.
+  max-width: 680px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 8px 0 0;
+}

@@ -37,9 +37,7 @@ self.MonacoEnvironment = {
 };
 
 import { AcpProvider } from '@acp-components/react';
-import { Workbench } from '@acp-components/react';
-import { Sidebar } from '@acp-components/react';
-import { SessionView } from '@acp-components/react';
+import { WorkbenchShell } from '@acp-components/react';
 import { PermissionDialog } from '@acp-components/react';
 import { LoginDialog } from '@acp-components/react';
 import { I18nProvider } from '@acp-components/react';
@@ -56,18 +54,12 @@ import { createTauriPlatform } from './tauriPlatform';
 
 function AppInner() {
   const activeSessionId = useAcpStore((s) => s.activeSessionId);
-  // SessionView composes the chat column (left) with a collapsible tabbed side
-  // panel (right) — the built-in Files tab shows opened files + file tree in a
-  // resizable two-column layout. File-open state lives in the global
-  // fileViewer store, wired automatically by <PlatformProvider>.
-  // Workspace load/save is driven automatically by <PlatformWorkspacesAuto>
-  // (mounted inside <PlatformProvider>).
+  // WorkbenchShell drives the whole layout: the Sidebar (top nav buttons +
+  // switchable body + footer) on the left, and a main area that swaps views
+  // based on the active nav item (Sessions → SessionView, Skills → SkillView).
   return (
     <>
-      <Workbench
-        sidebar={<Sidebar />}
-        main={<SessionView sessionId={activeSessionId} />}
-      />
+      <WorkbenchShell sessionId={activeSessionId} />
       <PermissionDialog sessionId={activeSessionId} />
       <LoginDialog />
     </>

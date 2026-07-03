@@ -1,0 +1,255 @@
+// =============================================================================
+// SkillView — searchable list/grid of agent skills
+// Token-only; matches the Sidebar/SessionList visual language.
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// Root container
+// ---------------------------------------------------------------------------
+.acp-skill-view {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  font-family: var(--acp-font-sans);
+  color: var(--acp-color-text-primary);
+  background: transparent;
+}
+
+// ---------------------------------------------------------------------------
+// Header — title + search box
+// ---------------------------------------------------------------------------
+.acp-skill-view__header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 14px 10px;
+}
+
+.acp-skill-view__title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--acp-color-text-muted);
+  user-select: none;
+}
+
+.acp-skill-view__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  max-width: 160px;
+}
+
+.acp-skill-view__search-icon {
+  position: absolute;
+  left: 8px;
+  color: var(--acp-color-text-muted);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.acp-skill-view__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 28px;
+  padding: 0 8px 0 26px;
+  border: 1px solid var(--acp-color-border-subtle);
+  border-radius: var(--acp-radius-sm);
+  background: var(--acp-color-bg-input);
+  color: var(--acp-color-text-primary);
+  font-family: var(--acp-font-sans);
+  font-size: 12px;
+  outline: none;
+  transition:
+    border-color var(--acp-duration-fast) var(--acp-ease-out),
+    background var(--acp-duration-fast) var(--acp-ease-out);
+
+  &::placeholder {
+    color: var(--acp-color-text-muted);
+  }
+
+  &:focus {
+    border-color: var(--acp-color-border-accent);
+    background: var(--acp-color-bg-secondary);
+  }
+
+  // Hide the native search clear affordance — we manage state ourselves.
+  &::-webkit-search-cancel-button {
+    appearance: none;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Items — scrollable single-column list (constrained like SessionList)
+// ---------------------------------------------------------------------------
+.acp-skill-view__items {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 6px 8px;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--acp-color-text-muted);
+    border-radius: 3px;
+
+    &:hover {
+      background: var(--acp-color-text-secondary);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Empty state
+// ---------------------------------------------------------------------------
+.acp-skill-view__empty {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 12px;
+  color: var(--acp-color-text-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+// ---------------------------------------------------------------------------
+// Skill card
+// ---------------------------------------------------------------------------
+.acp-skill-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 8px 8px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--acp-radius-sm);
+  background: transparent;
+  color: var(--acp-color-text-primary);
+  font-family: var(--acp-font-sans);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--acp-duration-fast) var(--acp-ease-out),
+    border-color var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover:not(&--disabled) {
+    background: var(--acp-color-bg-hover);
+    border-color: var(--acp-color-border-subtle);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--acp-color-accent);
+    outline-offset: 2px;
+  }
+
+  &--disabled {
+    color: var(--acp-color-text-muted);
+    cursor: not-allowed;
+  }
+}
+
+.acp-skill-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--acp-radius-xs);
+  background: var(--acp-color-bg-tertiary);
+  color: var(--acp-color-text-secondary);
+  font-size: 13px;
+}
+
+.acp-skill-card__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.acp-skill-card__name {
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--acp-color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.acp-skill-card__desc {
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--acp-color-text-muted);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.acp-skill-card__group {
+  font-size: 10px;
+  color: var(--acp-color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+// ---------------------------------------------------------------------------
+// Pin affordance — star toggle, visible on hover (always visible when pinned)
+// ---------------------------------------------------------------------------
+.acp-skill-card__pin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin-left: 2px;
+  border: none;
+  border-radius: var(--acp-radius-xs);
+  background: transparent;
+  color: var(--acp-color-text-muted);
+  font-size: 11px;
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--acp-duration-fast) var(--acp-ease-out),
+    color var(--acp-duration-fast) var(--acp-ease-out),
+    background var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover {
+    background: var(--acp-color-bg-tertiary);
+    color: var(--acp-color-text-secondary);
+  }
+
+  // Reveal on card hover, or always show when pinned.
+  .acp-skill-card:hover &,
+  &--active {
+    opacity: 1;
+  }
+
+  &--active {
+    color: var(--acp-color-warning);
+  }
+}

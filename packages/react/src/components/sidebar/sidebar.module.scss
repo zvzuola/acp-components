@@ -1,20 +1,125 @@
 // =============================================================================
-// Sidebar — session list + settings container
-// (File tree now lives in <SessionView>'s side panel; sidebar is sessions only.)
+// Sidebar — top nav (icon+text, full-width) + switchable body + footer
 // =============================================================================
 
 .acp-sidebar {
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden;
 
   // -------------------------------------------------------------------------
-  // Sessions view
+  // Top nav — full-width icon+text buttons
   // -------------------------------------------------------------------------
-  &__sessions {
+  &__nav {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 8px 8px;
+    border-bottom: 1px solid var(--acp-color-border-subtle);
+  }
+
+  // -------------------------------------------------------------------------
+  // Body — holds the active view (SessionList / SkillView / injected), fills
+  // the remaining height and scrolls.
+  // -------------------------------------------------------------------------
+  &__body {
     flex: 1;
+    min-height: 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;
   }
+
+  // -------------------------------------------------------------------------
+  // Footer — SettingsMenu (keeps its own padding + top border)
+  // -------------------------------------------------------------------------
+  &__footer {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Nav button — full-width, icon + text, ghost → selected
+// ---------------------------------------------------------------------------
+.acp-sidebar__nav-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 0 10px;
+  height: 32px;
+  border: none;
+  border-radius: var(--acp-radius-sm);
+  background: transparent;
+  color: var(--acp-color-text-secondary);
+  font-family: var(--acp-font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--acp-duration-fast) var(--acp-ease-out),
+    color var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover:not(&--disabled):not(&--active) {
+    background: var(--acp-color-bg-hover);
+    color: var(--acp-color-text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--acp-color-accent);
+    outline-offset: 2px;
+  }
+
+  &--active {
+    background: var(--acp-color-bg-selected);
+    color: var(--acp-color-text-primary);
+
+    // Left accent rail signals selection without a heavy fill.
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      transform: translateY(-50%);
+      width: 2px;
+      height: 16px;
+      border-radius: 1px;
+      background: var(--acp-color-accent);
+    }
+  }
+
+  &--disabled {
+    color: var(--acp-color-text-muted);
+    cursor: not-allowed;
+  }
+}
+
+.acp-sidebar__nav-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  font-size: 14px;
+  color: var(--acp-color-text-muted);
+}
+
+.acp-sidebar__nav-btn--active .acp-sidebar__nav-btn-icon {
+  color: var(--acp-color-text-primary);
+}
+
+.acp-sidebar__nav-btn-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

@@ -28,6 +28,9 @@ export const enUS = {
   'workbench.resizeSidebar': 'Resize sidebar',
   'workbench.resizePanel': 'Resize panel',
 
+  // WorkbenchShell
+  'workbenchShell.mainAriaLabel': 'Main view',
+
   // SessionView
   'sessionView.ariaLabel': 'Session view',
   'sessionView.resizePanel': 'Resize side panel',
@@ -146,4 +149,17 @@ export const enUS = {
 
   // Sidebar
   'sidebar.noWorkspace': 'Select a workspace',
+  'sidebar.navAriaLabel': 'Sidebar navigation',
+  'sidebar.navSessions': 'Sessions',
+  'sidebar.navSkills': 'Skills',
+
+  // SkillView
+  'skillView.ariaLabel': 'Skills',
+  'skillView.title': 'Skills',
+  'skillView.searchPlaceholder': 'Search skills...',
+  'skillView.searchAriaLabel': 'Search skills',
+  'skillView.empty': 'No skills available',
+  'skillView.noMatch': 'No matching skills',
+  'skillView.pin': 'Pin skill',
+  'skillView.unpin': 'Unpin skill',
 };

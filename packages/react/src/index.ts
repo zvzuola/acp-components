@@ -2,8 +2,16 @@ import './styles.css';
 
 export { AcpProvider } from './components/workbench';
 export type { AcpProviderProps } from './components/workbench/AcpProvider';
-export { Workbench } from './components/workbench';
-export type { WorkbenchProps } from './components/workbench/Workbench';
+export { Workbench, WorkbenchShell } from './components/workbench';
+export type {
+  WorkbenchProps,
+  WorkbenchShellProps,
+  WorkbenchNavItem,
+} from './components/workbench';
+export {
+  SIDEBAR_VIEW_SESSIONS,
+  SIDEBAR_VIEW_SKILLS,
+} from './components/workbench/WorkbenchShell';
 export { ResizeHandle } from './components/workbench';
 export type { ResizeHandleProps } from './components/workbench/ResizeHandle';
 export { SessionView } from './components/session-view';
@@ -15,7 +23,13 @@ export type {
 export { SESSION_VIEW_TAB_FILES } from './components/session-view/SessionView';
 export { SessionList } from './components/session-list';
 export { Sidebar } from './components/sidebar';
-export type { SidebarProps } from './components/sidebar/Sidebar';
+export type {
+  SidebarProps,
+  SidebarViewId,
+  SidebarNavItem,
+} from './components/sidebar/Sidebar';
+export { SkillView } from './components/skill-view';
+export type { SkillViewProps, Skill } from './components/skill-view/SkillView';
 export { Markdown } from './components/markdown';
 export type { MarkdownProps } from './components/markdown/Markdown';
 export { ChatView, MessageBubble, ChatComposer, ToolCallCard, StreamingIndicator, ThoughtView, PlanView } from './components/chat-view';

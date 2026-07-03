@@ -28,6 +28,9 @@ export const zhCN = {
   'workbench.resizeSidebar': '调整侧边栏宽度',
   'workbench.resizePanel': '调整面板宽度',
 
+  // WorkbenchShell
+  'workbenchShell.mainAriaLabel': '主视图',
+
   // SessionView
   'sessionView.ariaLabel': '会话视图',
   'sessionView.resizePanel': '调整侧栏宽度',
@@ -146,4 +149,17 @@ export const zhCN = {
 
   // Sidebar
   'sidebar.noWorkspace': '请选择工作区',
+  'sidebar.navAriaLabel': '侧边栏导航',
+  'sidebar.navSessions': '会话',
+  'sidebar.navSkills': '技能',
+
+  // SkillView
+  'skillView.ariaLabel': '技能',
+  'skillView.title': '技能',
+  'skillView.searchPlaceholder': '搜索技能...',
+  'skillView.searchAriaLabel': '搜索技能',
+  'skillView.empty': '暂无可用技能',
+  'skillView.noMatch': '无匹配技能',
+  'skillView.pin': '置顶技能',
+  'skillView.unpin': '取消置顶',
 };
