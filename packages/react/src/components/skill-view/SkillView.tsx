@@ -1,5 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { ThunderboltOutlined, SearchOutlined, StarFilled } from '@ant-design/icons';
+import type { Skill as CoreSkill } from '@acp-components/core';
+import { useSkills } from '../../hooks/useSkills';
 import { useI18n } from '../../i18n';
 import styles from './skill-view.module.scss';
 
@@ -8,44 +10,21 @@ import styles from './skill-view.module.scss';
 // ---------------------------------------------------------------------------
 
 /**
- * A skill surfaced by the host (or fetched from an agent extension). The ACP
- * protocol does not yet define a skill primitive, so the shape is owned by the
- * UI layer; hosts populate it from whatever source they have.
+ * A skill surfaced by the host (or fetched from an agent extension). The pure
+ * data shape lives in `@acp-components/core` (`Skill`); the react layer extends
+ * it with an optional rendered `icon` node. Skill data is read from the global
+ * `skillStore` via `useSkills()` — hosts populate the catalog by calling
+ * `setSkills` / `addSkill` (the ACP protocol does not yet define a skill
+ * primitive, so the source is host-controlled).
  */
-export interface Skill {
-  /** Stable unique id */
-  id: string;
-  /** Display name */
-  name: string;
-  /** One-line description shown under the name */
-  description?: string;
-  /** Optional leading icon (defaults to a bolt) */
+export interface Skill extends CoreSkill {
+  /** Optional leading icon (defaults to a bolt). */
   icon?: React.ReactNode;
-  /** Optional source/group label, e.g. "built-in" / an agent id */
-  group?: string;
-  /** Mark as pinned / favorite — pinned skills sort first */
-  pinned?: boolean;
-  /** Disable the skill card (still visible, not activatable) */
-  disabled?: boolean;
 }
 
 export interface SkillViewProps {
-  /**
-   * Skills to render. When omitted, SkillView renders its built-in default
-   * catalog (so it is usable with no props at all). Pass an explicit array —
-   * including `[]` — to source skills from your own catalog or an agent
-   * extension.
-   */
-  skills?: Skill[];
   /** Called when a skill card is clicked (and not disabled). */
   onSelect?: (skill: Skill) => void;
-  /**
-   * Toggle pin on a skill. When provided, the toggle is fully controlled by
-   * the host (SkillView calls it and expects the `pinned` field on the next
-   * `skills` render to reflect the change). When omitted, SkillView manages
-   * pin state internally so the affordance still works.
-   */
-  onTogglePin?: (skill: Skill) => void;
   /** Override the empty-state body text. */
   emptyText?: string;
   /** Placeholder text for the search box. */
@@ -55,21 +34,6 @@ export interface SkillViewProps {
   /** Extra class on the root */
   className?: string;
 }
-
-// ---------------------------------------------------------------------------
-// Built-in skill catalog
-// ---------------------------------------------------------------------------
-// SkillView owns a small default catalog so it is usable without any data
-// wiring. The ACP protocol does not yet define a skill primitive; hosts that
-// have a real source (agent extension listing, host-side catalog) should pass
-// it via `skills`.
-
-const DEFAULT_SKILLS: Skill[] = [
-  { id: 'code-review', name: 'Code Review', description: 'Review the current diff for bugs and style.', group: 'built-in', pinned: true },
-  { id: 'commit', name: 'Commit', description: 'Stage and commit pending changes with a generated message.', group: 'built-in' },
-  { id: 'test', name: 'Generate Tests', description: 'Scaffold unit tests for the selected symbol.', group: 'built-in' },
-  { id: 'refactor', name: 'Refactor', description: 'Extract method / rename across the workspace.', group: 'built-in' },
-];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -169,9 +133,7 @@ const SkillCard = React.memo(function SkillCard({
 // ---------------------------------------------------------------------------
 
 export function SkillView({
-  skills,
   onSelect,
-  onTogglePin,
   emptyText,
   searchPlaceholder,
   showSearch = true,
@@ -180,22 +142,18 @@ export function SkillView({
   const { t } = useI18n();
   const [query, setQuery] = useState('');
 
-  // Fall back to the built-in catalog when the host supplies no skills, so the
-  // view is usable with no props at all.
-  const source = skills ?? DEFAULT_SKILLS;
+  // Skills are sourced from the global store — never hardcoded. Hosts populate
+  // the catalog via `setSkills` / `addSkill`; the ACP protocol has no skill
+  // primitive yet, so the source is host-controlled.
+  const { skills, togglePin } = useSkills();
 
-  // When no host-controlled `onTogglePin` is provided, track pin overrides
-  // locally so the pin affordance still works out of the box.
-  const [pinOverrides, setPinOverrides] = useState<Record<string, boolean>>({});
+  // Pin is always managed through the store (`togglePin` writes to `skillStore`),
+  // so we expose the affordance on every card as long as a skill exists.
   const handleTogglePin = useCallback(
     (skill: Skill) => {
-      if (onTogglePin) {
-        onTogglePin(skill);
-        return;
-      }
-      setPinOverrides((prev) => ({ ...prev, [skill.id]: !prev[skill.id] }));
+      togglePin(skill.id);
     },
-    [onTogglePin],
+    [togglePin],
   );
 
   const handleSearch = useCallback(
@@ -205,16 +163,13 @@ export function SkillView({
 
   // Pinned first, then alphabetical by name; filtered by the search query.
   const visible = useMemo(() => {
-    const withPins = source.map((s) =>
-      pinOverrides[s.id] !== undefined ? { ...s, pinned: pinOverrides[s.id] } : s,
-    );
-    const filtered = withPins.filter((s) => matchesQuery(s, query));
+    const filtered = skills.filter((s) => matchesQuery(s, query));
     filtered.sort((a, b) => {
       if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
       return a.name.localeCompare(b.name);
     });
     return filtered;
-  }, [source, pinOverrides, query]);
+  }, [skills, query]);
 
   const rootCls = [styles.acpSkillView, className || ''].filter(Boolean).join(' ');
 
@@ -248,7 +203,7 @@ export function SkillView({
               key={skill.id}
               skill={skill}
               onSelect={onSelect}
-              onTogglePin={onTogglePin ? onTogglePin : handleTogglePin}
+              onTogglePin={handleTogglePin}
             />
           ))
         )}

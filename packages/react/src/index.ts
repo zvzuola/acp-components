@@ -84,6 +84,8 @@ export { useExtensions } from './hooks/useExtensions';
 export { useFileTree } from './hooks/useFileTree';
 export { useFileViewer } from './hooks/useFileViewer';
 export type { OpenFileEntry, UseFileViewerReturn } from './hooks/useFileViewer';
+export { useSkills } from './hooks/useSkills';
+export type { UseSkillsReturn } from './hooks/useSkills';
 export { loadWorkspaces, saveWorkspaces } from './components/platform/PlatformWorkspacesAuto';
 export { useResizable } from './hooks/useResizable';
 export type { UseResizableOptions, UseResizableReturn } from './hooks/useResizable';

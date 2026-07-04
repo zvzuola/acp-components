@@ -13,6 +13,8 @@ export type {
   FileContentReader,
   FileOpenDelegate,
 } from './store/fileViewerStore';
+export { skillStore } from './store/skillStore';
+export type { Skill, SkillStoreState } from './store/skillStore';
 export { createAcpProvider } from './provider';
 export type { MultiAgentProviderOptions, MultiAgentProviderInstance } from './provider';
 export { createSession, loadSession, selectSession, closeSession, deleteSession, forkSession, refreshSessions, loadMoreSessions, setSessionConfigOption, authenticate, authenticateWithEnv } from './actions/sessions';
@@ -21,6 +23,7 @@ export { respondToPermission, denyPermission } from './actions/permission';
 export { callExtMethod, sendExtNotification } from './actions/extensions';
 export { loadFileTree, expandDirectory, collapseDirectory, refreshFileTree, refreshNode } from './actions/fileTree';
 export { openFile, closeFile, setActiveFile, clearRevealLine, detectLanguage } from './actions/fileViewer';
+export { setSkills, addSkill, updateSkill, removeSkill, toggleSkillPin, clearSkills } from './actions/skills';
 export type {
   ConnectionStatus,
   Session,

@@ -59,7 +59,8 @@ function AppInner() {
   // WorkbenchShell drives the whole layout: the Sidebar (top nav buttons +
   // switchable body + footer) on the left, and a main area that swaps views
   // based on the active nav item (Sessions → SessionView, Skills → SkillView).
-  // SkillView owns its own skill catalog, so no skill props are passed here.
+  // SkillView reads its catalog from the global `skillStore` (via `useSkills`),
+  // so no skill props are passed here. Populate the store with `setSkills`.
   return (
     <>
       <WorkbenchShell sessionId={activeSessionId} />
