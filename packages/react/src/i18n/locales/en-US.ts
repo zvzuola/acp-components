@@ -60,6 +60,8 @@ export const enUS = {
   'sessionList.statusNeedsAction': 'Needs action',
   'sessionList.workspaceEmpty': 'No sessions in this workspace',
   'sessionList.addWorkspace': 'Add workspace',
+  'sessionList.workspaceActions': 'Workspace actions',
+  'sessionList.removeWorkspace': 'Remove workspace',
   'sessionList.addWorkspacePlaceholder': 'Enter workspace path',
   'sessionList.addWorkspaceAriaLabel': 'Workspace directory path',
 

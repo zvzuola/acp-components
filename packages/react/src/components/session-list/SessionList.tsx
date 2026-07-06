@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { CloseOutlined, ForkOutlined, MessageOutlined, FolderOutlined, PlusOutlined, RightOutlined } from '@ant-design/icons';
+import { CloseOutlined, DeleteOutlined, ForkOutlined, MessageOutlined, FolderOutlined, MoreOutlined, PlusOutlined, RightOutlined } from '@ant-design/icons';
 import { useStore } from 'zustand/react';
 import { sessionStore } from '@acp-components/core';
 import { useSessions } from '../../hooks/useSessions';
@@ -7,6 +7,7 @@ import { useAcpStore } from '../../hooks/useAcpStore';
 import { useWorkspaces } from '../../hooks/useWorkspaces';
 import { usePlatform } from '../../context/PlatformContext';
 import { useI18n } from '../../i18n';
+import { Dropdown } from '../dropdown';
 import type { SessionMeta, WorkspaceState } from '@acp-components/core';
 import type { SessionId } from '@acp-components/core';
 import styles from './session-list.module.scss';
@@ -244,6 +245,7 @@ function WorkspaceGroup({ cwd, workspace, isWorkspaceActive, onSelectSession }: 
   onSelectSession?: (session: SessionMeta) => void;
 }) {
   const { t } = useI18n();
+  const { removeWorkspace } = useWorkspaces();
   const agents = useAcpStore((s) => s.agents);
   const [collapsed, setCollapsed] = useState(false);
   const toggleCollapsed = useCallback(() => setCollapsed((v) => !v), []);
@@ -264,6 +266,13 @@ function WorkspaceGroup({ cwd, workspace, isWorkspaceActive, onSelectSession }: 
 
   const agentList = Array.from(agents.values());
 
+  const handleRemove = useCallback(() => {
+    // Matches the SessionItem delete pattern: remove directly. A native
+    // confirm dialog is not part of the Platform Dialogs slice today; if the
+    // host grows one, wire it here before calling removeWorkspace(cwd).
+    removeWorkspace(cwd);
+  }, [removeWorkspace, cwd]);
+
   return (
     <div className={`${styles.acpSessionWorkspaceGroup}${isWorkspaceActive ? ` ${styles.acpSessionWorkspaceGroupActive}` : ''}`}>
       <div
@@ -282,6 +291,30 @@ function WorkspaceGroup({ cwd, workspace, isWorkspaceActive, onSelectSession }: 
           {sessionCount > 0 && (
             <span className={styles.acpSessionWorkspaceHeaderBadge}>{sessionCount}</span>
           )}
+          {/* The wrapper stops click propagation so opening the menu does not
+              also toggle the workspace collapse (the trigger's onClick is
+              swapped in by Dropdown.Trigger via cloneElement, so the stop must
+              live on an ancestor). */}
+          <span className={styles.acpSessionWorkspaceHeaderMoreWrap} onClick={(e) => e.stopPropagation()}>
+            <Dropdown placement="bottom-end">
+              <Dropdown.Trigger asChild>
+                <button
+                  className={styles.acpSessionWorkspaceHeaderMore}
+                  aria-label={t('sessionList.workspaceActions')}
+                  title={t('sessionList.workspaceActions')}
+                >
+                  <MoreOutlined />
+                </button>
+              </Dropdown.Trigger>
+              <Dropdown.Content width={180}>
+                <Dropdown.Item
+                  icon={<DeleteOutlined />}
+                  label={t('sessionList.removeWorkspace')}
+                  onClick={handleRemove}
+                />
+              </Dropdown.Content>
+            </Dropdown>
+          </span>
         </div>
       </div>
       {!collapsed && (

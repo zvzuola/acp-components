@@ -60,6 +60,8 @@ export const zhCN = {
   'sessionList.statusNeedsAction': '待操作',
   'sessionList.workspaceEmpty': '此工作区暂无会话',
   'sessionList.addWorkspace': '添加工作区',
+  'sessionList.workspaceActions': '工作区操作',
+  'sessionList.removeWorkspace': '移除工作区',
   'sessionList.addWorkspacePlaceholder': '请输入工作区路径',
   'sessionList.addWorkspaceAriaLabel': '工作区目录路径',
 

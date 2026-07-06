@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { acpStore } from '@acp-components/core';
 import type { PlatformStorage } from '@acp-components/core';
 import { usePlatform } from '../../context/PlatformContext';
@@ -41,10 +41,14 @@ export function PlatformWorkspacesAuto() {
   const { storage } = usePlatform();
   const workspaces = useAcpStore((s) => s.workspaces);
 
-  // Stable ref to the storage instance for the logical name so effect deps
-  // don't churn if storage() returns a fresh object each call. (Hosts typically
-  // memoize, but we don't rely on it.)
-  const workspacesStorage = storage('workspaces');
+  // Stable ref to the storage instance for the logical name. Memoized on the
+  // `storage` function identity (a stable method on the Platform object) so the
+  // load effect runs only once on mount. Without this memo, hosts whose
+  // `storage()` returns a fresh object each call (e.g. `createWebPlatform`)
+  // would retrigger the load effect every render — re-hydrating from storage
+  // and racing the save effect, which can resurrect a workspace the user just
+  // removed (load reads stale storage before save flushes the deletion).
+  const workspacesStorage = useMemo(() => storage('workspaces'), [storage]);
 
   const initialized = useRef(false);
   const lastSavedKeys = useRef<string>('');

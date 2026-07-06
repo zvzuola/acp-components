@@ -298,6 +298,10 @@
 
   &:hover {
     background: var(--acp-color-bg-hover);
+
+    .acp-session-workspace-header__more {
+      opacity: 1;
+    }
   }
 
   &:active {
@@ -351,6 +355,36 @@
     justify-content: center;
     line-height: 1;
     margin-left: 4px;
+  }
+
+  &__more-wrap {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  &__more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border: none;
+    border-radius: var(--acp-radius-xs);
+    background: transparent;
+    color: var(--acp-color-text-muted);
+    font-size: 14px;
+    cursor: pointer;
+    opacity: 0;
+    flex-shrink: 0;
+    transition: opacity var(--acp-duration-fast) var(--acp-ease-out),
+                color var(--acp-duration-fast) var(--acp-ease-out),
+                background var(--acp-duration-fast) var(--acp-ease-out);
+
+    &:hover {
+      color: var(--acp-color-text-primary);
+      background: var(--acp-color-bg-tertiary);
+    }
   }
 }
 
