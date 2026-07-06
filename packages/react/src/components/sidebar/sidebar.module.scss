@@ -6,7 +6,6 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow: hidden;
 
   // -------------------------------------------------------------------------
   // Top nav — full-width icon+text buttons
@@ -80,19 +79,6 @@
   &--active {
     background: var(--acp-color-bg-selected);
     color: var(--acp-color-text-primary);
-
-    // Left accent rail signals selection without a heavy fill.
-    &::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 0;
-      transform: translateY(-50%);
-      width: 2px;
-      height: 16px;
-      border-radius: 1px;
-      background: var(--acp-color-accent);
-    }
   }
 
   &--disabled {

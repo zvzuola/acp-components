@@ -152,6 +152,23 @@ export const zhCN = {
   'sidebar.navAriaLabel': '侧边栏导航',
   'sidebar.navSessions': '会话',
   'sidebar.navSkills': '技能',
+  'sidebar.navNewSession': '新建会话',
+
+  // NewSessionView
+  'newSession.ariaLabel': '新建会话',
+  'newSession.title': '今天能帮你做什么？',
+  'newSession.subtitle': '开始一段新对话',
+  'newSession.placeholder': '输入问题…（Enter 发送，Shift+Enter 换行）',
+  'newSession.send': '发送',
+  'newSession.sendAriaLabel': '发送消息',
+  'newSession.creating': '创建中…',
+  'newSession.selectWorkspace': '工作区',
+  'newSession.selectAgent': '智能体',
+  'newSession.noWorkspaces': '请先添加工作区',
+  'newSession.noAgents': '正在连接智能体…',
+  'newSession.pickFolder': '选择文件夹…',
+  'newSession.selectModel': '模型',
+  'newSession.selectMode': '模式',
 
   // SkillView
   'skillView.ariaLabel': '技能',

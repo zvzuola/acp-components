@@ -3,7 +3,8 @@ import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { useSessionMessages, useSessionIsStreaming, useSessionPlan, useSessionAvailableCommands } from '../../hooks/useSession';
 import { useAcpStore } from '../../hooks/useAcpStore';
 import { useFileViewer } from '../../hooks/useFileViewer';
-import type { SessionId } from '@acp-components/core';
+import { usePrompt } from '../../hooks/usePrompt';
+import type { SessionId, ContentBlock, PromptCapabilities } from '@acp-components/core';
 import type { Message } from '@acp-components/core';
 import { MessageBubble } from './MessageBubble';
 import { UserMessage } from './UserMessage';
@@ -135,6 +136,18 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
   const isStreaming = useSessionIsStreaming(sessionId);
   const plan = useSessionPlan(sessionId);
   const availableCommands = useSessionAvailableCommands(sessionId);
+  const { send, cancel } = usePrompt(sessionId);
+  const promptCapabilities = useAcpStore((s) => {
+    if (!sessionId) return undefined;
+    for (const [, ws] of s.workspaces) {
+      const meta = ws.sessions.get(sessionId);
+      if (meta) {
+        const agent = s.agents.get(meta.agentId);
+        return agent?.capabilities?.promptCapabilities;
+      }
+    }
+    return undefined;
+  }) as PromptCapabilities | undefined;
   const { openFile: openFileAction } = useFileViewer();
   // Host override takes precedence; otherwise route to the global file viewer.
   const navigateFile = onNavigateFile ?? openFileAction;
@@ -161,7 +174,7 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
   // chunk. Cancelled if we return to bottom within the window.
   const showBtnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [editText, setEditText] = useState<string | undefined>(undefined);
+  const [composerValue, setComposerValue] = useState('');
 
   const rounds = useRounds(messages, sessionId);
 
@@ -171,8 +184,31 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
   roundsLengthRef.current = rounds.length;
 
   const handleUserMessageEdit = useCallback((text: string) => {
-    setEditText(text);
+    setComposerValue(text);
+    // Focus the composer so the user can edit immediately.
+    setTimeout(() => {
+      const ta = window.document.querySelector<HTMLTextAreaElement>(
+        `.${styles.acpChatView} textarea`,
+      );
+      if (ta) {
+        ta.focus();
+        ta.setSelectionRange(text.length, text.length);
+      }
+    }, 0);
   }, []);
+
+  const handleComposerSend = useCallback(
+    async (blocks: ContentBlock[]) => {
+      if (!sessionId) return;
+      setComposerValue('');
+      await send(blocks);
+    },
+    [sessionId, send],
+  );
+
+  const handleComposerCancel = useCallback(() => {
+    void cancel();
+  }, [cancel]);
 
   // Listen for user-initiated scroll events (wheel / touch) to detect when
   // the user explicitly scrolls up — only then do we stop auto-following.
@@ -358,11 +394,14 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
           <PlanView entries={plan} isStreaming={isStreaming} />
         )}
         <ChatComposer
-          sessionId={sessionId}
+          value={composerValue}
+          onChange={setComposerValue}
+          onSend={handleComposerSend}
+          onCancel={handleComposerCancel}
           isStreaming={isStreaming}
+          disabled={!sessionId}
+          promptCapabilities={promptCapabilities}
           availableCommands={availableCommands}
-          editText={editText}
-          onEditTextConsumed={() => setEditText(undefined)}
         />
         <div className={styles.acpChatFooter}>
           <SessionConfigPanel sessionId={sessionId} />

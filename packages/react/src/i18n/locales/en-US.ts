@@ -152,6 +152,23 @@ export const enUS = {
   'sidebar.navAriaLabel': 'Sidebar navigation',
   'sidebar.navSessions': 'Sessions',
   'sidebar.navSkills': 'Skills',
+  'sidebar.navNewSession': 'New session',
+
+  // NewSessionView
+  'newSession.ariaLabel': 'New session',
+  'newSession.title': 'How can I help today?',
+  'newSession.subtitle': 'Start a new conversation',
+  'newSession.placeholder': 'Ask anything… (Enter to send, Shift+Enter for a new line)',
+  'newSession.send': 'Send',
+  'newSession.sendAriaLabel': 'Send message',
+  'newSession.creating': 'Creating…',
+  'newSession.selectWorkspace': 'Workspace',
+  'newSession.selectAgent': 'Agent',
+  'newSession.noWorkspaces': 'Add a workspace to get started',
+  'newSession.noAgents': 'Connecting to agents…',
+  'newSession.pickFolder': 'Choose a folder…',
+  'newSession.selectModel': 'Model',
+  'newSession.selectMode': 'Mode',
 
   // SkillView
   'skillView.ariaLabel': 'Skills',

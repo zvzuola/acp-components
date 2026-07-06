@@ -1,8 +1,26 @@
-import type { SessionId } from '@agentclientprotocol/sdk';
+import type { SessionId, SessionConfigOption } from '@agentclientprotocol/sdk';
 import type { AcpClient } from '../client/AcpClient';
 import { acpStore, findWorkspaceBySession } from '../store/acpStore';
 import { sessionStore } from '../store/sessionStore';
 import type { SessionMeta } from '../types';
+
+/**
+ * Cache the most recently observed `configOptions` on the owning agent so
+ * UI surfaces without a sessionId yet (e.g. NewSessionView) can render
+ * model/mode selectors. No-op if the agent is unknown or the payload empty.
+ */
+function cacheAgentConfigOptions(agentId: string, configOptions: SessionConfigOption[] | null | undefined): void {
+  if (!configOptions) return;
+  acpStore.getState().updateAgent(agentId, { configOptions });
+}
+
+/** Look up the agentId owning a given session (across all workspaces). */
+function agentIdForSession(sessionId: SessionId): string | undefined {
+  const { workspaces } = acpStore.getState();
+  const cwd = findWorkspaceBySession(workspaces, sessionId);
+  if (!cwd) return undefined;
+  return workspaces.get(cwd)?.sessions.get(sessionId)?.agentId;
+}
 
 export async function createSession(client: AcpClient, agentId: string, cwd: string): Promise<SessionId> {
   const res = await client.newSession(cwd);
@@ -12,6 +30,7 @@ export async function createSession(client: AcpClient, agentId: string, cwd: str
   if (res.configOptions) {
     sessionStore.getState().setConfigOptions(res.sessionId, res.configOptions);
   }
+  cacheAgentConfigOptions(agentId, res.configOptions);
   return res.sessionId;
 }
 
@@ -39,6 +58,8 @@ export async function loadSession(client: AcpClient, sessionId: SessionId, cwd: 
   if (res.configOptions) {
     sessionStore.getState().setConfigOptions(sessionId, res.configOptions);
   }
+  const agentId = agentIdForSession(sessionId);
+  if (agentId) cacheAgentConfigOptions(agentId, res.configOptions);
   acpStore.getState().updateSession(sessionId, { loaded: true });
 }
 
@@ -93,6 +114,8 @@ export async function setSessionConfigOption(
   try {
     const res = await client.setSessionConfigOption(sessionId, configId, value);
     sessionStore.getState().setConfigOptions(sessionId, res.configOptions);
+    const agentId = agentIdForSession(sessionId);
+    if (agentId) cacheAgentConfigOptions(agentId, res.configOptions);
   } catch {
     if (prev) {
       sessionStore.getState().setConfigOptions(sessionId, prev);

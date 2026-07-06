@@ -88,6 +88,14 @@ export interface AgentConnection {
   agentInfo: Implementation | null;
   capabilities: AgentCapabilities | null;
   authMethods: AuthMethod[];
+  /**
+   * Agent-level cache of the most recently observed `configOptions`
+   * (from NewSessionResponse / LoadSessionResponse / set_config_option).
+   * Lets UI surfaces that don't yet have a sessionId (e.g. NewSessionView)
+   * render model/mode selectors for this agent. May be empty before any
+   * session has ever been created.
+   */
+  configOptions?: SessionConfigOption[];
 }
 
 export interface WorkspaceState {

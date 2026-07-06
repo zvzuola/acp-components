@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import React, { useCallback, useEffect, useRef, useMemo, useState } from 'react';
 import {
   FileTextOutlined,
   CloseOutlined,
@@ -6,25 +6,56 @@ import {
   PauseOutlined,
   ArrowUpOutlined,
 } from '@ant-design/icons';
-import { usePrompt } from '../../hooks/usePrompt';
-import { useAcpStore } from '../../hooks/useAcpStore';
-import type { SessionId, ContentBlock, AvailableCommand, PromptCapabilities } from '@acp-components/core';
+import type { ContentBlock, AvailableCommand, PromptCapabilities } from '@acp-components/core';
 import { CommandPalette } from '../command-palette';
 import { useI18n } from '../../i18n';
 import styles from './chat-composer.module.scss';
 
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+/**
+ * Pure presentational composer. Owns only attachment state + the slash-command
+ * palette; the text value is controlled by the caller, and sending / cancelling
+ * is delegated entirely to {@link ChatComposerProps.onSend} /
+ * {@link ChatComposerProps.onCancel}. The component never touches the prompt
+ * action or the acp store — that wiring lives in the host (ChatView,
+ * NewSessionView, …).
+ */
 export interface ChatComposerProps {
-  sessionId: SessionId | null;
+  /** Controlled text value. */
+  value: string;
+  /** Called on every text change. */
+  onChange: (value: string) => void;
+  /**
+   * Send the assembled content blocks (text + attached files, already shaped
+   * per `promptCapabilities`). The composer clears its attachments on send;
+   * the caller is responsible for clearing the text value (via `onChange`).
+   */
+  onSend: (blocks: ContentBlock[]) => void | Promise<void>;
+  /** Called when the cancel button is clicked (shown while `isStreaming`). */
+  onCancel?: () => void;
+  /** Show the cancel button instead of send (agent is generating). */
   isStreaming: boolean;
+  /** Disable the whole composer (e.g. no session yet). */
+  disabled?: boolean;
+  /** Override the textarea placeholder. */
+  placeholder?: string;
+  /** Drives attachment content-block shape (image / resource / link). */
+  promptCapabilities?: PromptCapabilities;
+  /** Slash-command catalog; when empty the palette never opens. */
   availableCommands?: AvailableCommand[];
-  editText?: string;
-  onEditTextConsumed?: () => void;
 }
 
 interface AttachedFile {
   file: File;
   previewUrl: string | null;
 }
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function getCommandQuery(value: string, cursorPos: number): { query: string; slashIndex: number } | null {
   const beforeCursor = value.slice(0, cursorPos);
@@ -105,22 +136,23 @@ async function buildContentBlocks(
   return blocks;
 }
 
-export function ChatComposer({ sessionId, isStreaming, availableCommands, editText, onEditTextConsumed }: ChatComposerProps) {
-  const [value, setValue] = useState('');
+// ---------------------------------------------------------------------------
+// ChatComposer
+// ---------------------------------------------------------------------------
+
+export function ChatComposer({
+  value,
+  onChange,
+  onSend,
+  onCancel,
+  isStreaming,
+  disabled = false,
+  placeholder,
+  promptCapabilities,
+  availableCommands,
+}: ChatComposerProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
-  const { send, cancel } = usePrompt(sessionId);
-  const promptCapabilities = useAcpStore((s) => {
-    if (!sessionId) return undefined;
-    for (const [, ws] of s.workspaces) {
-      const meta = ws.sessions.get(sessionId);
-      if (meta) {
-        const agent = s.agents.get(meta.agentId);
-        return agent?.capabilities?.promptCapabilities;
-      }
-    }
-    return undefined;
-  });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useI18n();
@@ -158,7 +190,7 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands, editTe
       const after = value.slice(cursorPos);
       const insertion = `/${cmd.name} `;
       const newValue = before + insertion + after;
-      setValue(newValue);
+      onChange(newValue);
       setActiveIndex(0);
       setPaletteSuppressed(true);
       const cursorTarget = before.length + insertion.length;
@@ -170,18 +202,17 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands, editTe
         }
       }, 0);
     },
-    [value, commandState]
+    [value, commandState, onChange]
   );
 
   const sendText = useCallback(
     async (text: string) => {
-      if ((!text.trim() && attachedFiles.length === 0) || !sessionId || isStreaming) return;
-      setValue('');
+      if ((!text.trim() && attachedFiles.length === 0) || isStreaming || disabled) return;
       const blocks = await buildContentBlocks(text, attachedFiles, promptCapabilities);
       setAttachedFiles([]);
-      await send(blocks);
+      await onSend(blocks);
     },
-    [sessionId, isStreaming, attachedFiles, send, promptCapabilities]
+    [isStreaming, disabled, attachedFiles, onSend, promptCapabilities]
   );
 
   const handleSend = useCallback(async () => {
@@ -246,10 +277,6 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands, editTe
     [showPalette, filteredCommands, activeIndex, selectCommand, selectAndSendCommand, closePalette, handleSend]
   );
 
-  const handleCancel = useCallback(() => {
-    cancel();
-  }, [cancel]);
-
   const handleAttachClick = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
@@ -295,21 +322,8 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands, editTe
     }
   }
 
-  const canSend = (value.trim().length > 0 || attachedFiles.length > 0) && !!sessionId;
-
-  useEffect(() => {
-    if (editText == null) return;
-    setValue(editText);
-    onEditTextConsumed?.();
-    setTimeout(() => {
-      const ta = textareaRef.current;
-      if (ta) {
-        ta.focus();
-        ta.setSelectionRange(editText.length, editText.length);
-      }
-    }, 0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editText]);
+  const canSend =
+    (value.trim().length > 0 || attachedFiles.length > 0) && !disabled && !isStreaming;
 
   return (
     <div className={styles.acpChatComposer}>
@@ -352,17 +366,17 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands, editTe
           <textarea
             ref={textareaRef}
             className={styles.acpChatComposerInput}
-            placeholder={t('composer.placeholder')}
+            placeholder={placeholder ?? t('composer.placeholder')}
             value={value}
             onChange={(e) => {
-              setValue(e.target.value);
+              onChange(e.target.value);
               setActiveIndex(0);
               setPaletteSuppressed(false);
             }}
             onKeyDown={handleKeyDown}
             onBlur={() => showPalette && closePalette()}
             rows={1}
-            disabled={!sessionId}
+            disabled={disabled}
             aria-label={t('composer.ariaLabel')}
           />
           <div className={styles.acpChatComposerActions}>
@@ -376,7 +390,7 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands, editTe
             <button
               className={styles.acpChatComposerAttachBtn}
               onClick={handleAttachClick}
-              disabled={!sessionId}
+              disabled={disabled}
               aria-label={t('composer.attachFileAriaLabel')}
               title={t('composer.attachFile')}
             >
@@ -385,7 +399,8 @@ export function ChatComposer({ sessionId, isStreaming, availableCommands, editTe
             {isStreaming ? (
               <button
                 className={styles.acpChatComposerCancel}
-                onClick={handleCancel}
+                onClick={onCancel}
+                disabled={!onCancel}
                 aria-label={t('composer.cancelAriaLabel')}
                 title={t('composer.cancel')}
               >

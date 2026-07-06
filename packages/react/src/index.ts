@@ -11,6 +11,7 @@ export type {
 export {
   SIDEBAR_VIEW_SESSIONS,
   SIDEBAR_VIEW_SKILLS,
+  SIDEBAR_VIEW_NEW_SESSION,
 } from './components/workbench/WorkbenchShell';
 export { ResizeHandle } from './components/workbench';
 export type { ResizeHandleProps } from './components/workbench/ResizeHandle';
@@ -30,6 +31,8 @@ export type {
 } from './components/sidebar/Sidebar';
 export { SkillView } from './components/skill-view';
 export type { SkillViewProps, Skill } from './components/skill-view/SkillView';
+export { NewSessionView } from './components/new-session-view';
+export type { NewSessionViewProps } from './components/new-session-view/NewSessionView';
 export { Markdown } from './components/markdown';
 export type { MarkdownProps } from './components/markdown/Markdown';
 export { ChatView, MessageBubble, ChatComposer, ToolCallCard, StreamingIndicator, ThoughtView, PlanView } from './components/chat-view';

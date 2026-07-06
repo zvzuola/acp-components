@@ -1,5 +1,6 @@
 import React from 'react';
 import { SessionList } from '../session-list';
+import type { SessionMeta } from '@acp-components/core';
 import { SettingsMenu } from '../settings-menu/SettingsMenu';
 import { useI18n } from '../../i18n';
 import styles from './sidebar.module.scss';
@@ -40,6 +41,12 @@ export interface SidebarProps {
   onActiveViewChange: (view: SidebarViewId) => void;
   /** Nav items to render, in order. The sidebar renders exactly these. */
   navItems?: SidebarNavItem[];
+  /**
+   * Called when a session in the sidebar's SessionList is clicked (whether or
+   * not it is already active). Lets the host flip its main view back to the
+   * session even when the clicked session is the current one.
+   */
+  onSelectSession?: (session: SessionMeta) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -93,6 +100,7 @@ export function Sidebar({
   activeView,
   onActiveViewChange,
   navItems = [],
+  onSelectSession,
 }: SidebarProps) {
   const { t } = useI18n();
 
@@ -120,7 +128,7 @@ export function Sidebar({
       )}
 
       <div className={styles.acpSidebarBody}>
-        <SessionList />
+        <SessionList onSelectSession={onSelectSession} />
       </div>
 
       <div className={styles.acpSidebarFooter}>

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AppstoreOutlined } from '@ant-design/icons';
+import { AppstoreOutlined, PlusOutlined } from '@ant-design/icons';
 import type { SessionId } from '@acp-components/core';
 import { Workbench } from './Workbench';
 import type { WorkbenchProps } from './Workbench';
@@ -7,6 +7,7 @@ import { Sidebar } from '../sidebar/Sidebar';
 import type { SidebarNavItem, SidebarViewId } from '../sidebar/Sidebar';
 import { SessionView } from '../session-view/SessionView';
 import { SkillView } from '../skill-view/SkillView';
+import { NewSessionView } from '../new-session-view';
 import { useAcpStore } from '../../hooks/useAcpStore';
 import { useI18n } from '../../i18n';
 import styles from './workbench-shell.module.scss';
@@ -18,6 +19,7 @@ import styles from './workbench-shell.module.scss';
 // ---------------------------------------------------------------------------
 export const SIDEBAR_VIEW_SESSIONS = 'sessions';
 export const SIDEBAR_VIEW_SKILLS = 'skills';
+export const SIDEBAR_VIEW_NEW_SESSION = 'new-session';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -86,11 +88,14 @@ export function WorkbenchShell({
   );
 
   // Selecting a session in the sidebar's SessionList flips the store's
-  // activeSessionId. When that happens while the main area is showing the
-  // Skills view, switch back to the session view — clicking a session means
-  // "show me this conversation", not "stay on skills".
+  // activeSessionId. When that happens while the main area is showing a
+  // non-session view (Skills or New Session), switch back to the session
+  // view — clicking a session means "show me this conversation".
   useEffect(() => {
-    if (storeSessionId && current === SIDEBAR_VIEW_SKILLS) {
+    if (
+      storeSessionId &&
+      (current === SIDEBAR_VIEW_SKILLS || current === SIDEBAR_VIEW_NEW_SESSION)
+    ) {
       setCurrent(SIDEBAR_VIEW_SESSIONS);
     }
     // Only react to session changes, not to `current` (this effect drives
@@ -99,11 +104,17 @@ export function WorkbenchShell({
   }, [storeSessionId]);
 
   // ── Sidebar nav items ─────────────────────────────────────────────────
-  // The built-in Skill entry is configured here (not hardcoded in <Sidebar>)
-  // so the sidebar stays a pure renderer. It is prepended to the host's
-  // navItems; the host's items follow in order.
+  // The built-in entries are configured here (not hardcoded in <Sidebar>)
+  // so the sidebar stays a pure renderer. The "New session" action sits at
+  // the top (a primary affordance, like codex's new-chat button), followed
+  // by Skills; the host's items follow in order.
   const sidebarNavItems: SidebarNavItem[] = useMemo(
     () => [
+      {
+        id: SIDEBAR_VIEW_NEW_SESSION,
+        label: t('sidebar.navNewSession'),
+        icon: <PlusOutlined />,
+      },
       {
         id: SIDEBAR_VIEW_SKILLS,
         label: t('sidebar.navSkills'),
@@ -133,6 +144,13 @@ export function WorkbenchShell({
         />
       );
     }
+    if (current === SIDEBAR_VIEW_NEW_SESSION) {
+      return (
+        <NewSessionView
+          onSubmitted={() => setCurrent(SIDEBAR_VIEW_SESSIONS)}
+        />
+      );
+    }
     // Host-injected view: look up content from navItems.
     const injected = navItems.find((it) => it.id === current);
     return injected?.content ?? null;
@@ -147,6 +165,7 @@ export function WorkbenchShell({
       activeView={current}
       onActiveViewChange={setCurrent}
       navItems={sidebarNavItems}
+      onSelectSession={() => setCurrent(SIDEBAR_VIEW_SESSIONS)}
     />
   );
 

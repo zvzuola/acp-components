@@ -62,9 +62,10 @@ function useFormatTime() {
 // SessionItem — renders a single session row
 // ---------------------------------------------------------------------------
 
-function SessionItem({ session, isActive }: {
+function SessionItem({ session, isActive, onSelect }: {
   session: SessionMeta;
   isActive: boolean;
+  onSelect?: (session: SessionMeta) => void;
 }) {
   const { t } = useI18n();
   const formatTime = useFormatTime();
@@ -77,7 +78,14 @@ function SessionItem({ session, isActive }: {
   return (
     <div
       className={`${styles.acpSessionItem}${isActive ? ` ${styles.acpSessionItemActive}` : ''}`}
-      onClick={() => { if (!isActive) void selectSession(session.id); }}
+      onClick={() => {
+        // Clicking a session always signals "show me this conversation" —
+        // including when it's already the active one (the host may be on a
+        // non-session view). The select call is idempotent for an already
+        // active, loaded session.
+        if (!isActive) void selectSession(session.id);
+        onSelect?.(session);
+      }}
       role="option"
       aria-selected={isActive}
     >
@@ -139,12 +147,13 @@ const agentDotClass: Record<string, string> = {
   error: styles.acpSessionAgentHeaderDotError,
 };
 
-function AgentGroup({ agentId, agentName, agentStatus, sessions, cwd }: {
+function AgentGroup({ agentId, agentName, agentStatus, sessions, cwd, onSelectSession }: {
   agentId: string;
   agentName: string;
   agentStatus: string;
   sessions: SessionMeta[];
   cwd: string;
+  onSelectSession?: (session: SessionMeta) => void;
 }) {
   const { t } = useI18n();
   const { activeSessionId, loadMoreSessions, createSession, setActiveSession } = useSessions();
@@ -204,6 +213,7 @@ function AgentGroup({ agentId, agentName, agentStatus, sessions, cwd }: {
               key={s.id}
               session={s}
               isActive={activeSessionId === s.id}
+              onSelect={onSelectSession}
             />
           ))}
           {hasMore && (
@@ -227,10 +237,11 @@ function AgentGroup({ agentId, agentName, agentStatus, sessions, cwd }: {
 // WorkspaceGroup — renders a workspace and its agent groups
 // ---------------------------------------------------------------------------
 
-function WorkspaceGroup({ cwd, workspace, isWorkspaceActive }: {
+function WorkspaceGroup({ cwd, workspace, isWorkspaceActive, onSelectSession }: {
   cwd: string;
   workspace: WorkspaceState;
   isWorkspaceActive: boolean;
+  onSelectSession?: (session: SessionMeta) => void;
 }) {
   const { t } = useI18n();
   const agents = useAcpStore((s) => s.agents);
@@ -279,10 +290,11 @@ function WorkspaceGroup({ cwd, workspace, isWorkspaceActive }: {
             <AgentGroup
               key={agent.id}
               agentId={agent.id}
-              agentName={agent.name}
+              agentName={agent.agentInfo?.title || agent.name}
               agentStatus={agent.status}
               sessions={agentSessions.get(agent.id) ?? []}
               cwd={cwd}
+              onSelectSession={onSelectSession}
             />
           ))}
           {sessionCount === 0 && (
@@ -300,7 +312,7 @@ function WorkspaceGroup({ cwd, workspace, isWorkspaceActive }: {
 // SessionList — top-level orchestrator
 // ---------------------------------------------------------------------------
 
-export function SessionList() {
+export function SessionList({ onSelectSession }: { onSelectSession?: (session: SessionMeta) => void } = {}) {
   const agents = useAcpStore((s) => s.agents);
   const { workspaces, addWorkspace, activeWorkspaceCwd } = useWorkspaces();
   const { t } = useI18n();
@@ -345,6 +357,7 @@ export function SessionList() {
             cwd={cwd}
             workspace={ws}
             isWorkspaceActive={cwd === activeWorkspaceCwd}
+            onSelectSession={onSelectSession}
           />
         ))}
       </div>
