@@ -165,6 +165,7 @@ export const zhCN = {
   'newSession.sendAriaLabel': '发送消息',
   'newSession.creating': '创建中…',
   'newSession.selectWorkspace': '工作区',
+  'newSession.selectWorkspacePlaceholder': '选择工作区',
   'newSession.selectAgent': '智能体',
   'newSession.noWorkspaces': '请先添加工作区',
   'newSession.noAgents': '正在连接智能体…',

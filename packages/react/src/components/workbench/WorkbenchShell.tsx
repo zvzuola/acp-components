@@ -82,9 +82,11 @@ export function WorkbenchShell({
   const resolvedSessionId = sessionId === undefined ? storeSessionId : sessionId;
 
   // ── Active view ──────────────────────────────────────────────────────
-  // Owned entirely by WorkbenchShell; defaults to the sessions view.
+  // Owned entirely by WorkbenchShell; defaults to the new-session view so
+  // the app opens on the landing/composer screen. The effect below still
+  // flips back to the sessions view as soon as a session becomes active.
   const [current, setCurrent] = useState<SidebarViewId>(
-    SIDEBAR_VIEW_SESSIONS,
+    SIDEBAR_VIEW_NEW_SESSION,
   );
 
   // Selecting a session in the sidebar's SessionList flips the store's

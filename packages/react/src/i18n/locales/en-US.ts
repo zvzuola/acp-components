@@ -165,6 +165,7 @@ export const enUS = {
   'newSession.sendAriaLabel': 'Send message',
   'newSession.creating': 'Creating…',
   'newSession.selectWorkspace': 'Workspace',
+  'newSession.selectWorkspacePlaceholder': 'Select workspace',
   'newSession.selectAgent': 'Agent',
   'newSession.noWorkspaces': 'Add a workspace to get started',
   'newSession.noAgents': 'Connecting to agents…',

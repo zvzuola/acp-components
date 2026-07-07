@@ -143,7 +143,6 @@ export function NewSessionView({ className, onSubmitted }: NewSessionViewProps) 
     setModeValue(null);
   }, [agentId]);
 
-  const hasWorkspace = workspaceList.length > 0;
   const hasAgent = agentList.length > 0;
 
   // Workspace change: the dropdown also carries a "pick a folder…" entry that
@@ -178,9 +177,9 @@ export function NewSessionView({ className, onSubmitted }: NewSessionViewProps) 
   // useSessions/usePrompt do internally).
   const handleSend = useCallback(
     async (blocks: ContentBlock[]) => {
-      const activeCwd = cwd ?? defaultCwd;
+      const activeCwd = cwd ?? defaultCwd ?? '';
       const activeAgentId = agentId ?? defaultAgentId;
-      if (!activeCwd || !activeAgentId) return;
+      if (!activeAgentId) return;
       setComposerValue('');
       setSubmitting(true);
       try {
@@ -225,9 +224,9 @@ export function NewSessionView({ className, onSubmitted }: NewSessionViewProps) 
           <p className={styles.acpNewSessionViewSubtitle}>{t('newSession.subtitle')}</p>
         </div>
 
-        {!hasWorkspace || !hasAgent ? (
+        {!hasAgent ? (
           <div className={styles.acpNewSessionViewEmpty}>
-            {!hasWorkspace ? t('newSession.noWorkspaces') : t('newSession.noAgents')}
+            {t('newSession.noAgents')}
           </div>
         ) : (
           <ChatComposer
@@ -240,12 +239,14 @@ export function NewSessionView({ className, onSubmitted }: NewSessionViewProps) 
           />
         )}
 
-        {hasWorkspace && hasAgent && (
+        {hasAgent && (
           <div className={styles.acpNewSessionViewSelectors}>
             <Select
               className={styles.acpNewSessionViewSelect}
+              borderless
               aria-label={t('newSession.selectWorkspace')}
               value={cwd ?? ''}
+              placeholder={t('newSession.selectWorkspacePlaceholder')}
               onChange={handleWorkspaceChange}
               options={[
                 ...workspaceList.map((ws) => ({
@@ -259,6 +260,7 @@ export function NewSessionView({ className, onSubmitted }: NewSessionViewProps) 
             />
             <Select
               className={styles.acpNewSessionViewSelect}
+              borderless
               aria-label={t('newSession.selectAgent')}
               value={agentId ?? ''}
               onChange={setAgentId}
@@ -270,6 +272,7 @@ export function NewSessionView({ className, onSubmitted }: NewSessionViewProps) 
             {modelOption && (
               <Select
                 className={styles.acpNewSessionViewSelect}
+                borderless
                 aria-label={t('newSession.selectModel')}
                 value={modelValue ?? modelOption.currentValue}
                 onChange={setModelValue}
@@ -279,6 +282,7 @@ export function NewSessionView({ className, onSubmitted }: NewSessionViewProps) 
             {modeOption && (
               <Select
                 className={styles.acpNewSessionViewSelect}
+                borderless
                 aria-label={t('newSession.selectMode')}
                 value={modeValue ?? modeOption.currentValue}
                 onChange={setModeValue}

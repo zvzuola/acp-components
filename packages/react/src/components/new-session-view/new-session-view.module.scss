@@ -59,6 +59,8 @@
 
 // ---------------------------------------------------------------------------
 // Selectors — workspace + agent, shown beneath the composer as a config row
+// Tucked closer to the composer than the default inner gap (overrides the
+// 20px column gap with a negative top margin → ~8px effective spacing).
 // ---------------------------------------------------------------------------
 .acp-new-session-view__selectors {
   display: flex;
@@ -67,6 +69,7 @@
   justify-content: flex-start;
   gap: 8px;
   width: 100%;
+  margin-top: -12px;
 }
 
 .acp-new-session-view__select {
