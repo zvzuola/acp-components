@@ -180,6 +180,9 @@ export const zhCN = {
   'skillView.searchAriaLabel': '搜索技能',
   'skillView.empty': '暂无可用技能',
   'skillView.noMatch': '无匹配技能',
-  'skillView.pin': '置顶技能',
-  'skillView.unpin': '取消置顶',
+  'skillView.loading': '正在加载技能…',
+  'skillView.loadError': '加载技能失败',
+  'skillView.userScope': '用户级',
+  'skillView.userScopeAriaLabel': '用户级技能',
+  'skillView.projectScopeAriaLabel': '{{cwd}} 的技能',
 };

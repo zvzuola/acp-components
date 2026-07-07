@@ -23,7 +23,7 @@ export { respondToPermission, denyPermission } from './actions/permission';
 export { callExtMethod, sendExtNotification } from './actions/extensions';
 export { loadFileTree, expandDirectory, collapseDirectory, refreshFileTree, refreshNode } from './actions/fileTree';
 export { openFile, closeFile, setActiveFile, clearRevealLine, detectLanguage } from './actions/fileViewer';
-export { setSkills, addSkill, updateSkill, removeSkill, toggleSkillPin, clearSkills } from './actions/skills';
+export { clearSkills, setAgentSkills, removeAgentSkills } from './actions/skills';
 export type {
   ConnectionStatus,
   Session,

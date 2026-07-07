@@ -1,33 +1,34 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useStore } from 'zustand/react';
 import {
   skillStore,
-  setSkills as coreSetSkills,
-  addSkill as coreAddSkill,
-  updateSkill as coreUpdateSkill,
-  removeSkill as coreRemoveSkill,
-  toggleSkillPin as coreToggleSkillPin,
   clearSkills as coreClearSkills,
+  setAgentSkills as coreSetAgentSkills,
+  removeAgentSkills as coreRemoveAgentSkills,
 } from '@acp-components/core';
 import type { Skill } from '@acp-components/core';
 
 export type { Skill };
 
-export interface UseSkillsReturn {
-  /** Skill catalog (read from the global store). Empty until a host populates it. */
+/** One agent's slice of the per-agent skill catalog. */
+export interface AgentSkillGroup {
+  agentId: string;
   skills: Skill[];
-  /** Replace the whole catalog. */
-  setSkills: (skills: Skill[]) => void;
-  /** Add a skill; no-op if the id already exists. */
-  addSkill: (skill: Skill) => void;
-  /** Merge a partial patch into a skill by id; no-op if unknown. */
-  updateSkill: (id: string, patch: Partial<Skill>) => void;
-  /** Remove a skill by id; no-op if unknown. */
-  removeSkill: (id: string) => void;
-  /** Flip the `pinned` flag on a skill by id; no-op if unknown. */
-  togglePin: (id: string) => void;
+}
+
+export interface UseSkillsReturn {
+  /**
+   * Per-agent catalog, newest agent first by insertion. Populated when the
+   * React layer calls `AcpClient.listSkills()` per connected agent and writes
+   * the result via `setAgentSkills`.
+   */
+  agentSkills: AgentSkillGroup[];
   /** Empty the catalog. */
   clear: () => void;
+  /** Replace the per-agent catalog for `agentId` (latest `listSkills()`). */
+  setAgentSkills: (agentId: string, skills: Skill[]) => void;
+  /** Drop the per-agent catalog for `agentId`. */
+  removeAgentSkills: (agentId: string) => void;
 }
 
 type SkillStoreState = ReturnType<typeof skillStore.getState>;
@@ -35,33 +36,41 @@ type SkillStoreState = ReturnType<typeof skillStore.getState>;
 /**
  * Subscribe to the global skill store (backed by `skillStore` in
  * `@acp-components/core`). State is shared across every component that calls
- * this hook — no props threading required. Hosts populate the catalog via
- * `setSkills` / `addSkill` (e.g. from a host-side catalog or an agent extension
- * listing).
+ * this hook — no props threading required. The per-agent catalog is populated
+ * by the React layer from `AcpClient.listSkills()` (see `SkillView`).
  */
 export function useSkills(): UseSkillsReturn {
-  const skills = useStore(
+  // Selectors return the store's own references (which only change on a real
+  // mutation) so `useSyncExternalStore` does not loop. The per-agent Map is
+  // rebuilt as a new reference on every `setAgentSkills` / `removeAgentSkills`,
+  // so plain `===` is sufficient — no `useShallow` wrapper (which would
+  // re-create wrapper objects each render and trigger an infinite loop).
+  const skillsByAgent = useStore(
     skillStore,
-    useCallback((s: SkillStoreState) => s.skills, []),
+    useCallback((s: SkillStoreState) => s.skillsByAgent, []),
   );
 
-  const handleSetSkills = useCallback((next: Skill[]) => coreSetSkills(next), []);
-  const handleAddSkill = useCallback((skill: Skill) => coreAddSkill(skill), []);
-  const handleUpdateSkill = useCallback(
-    (id: string, patch: Partial<Skill>) => coreUpdateSkill(id, patch),
+  // Flatten the Map to the public array shape. A new array each render is fine
+  // here — it is derived value, not the snapshot `useSyncExternalStore` reads.
+  const agentSkills = useMemo<AgentSkillGroup[]>(
+    () => Array.from(skillsByAgent.entries()).map(([agentId, skills]) => ({ agentId, skills })),
+    [skillsByAgent],
+  );
+
+  const handleClear = useCallback(() => coreClearSkills(), []);
+  const handleSetAgentSkills = useCallback(
+    (agentId: string, next: Skill[]) => coreSetAgentSkills(agentId, next),
     [],
   );
-  const handleRemoveSkill = useCallback((id: string) => coreRemoveSkill(id), []);
-  const handleTogglePin = useCallback((id: string) => coreToggleSkillPin(id), []);
-  const handleClear = useCallback(() => coreClearSkills(), []);
+  const handleRemoveAgentSkills = useCallback(
+    (agentId: string) => coreRemoveAgentSkills(agentId),
+    [],
+  );
 
   return {
-    skills,
-    setSkills: handleSetSkills,
-    addSkill: handleAddSkill,
-    updateSkill: handleUpdateSkill,
-    removeSkill: handleRemoveSkill,
-    togglePin: handleTogglePin,
+    agentSkills,
     clear: handleClear,
+    setAgentSkills: handleSetAgentSkills,
+    removeAgentSkills: handleRemoveAgentSkills,
   };
 }

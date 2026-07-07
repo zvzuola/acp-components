@@ -1,64 +1,40 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
-  setSkills,
-  addSkill,
-  updateSkill,
-  removeSkill,
-  toggleSkillPin,
   clearSkills,
+  setAgentSkills,
+  removeAgentSkills,
 } from './skills';
 import { skillStore } from '../store/skillStore';
 import type { Skill } from '../store/skillStore';
 
 function resetStore(): void {
-  skillStore.setState({ skills: [] });
+  skillStore.setState({ skillsByAgent: new Map() });
 }
 
 beforeEach(() => {
   resetStore();
 });
 
-const a: Skill = { id: 'code-review', name: 'Code Review', pinned: true };
+const a: Skill = { id: 'code-review', name: 'Code Review' };
 const b: Skill = { id: 'commit', name: 'Commit' };
 
-describe('actions/skills — thin wrappers over skillStore', () => {
-  it('setSkills replaces the catalog', () => {
-    setSkills([a, b]);
-    expect(skillStore.getState().skills).toHaveLength(2);
+describe('actions/skills — per-agent wrappers', () => {
+  it('setAgentSkills writes to skillsByAgent', () => {
+    setAgentSkills('agent-1', [a, b]);
+    const list = skillStore.getState().skillsByAgent.get('agent-1')!;
+    expect(list.map((s) => s.id)).toEqual(['code-review', 'commit']);
+    expect(list.every((s) => s.agentId === 'agent-1')).toBe(true);
   });
 
-  it('addSkill appends, ignoring duplicates by id', () => {
-    addSkill(a);
-    addSkill({ ...a, name: 'dup' });
-    addSkill(b);
-    expect(skillStore.getState().skills.map((s) => s.id)).toEqual(['code-review', 'commit']);
-  });
-
-  it('updateSkill merges a patch', () => {
-    setSkills([b]);
-    updateSkill('commit', { pinned: true });
-    expect(skillStore.getState().skills[0].pinned).toBe(true);
-    expect(skillStore.getState().skills[0].name).toBe('Commit');
-  });
-
-  it('removeSkill removes by id', () => {
-    setSkills([a, b]);
-    removeSkill('code-review');
-    expect(skillStore.getState().skills.map((s) => s.id)).toEqual(['commit']);
-  });
-
-  it('toggleSkillPin flips the pinned flag', () => {
-    setSkills([a]);
-    expect(skillStore.getState().skills[0].pinned).toBe(true);
-    toggleSkillPin('code-review');
-    expect(skillStore.getState().skills[0].pinned).toBe(false);
-    toggleSkillPin('code-review');
-    expect(skillStore.getState().skills[0].pinned).toBe(true);
+  it('removeAgentSkills drops the entry', () => {
+    setAgentSkills('agent-1', [a]);
+    removeAgentSkills('agent-1');
+    expect(skillStore.getState().skillsByAgent.has('agent-1')).toBe(false);
   });
 
   it('clearSkills empties the catalog', () => {
-    setSkills([a, b]);
+    setAgentSkills('agent-1', [a, b]);
     clearSkills();
-    expect(skillStore.getState().skills).toEqual([]);
+    expect(skillStore.getState().skillsByAgent.size).toBe(0);
   });
 });

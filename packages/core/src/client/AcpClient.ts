@@ -32,11 +32,88 @@ import type { AgentCapabilities } from '@agentclientprotocol/sdk';
 import { StdioTransport, HttpTransport, WebSocketTransport } from '../transport';
 import type { AcpTransport } from '../transport';
 import type { ConnectionStatus, Implementation, TransportConfig } from '../types';
+import type { Skill } from '../store/skillStore';
 
 export type SessionUpdateHandler = (update: SessionNotification) => void;
 export type PermissionHandler = (request: RequestPermissionRequest) => Promise<RequestPermissionResponse>;
 export type ExtMethodHandler = (method: string, params: Record<string, unknown>) => Promise<Record<string, unknown>>;
 export type ExtNotificationHandler = (method: string, params: Record<string, unknown>) => void;
+
+/**
+ * A skill entry already normalized to the core `Skill` shape, paired with the
+ * source workspace root it was reported for (when the agent returns a
+ * per-cwd grouped response).
+ */
+interface NormalizedSkillEntry {
+  cwd?: string;
+  skill: Skill;
+}
+
+/**
+ * Pull skills out of an arbitrary `_acp/skills/list` response, preserving the
+ * source `cwd` when the agent returns a per-workspace grouped result.
+ *
+ * Supported response shapes (most-specific first):
+ *  1. Per-cwd grouped array: `[{ cwd: "/a", skills: [...] }, ...]` — emitted
+ *     when `listSkills(cwds)` is called with one or more workspaces. Each
+ *     skill is tagged with its entry's `cwd`.
+ *  2. Bare flat array: `[skill, skill, ...]` (no `cwd` context).
+ *  3. Enveloped: `{ skills: [...] }` or `{ data: [...] }`.
+ *
+ * Elements that are not skill records are dropped. Unknown fields are
+ * tolerated by `normalizeSkill`.
+ */
+function extractSkillEntries(res: unknown): NormalizedSkillEntry[] {
+  const arr = Array.isArray(res)
+    ? res
+    : Array.isArray((res as Record<string, unknown> | null | undefined)?.skills)
+      ? (res as Record<string, unknown>).skills as unknown[]
+      : Array.isArray((res as Record<string, unknown> | null | undefined)?.data)
+        ? (res as Record<string, unknown>).data as unknown[]
+        : [];
+
+  const entries: NormalizedSkillEntry[] = [];
+  for (const item of arr) {
+    if (!item || typeof item !== 'object') continue;
+    const rec = item as Record<string, unknown>;
+    // Per-cwd grouped entry: `{ cwd, skills: [...] }`. Detect by a `skills`
+    // array (and a stringish `cwd`); the inner array is the real skill list.
+    const inner = Array.isArray(rec.skills) ? rec.skills as unknown[] : null;
+    if (inner) {
+      const cwd = typeof rec.cwd === 'string' ? rec.cwd : undefined;
+      for (const s of inner) {
+        if (!s || typeof s !== 'object') continue;
+        entries.push({ cwd, skill: normalizeSkill(s as Record<string, unknown>) });
+      }
+    } else {
+      entries.push({ cwd: undefined, skill: normalizeSkill(rec) });
+    }
+  }
+  return entries;
+}
+
+/**
+ * Map an agent-provided skill record onto the core `Skill` shape. Accepts a few
+ * common field aliases (`name`/`title`, `description`/`desc`) and tolerates
+ * missing fields — only `id`/`name` are required on the output.
+ */
+function normalizeSkill(raw: Record<string, unknown>): Skill {
+  const id = String(raw.id ?? raw.skillId ?? raw.name ?? '');
+  const name = String(raw.name ?? raw.title ?? id);
+  const description =
+    raw.description != null ? String(raw.description)
+      : raw.desc != null ? String(raw.desc)
+        : undefined;
+  const group = raw.group != null ? String(raw.group) : raw.source != null ? String(raw.source) : undefined;
+  const iconName = raw.iconName != null ? String(raw.iconName) : raw.icon != null ? String(raw.icon) : undefined;
+  const disabled = typeof raw.disabled === 'boolean' ? raw.disabled : undefined;
+  const skill: Skill = { id, name };
+  if (description !== undefined) skill.description = description;
+  if (group !== undefined) skill.group = group;
+  if (iconName !== undefined) skill.iconName = iconName;
+  if (disabled !== undefined) skill.disabled = disabled;
+  return skill;
+}
 
 function createTransport(config: TransportConfig): AcpTransport {
   switch (config.type) {
@@ -275,6 +352,31 @@ export class AcpClient {
   async extMethod(method: string, params: Record<string, unknown>): Promise<Record<string, unknown>> {
     if (!this.connection) throw new Error('Not connected');
     return this.connection.extMethod(method, params);
+  }
+
+  /**
+   * Fetch the agent's skill catalog via the `_acp/skills/list` extension method.
+   *
+   * @param cwds Optional list of every workspace path the user currently has
+   *   open. Forwarded to the agent so it can scope/filter the skills it reports
+   *   (e.g. only return skills that apply to the open project roots). When
+   *   provided, the agent is expected to return a per-cwd grouped array —
+   *   `[{ cwd: "/a", skills: [...] }, ...]` — and each returned skill is
+   *   stamped with the `cwd` of the entry it came from. Omit when the caller
+   *   has no workspace context; the agent then returns a flat global catalog
+   *   (no `cwd` on the skills). Unknown/optional fields are stripped before
+   *   sending.
+   */
+  async listSkills(cwds?: string[]): Promise<Skill[]> {
+    if (!this.connection) throw new Error('Not connected');
+    const params: Record<string, unknown> = {};
+    if (cwds && cwds.length > 0) params.cwds = cwds;
+    const res = await this.extMethod('_acp/skills/list', params);
+    const entries = extractSkillEntries(res);
+    return entries.map(({ cwd, skill }) => {
+      if (cwd !== undefined) skill.cwd = cwd;
+      return skill;
+    });
   }
 
   async extNotification(method: string, params: Record<string, unknown>): Promise<void> {

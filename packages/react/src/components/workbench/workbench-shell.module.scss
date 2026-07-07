@@ -28,7 +28,9 @@
   flex: 1 1 0;
   min-height: 0;
   // SkillView already scrolls; constrain the card column for readability.
-  max-width: 680px;
+  // Wide enough for two card columns (each card needs ~280px) once the
+  // container is wide; below that the auto-fill grid collapses to one.
+  max-width: 920px;
   width: 100%;
   margin: 0 auto;
   padding: 8px 0 0;

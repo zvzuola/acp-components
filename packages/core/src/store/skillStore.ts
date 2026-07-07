@@ -5,9 +5,9 @@ import { createStore } from 'zustand/vanilla';
 // ---------------------------------------------------------------------------
 
 /**
- * A skill surfaced by the host (or fetched from an agent extension). The ACP
- * protocol does not yet define a skill primitive, so the shape is owned by the
- * UI layer; hosts populate it from whatever source they have.
+ * A skill fetched from an agent via `AcpClient.listSkills()` (`_acp/skills/list`
+ * extension method). The ACP protocol does not yet define a skill primitive,
+ * so the shape is owned by the UI layer.
  *
  * core owns the pure-data shape (no React types). The react layer extends this
  * with an optional `icon` React node for rendering — see `SkillView`.
@@ -24,33 +24,49 @@ export interface Skill {
   /** Optional icon hint (e.g. an antd icon name or emoji). The react layer
    * maps this to a rendered icon; ignored by pure-data consumers. */
   iconName?: string;
-  /** Mark as pinned / favorite — pinned skills sort first */
-  pinned?: boolean;
   /** Disable the skill card (still visible, not activatable) */
   disabled?: boolean;
+  /**
+   * Owning agent. Stamped automatically by `setAgentSkills`; the React layer
+   * uses it to group skills by agent in the view.
+   */
+  agentId?: string;
+  /**
+   * Source workspace root this skill was reported for. When `_acp/skills/list`
+   * is called with `cwds`, the agent returns one entry per cwd
+   * (`{ cwd, skills: [...] }`); each skill is stamped with the `cwd` of the
+   * entry it came from. Absent for agents that return a flat catalog
+   * (legacy / no-cwd response shape).
+   */
+  cwd?: string;
 }
 
 /**
  * Pure data + atomic setters for the skill catalog. Business orchestration
  * (if any) lives in `actions/skills.ts` — NOT here. Mirrors the fileViewerStore
  * split (store = data box, actions = orchestration).
+ *
+ * The catalog is per-agent: keyed by agentId, each entry is the most recent
+ * `listSkills()` result for that agent. The same skill id on two agents does
+ * not collide.
  */
 export interface SkillStoreState {
-  /** Skill catalog; empty until a host populates it via `setSkills`/`addSkill`. */
-  skills: Skill[];
+  /**
+   * Per-agent skill catalog. Keyed by agentId; each entry is the most recent
+   * `listSkills()` result for that agent. Stamped with `agentId` on write.
+   */
+  skillsByAgent: Map<string, Skill[]>;
 
-  /** Replace the whole catalog. */
-  setSkills: (skills: Skill[]) => void;
-  /** Add a skill; no-op if a skill with the same id already exists. */
-  addSkill: (skill: Skill) => void;
-  /** Merge a partial patch into a skill by id; no-op if unknown. */
-  updateSkill: (id: string, patch: Partial<Skill>) => void;
-  /** Remove a skill by id; no-op if unknown. */
-  removeSkill: (id: string) => void;
-  /** Flip the `pinned` flag on a skill by id; no-op if unknown. */
-  togglePin: (id: string) => void;
   /** Empty the catalog. */
   clear: () => void;
+
+  /**
+   * Replace the per-agent catalog for `agentId`. Each skill is stamped with
+   * `agentId`.
+   */
+  setAgentSkills: (agentId: string, skills: Skill[]) => void;
+  /** Drop the per-agent catalog for `agentId` (e.g. on agent disconnect). */
+  removeAgentSkills: (agentId: string) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -58,43 +74,26 @@ export interface SkillStoreState {
 // ---------------------------------------------------------------------------
 
 export const skillStore = createStore<SkillStoreState>((set) => ({
-  skills: [],
-
-  setSkills: (skills) =>
-    set((state) => (state.skills === skills ? state : { skills })),
-
-  addSkill: (skill) =>
-    set((state) => {
-      if (state.skills.some((s) => s.id === skill.id)) return state;
-      return { skills: [...state.skills, skill] };
-    }),
-
-  updateSkill: (id, patch) =>
-    set((state) => {
-      const idx = state.skills.findIndex((s) => s.id === id);
-      if (idx === -1) return state;
-      const next = [...state.skills];
-      next[idx] = { ...next[idx], ...patch };
-      return { skills: next };
-    }),
-
-  removeSkill: (id) =>
-    set((state) => {
-      const idx = state.skills.findIndex((s) => s.id === id);
-      if (idx === -1) return state;
-      return { skills: state.skills.filter((s) => s.id !== id) };
-    }),
-
-  togglePin: (id) =>
-    set((state) => {
-      const idx = state.skills.findIndex((s) => s.id === id);
-      if (idx === -1) return state;
-      const next = [...state.skills];
-      const cur = next[idx];
-      next[idx] = { ...cur, pinned: !cur.pinned };
-      return { skills: next };
-    }),
+  skillsByAgent: new Map(),
 
   clear: () =>
-    set((state) => (state.skills.length === 0 ? state : { skills: [] })),
+    set((state) =>
+      state.skillsByAgent.size === 0 ? state : { skillsByAgent: new Map() },
+    ),
+
+  setAgentSkills: (agentId, skills) =>
+    set((state) => {
+      const stamped = skills.map((s) => ({ ...s, agentId }));
+      const next = new Map(state.skillsByAgent);
+      next.set(agentId, stamped);
+      return { skillsByAgent: next };
+    }),
+
+  removeAgentSkills: (agentId) =>
+    set((state) => {
+      if (!state.skillsByAgent.has(agentId)) return state;
+      const next = new Map(state.skillsByAgent);
+      next.delete(agentId);
+      return { skillsByAgent: next };
+    }),
 }));

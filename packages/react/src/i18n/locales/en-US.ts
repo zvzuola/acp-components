@@ -180,6 +180,9 @@ export const enUS = {
   'skillView.searchAriaLabel': 'Search skills',
   'skillView.empty': 'No skills available',
   'skillView.noMatch': 'No matching skills',
-  'skillView.pin': 'Pin skill',
-  'skillView.unpin': 'Unpin skill',
+  'skillView.loading': 'Loading skills…',
+  'skillView.loadError': 'Failed to load skills',
+  'skillView.userScope': 'User Skills',
+  'skillView.userScopeAriaLabel': 'User skills',
+  'skillView.projectScopeAriaLabel': '{{cwd}} skills',
 };
