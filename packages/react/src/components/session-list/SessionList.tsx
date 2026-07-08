@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { CloseOutlined, DeleteOutlined, ForkOutlined, MessageOutlined, FolderOutlined, MoreOutlined, PlusOutlined, RightOutlined } from '@ant-design/icons';
+import { CloseOutlined, DeleteOutlined, ForkOutlined, MessageOutlined, FolderOutlined, FolderOpenOutlined, MoreOutlined, PlusOutlined } from '@ant-design/icons';
 import { useStore } from 'zustand/react';
-import { sessionStore } from '@acp-components/core';
+import { sessionStore, acpStore } from '@acp-components/core';
 import { useSessions } from '../../hooks/useSessions';
 import { useAcpStore } from '../../hooks/useAcpStore';
 import { useWorkspaces } from '../../hooks/useWorkspaces';
@@ -10,6 +10,7 @@ import { useI18n } from '../../i18n';
 import { Dropdown } from '../dropdown';
 import type { SessionMeta, WorkspaceState } from '@acp-components/core';
 import type { SessionId } from '@acp-components/core';
+import { getAgentName } from '../../utils/agentName';
 import styles from './session-list.module.scss';
 
 // ---------------------------------------------------------------------------
@@ -59,14 +60,26 @@ function useFormatTime() {
   }, [t]);
 }
 
+// Status dot class per agent connection status — shared by SessionItem (and
+// any future agent-bearing surface). Mirrors the legacy AgentGroup colors.
+const agentDotClass: Record<string, string> = {
+  connected: styles.acpSessionItemAgentDotConnected,
+  connecting: styles.acpSessionItemAgentDotConnecting,
+  disconnected: styles.acpSessionItemAgentDotDisconnected,
+  error: styles.acpSessionItemAgentDotError,
+};
+
 // ---------------------------------------------------------------------------
 // SessionItem — renders a single session row
 // ---------------------------------------------------------------------------
 
-function SessionItem({ session, isActive, onSelect }: {
+function SessionItem({ session, isActive, onSelect, agentName, agentStatus, showAgent }: {
   session: SessionMeta;
   isActive: boolean;
   onSelect?: (session: SessionMeta) => void;
+  agentName?: string;
+  agentStatus?: string;
+  showAgent?: boolean;
 }) {
   const { t } = useI18n();
   const formatTime = useFormatTime();
@@ -97,7 +110,15 @@ function SessionItem({ session, isActive, onSelect }: {
         <div className={styles.acpSessionItemTitle}>
           {session.title || t('sessionList.defaultSessionTitle')}
         </div>
-        <div className={styles.acpSessionItemMeta}>{formatTime(session.updatedAt)}</div>
+        <div className={styles.acpSessionItemMeta}>
+          {showAgent && agentName && (
+            <span className={styles.acpSessionItemAgent}>
+              <span className={`${styles.acpSessionItemAgentDot} ${agentDotClass[agentStatus ?? 'disconnected'] || ''}`} />
+              {agentName}
+            </span>
+          )}
+          <span className={styles.acpSessionItemTime}>{formatTime(session.updatedAt)}</span>
+        </div>
       </div>
       {supportsFork && (
         <button
@@ -137,105 +158,10 @@ function SessionItem({ session, isActive, onSelect }: {
 }
 
 // ---------------------------------------------------------------------------
-// AgentGroup — renders one agent's sessions inside a workspace.
-// Owns its own "load more" state and cursor check.
-// ---------------------------------------------------------------------------
-
-const agentDotClass: Record<string, string> = {
-  connected: styles.acpSessionAgentHeaderDotConnected,
-  connecting: styles.acpSessionAgentHeaderDotConnecting,
-  disconnected: styles.acpSessionAgentHeaderDotDisconnected,
-  error: styles.acpSessionAgentHeaderDotError,
-};
-
-function AgentGroup({ agentId, agentName, agentStatus, sessions, cwd, onSelectSession }: {
-  agentId: string;
-  agentName: string;
-  agentStatus: string;
-  sessions: SessionMeta[];
-  cwd: string;
-  onSelectSession?: (session: SessionMeta) => void;
-}) {
-  const { t } = useI18n();
-  const { activeSessionId, loadMoreSessions, createSession, setActiveSession } = useSessions();
-  const [collapsed, setCollapsed] = useState(false);
-  const toggleCollapsed = useCallback(() => setCollapsed((v) => !v), []);
-
-  // --- "Load more" — owned entirely by this component ---
-  const hasMore = useAcpStore((s) => {
-    const cursors = s.workspaces.get(cwd)?.sessionListCursors;
-    return cursors?.has(agentId) ?? false;
-  });
-  const [loadingMore, setLoadingMore] = useState(false);
-
-  const handleLoadMore = useCallback(async () => {
-    if (loadingMore) return;
-    setLoadingMore(true);
-    try {
-      await loadMoreSessions(agentId, cwd);
-    } finally {
-      setLoadingMore(false);
-    }
-  }, [loadingMore, loadMoreSessions, agentId, cwd]);
-
-  return (
-    <div className={styles.acpSessionAgentGroup}>
-      <div className={styles.acpSessionAgentHeader}>
-        <span
-          className={styles.acpSessionAgentHeaderName}
-          onClick={toggleCollapsed}
-          role="button"
-          tabIndex={0}
-        >
-          <span className={`${styles.acpSessionGroupChevron}${collapsed ? '' : ` ${styles.acpSessionGroupChevronExpanded}`}`}><RightOutlined /></span>
-          <span className={`${styles.acpSessionAgentHeaderDot} ${agentDotClass[agentStatus] || ''}`} />
-          {agentName}
-        </span>
-        <button
-          className={styles.acpSessionAgentHeaderAdd}
-          onClick={async () => {
-            try {
-              const id = await createSession(agentId, cwd);
-              setActiveSession(id);
-            } catch (e) {
-              console.error('Failed to create session:', e);
-            }
-          }}
-          aria-label={t('sessionList.newSession')}
-          title={t('sessionList.newSession')}
-        >
-          <PlusOutlined />
-        </button>
-      </div>
-      {!collapsed && (
-        <>
-          {sessions.map((s) => (
-            <SessionItem
-              key={s.id}
-              session={s}
-              isActive={activeSessionId === s.id}
-              onSelect={onSelectSession}
-            />
-          ))}
-          {hasMore && (
-            <div className={styles.acpSessionLoadMore}>
-              <button
-                className={styles.acpSessionLoadMoreBtn}
-                onClick={handleLoadMore}
-                disabled={loadingMore}
-              >
-                {loadingMore ? '...' : t('sessionList.loadMore')}
-              </button>
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// WorkspaceGroup — renders a workspace and its agent groups
+// WorkspaceGroup — renders a workspace and its sessions (flat, no agent
+// grouping). Agent name + connection dot are shown inline per session row
+// only when the workspace holds sessions from more than one agent; the
+// "new session" entry moved up into the workspace header.
 // ---------------------------------------------------------------------------
 
 function WorkspaceGroup({ cwd, workspace, isWorkspaceActive, onSelectSession }: {
@@ -247,24 +173,70 @@ function WorkspaceGroup({ cwd, workspace, isWorkspaceActive, onSelectSession }: 
   const { t } = useI18n();
   const { removeWorkspace } = useWorkspaces();
   const agents = useAcpStore((s) => s.agents);
+  const { activeSessionId, createSession, setActiveSession, loadMoreSessions } = useSessions();
   const [collapsed, setCollapsed] = useState(false);
   const toggleCollapsed = useCallback(() => setCollapsed((v) => !v), []);
 
   const sessions = Array.from(workspace.sessions.values());
-  const sessionCount = sessions.length;
 
-  // Group sessions by agentId
-  const agentSessions = useMemo(() => {
-    const map = new Map<string, SessionMeta[]>();
-    for (const s of sessions) {
-      const list = map.get(s.agentId);
-      if (list) list.push(s);
-      else map.set(s.agentId, [s]);
-    }
-    return map;
+  // Flatten sessions across agents, newest first (stable secondary sort by id).
+  const sortedSessions = useMemo(() => {
+    return [...sessions].sort((a, b) => {
+      const ta = a.updatedAt ? Date.parse(a.updatedAt) : 0;
+      const tb = b.updatedAt ? Date.parse(b.updatedAt) : 0;
+      if (tb !== ta) return tb - ta;
+      return a.id < b.id ? -1 : 1;
+    });
   }, [sessions]);
 
+  // Show agent name + status dot inline only when the app is configured with
+  // more than one agent — a global, stable signal (independent of which
+  // sessions happen to exist in this workspace), so the label doesn't
+  // flicker on/off as workspaces are added or sessions are created.
+  const showAgent = agents.size > 1;
+
   const agentList = Array.from(agents.values());
+  // Only one agent configured → "+" creates directly; multiple → pick via
+  // dropdown. Consistent per app (not per-workspace): avoids the "+" flipping
+  // between direct-create and picker as sessions come and go.
+  const directNew = agentList.length === 1;
+
+  // "Load more" — true if any agent in this workspace still has a cursor.
+  const hasMore = useAcpStore(
+    (s) => (s.workspaces.get(cwd)?.sessionListCursors?.size ?? 0) > 0,
+  );
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const handleLoadMore = useCallback(async () => {
+    if (loadingMore) return;
+    // Load the next page for every agent that still has a cursor in this
+    // workspace; with agent grouping gone there is no single "owner" agent
+    // for the button, so we fan out. loadMoreSessions is a no-op when the
+    // cursor is already gone.
+    const cursors = acpStore.getState().workspaces.get(cwd)?.sessionListCursors;
+    if (!cursors) return;
+    setLoadingMore(true);
+    try {
+      await Promise.all(
+        Array.from(cursors.keys()).map((agentId) => loadMoreSessions(agentId, cwd)),
+      );
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, loadMoreSessions, cwd]);
+
+  const handleNewSession = useCallback(async (agentId?: string) => {
+    // directNew callers omit agentId; dropdown callers pass it. With multiple
+    // agents and no explicit pick there is no sensible default, so bail.
+    const target = agentId ?? (agentList.length === 1 ? agentList[0].id : undefined);
+    if (!target) return;
+    try {
+      const id = await createSession(target, cwd);
+      setActiveSession(id);
+    } catch (e) {
+      console.error('Failed to create session:', e);
+    }
+  }, [agentList, createSession, setActiveSession, cwd]);
 
   const handleRemove = useCallback(() => {
     // Matches the SessionItem delete pattern: remove directly. A native
@@ -283,19 +255,51 @@ function WorkspaceGroup({ cwd, workspace, isWorkspaceActive, onSelectSession }: 
         title={cwd}
       >
         <span className={styles.acpSessionWorkspaceHeaderLeft}>
-          <span className={`${styles.acpSessionGroupChevron}${collapsed ? '' : ` ${styles.acpSessionGroupChevronExpanded}`}`}><RightOutlined /></span>
-          <span className={styles.acpSessionWorkspaceHeaderFolder}><FolderOutlined /></span>
+          {/* Folder icon doubles as the expand/collapse indicator: closed
+              folder when collapsed, open folder when expanded. Saves the
+              dedicated chevron column that used to sit to its left. */}
+          <span className={`${styles.acpSessionWorkspaceHeaderFolder}${collapsed ? '' : ` ${styles.acpSessionWorkspaceHeaderFolderOpen}`}`}>
+            {collapsed ? <FolderOutlined /> : <FolderOpenOutlined />}
+          </span>
           <span className={styles.acpSessionWorkspaceHeaderName}>{getWorkspaceName(cwd)}</span>
         </span>
         <div className={styles.acpSessionWorkspaceHeaderActions}>
-          {sessionCount > 0 && (
-            <span className={styles.acpSessionWorkspaceHeaderBadge}>{sessionCount}</span>
-          )}
-          {/* The wrapper stops click propagation so opening the menu does not
-              also toggle the workspace collapse (the trigger's onClick is
-              swapped in by Dropdown.Trigger via cloneElement, so the stop must
-              live on an ancestor). */}
+          {/* The wrapper stops click propagation so opening the menu / picker
+              does not also toggle the workspace collapse (the trigger's
+              onClick is swapped in by Dropdown.Trigger via cloneElement, so
+              the stop must live on an ancestor). */}
           <span className={styles.acpSessionWorkspaceHeaderMoreWrap} onClick={(e) => e.stopPropagation()}>
+            {directNew ? (
+              <button
+                className={styles.acpSessionWorkspaceHeaderAdd}
+                onClick={() => void handleNewSession()}
+                aria-label={t('sessionList.newSession')}
+                title={t('sessionList.newSession')}
+              >
+                <PlusOutlined />
+              </button>
+            ) : (
+              <Dropdown placement="bottom-end">
+                <Dropdown.Trigger asChild>
+                  <button
+                    className={styles.acpSessionWorkspaceHeaderAdd}
+                    aria-label={t('sessionList.newSession')}
+                    title={t('sessionList.newSession')}
+                  >
+                    <PlusOutlined />
+                  </button>
+                </Dropdown.Trigger>
+                <Dropdown.Content width={180}>
+                  {agentList.map((agent) => (
+                    <Dropdown.Item
+                      key={agent.id}
+                      label={getAgentName(agent)}
+                      onClick={() => void handleNewSession(agent.id)}
+                    />
+                  ))}
+                </Dropdown.Content>
+              </Dropdown>
+            )}
             <Dropdown placement="bottom-end">
               <Dropdown.Trigger asChild>
                 <button
@@ -319,18 +323,32 @@ function WorkspaceGroup({ cwd, workspace, isWorkspaceActive, onSelectSession }: 
       </div>
       {!collapsed && (
         <div className={styles.acpSessionWorkspaceBody}>
-          {agentList.map((agent) => (
-            <AgentGroup
-              key={agent.id}
-              agentId={agent.id}
-              agentName={agent.agentInfo?.title || agent.name}
-              agentStatus={agent.status}
-              sessions={agentSessions.get(agent.id) ?? []}
-              cwd={cwd}
-              onSelectSession={onSelectSession}
-            />
-          ))}
-          {sessionCount === 0 && (
+          {sortedSessions.map((s) => {
+            const agent = agents.get(s.agentId);
+            return (
+              <SessionItem
+                key={s.id}
+                session={s}
+                isActive={activeSessionId === s.id}
+                onSelect={onSelectSession}
+                agentName={getAgentName(agent ?? undefined)}
+                agentStatus={agent?.status}
+                showAgent={showAgent}
+              />
+            );
+          })}
+          {hasMore && (
+            <div className={styles.acpSessionLoadMore}>
+              <button
+                className={styles.acpSessionLoadMoreBtn}
+                onClick={() => void handleLoadMore()}
+                disabled={loadingMore}
+              >
+                {loadingMore ? '...' : t('sessionList.loadMore')}
+              </button>
+            </div>
+          )}
+          {sortedSessions.length === 0 && (
             <div className={styles.acpSessionWorkspaceEmpty}>
               {t('sessionList.workspaceEmpty')}
             </div>

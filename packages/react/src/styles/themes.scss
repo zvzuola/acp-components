@@ -40,7 +40,7 @@
   --acp-color-bg-primary: #0a0a0a;
   --acp-color-bg-secondary: #1a1a1a;
   --acp-color-bg-tertiary: #242424;
-  --acp-color-bg-hover: #333333;
+  --acp-color-bg-hover: #2a2a2a;
   --acp-color-bg-glass: #1a1a1a;
   --acp-color-bg-input: #0a0a0a;
   --acp-color-bg-code: #0a0a0a;
@@ -56,9 +56,9 @@
   --acp-color-text-danger: #f94f4f;
 
   // ── Borders ───────────────────────────────────────────────────────────
-  --acp-color-border: rgba(255, 255, 255, 0.12);
-  --acp-color-border-subtle: rgba(255, 255, 255, 0.06);
-  --acp-color-border-accent: rgba(255, 255, 255, 0.28);
+  --acp-color-border: rgba(255, 255, 255, 0.16);
+  --acp-color-border-subtle: rgba(255, 255, 255, 0.08);
+  --acp-color-border-accent: rgba(255, 255, 255, 0.32);
 
   // ── Accent (inverted — soft off-white on dark) ───────────────────────
   --acp-color-accent: #d4d4d4;
@@ -128,7 +128,7 @@
   --acp-color-bg-primary: #ffffff;
   --acp-color-bg-secondary: #f4f4f5;
   --acp-color-bg-tertiary: #e4e4e7;
-  --acp-color-bg-hover: #d4d4d8;
+  --acp-color-bg-hover: #f0f0f2;
   --acp-color-bg-glass: #ffffff;
   --acp-color-bg-input: #ffffff;
   --acp-color-bg-code: #f4f4f5;
@@ -144,8 +144,8 @@
   --acp-color-text-danger: #e00;
 
   // ── Borders ───────────────────────────────────────────────────────────
-  --acp-color-border: rgba(0, 0, 0, 0.12);
-  --acp-color-border-subtle: rgba(0, 0, 0, 0.06);
+  --acp-color-border: rgba(0, 0, 0, 0.14);
+  --acp-color-border-subtle: rgba(0, 0, 0, 0.08);
   --acp-color-border-accent: rgba(0, 0, 0, 0.28);
 
   // ── Accent (inverted — soft off-black on light) ──────────────────────

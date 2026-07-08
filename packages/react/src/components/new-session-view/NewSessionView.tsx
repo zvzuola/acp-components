@@ -10,6 +10,7 @@ import { useI18n } from '../../i18n';
 import { Select } from '../select';
 import type { SelectOption, SelectOptionGroup } from '../select';
 import { ChatComposer } from '../chat-view';
+import { getAgentName } from '../../utils/agentName';
 import styles from './new-session-view.module.scss';
 
 // ---------------------------------------------------------------------------
@@ -266,7 +267,7 @@ export function NewSessionView({ className, onSubmitted }: NewSessionViewProps) 
               onChange={setAgentId}
               options={agentList.map((a) => ({
                 value: a.id,
-                label: a.agentInfo?.title || a.name,
+                label: getAgentName(a),
               }))}
             />
             {modelOption && (
