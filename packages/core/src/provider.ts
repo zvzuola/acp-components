@@ -1,5 +1,4 @@
 import { AcpClient } from './client/AcpClient';
-import type { ExtMethodHandler, ExtNotificationHandler } from './client/AcpClient';
 import { acpStore } from './store/acpStore';
 import { sessionStore } from './store/sessionStore';
 import type { ToolCallState } from './types';
@@ -33,8 +32,6 @@ function isTextBlock(block: ContentBlock): block is ContentBlock & { type: 'text
 
 export interface MultiAgentProviderOptions {
   agents: AgentConfig[];
-  onExtMethod?: ExtMethodHandler;
-  onExtNotification?: ExtNotificationHandler;
 }
 
 export interface MultiAgentProviderInstance {
@@ -288,9 +285,7 @@ function buildCapabilities(
   return clientCapabilities;
 }
 
-export function createAcpProvider({ agents, onExtMethod, onExtNotification }: MultiAgentProviderOptions): MultiAgentProviderInstance {
-  const scopedExtMethodHandler = onExtMethod;
-  const scopedExtNotificationHandler = onExtNotification;
+export function createAcpProvider({ agents }: MultiAgentProviderOptions): MultiAgentProviderInstance {
   const scopedClientRegistry = new Map<string, AcpClient>();
   const scopedCleanupFns = new Map<string, () => void>();
   let permissionIdCounter = 0;
@@ -333,14 +328,6 @@ export function createAcpProvider({ agents, onExtMethod, onExtNotification }: Mu
 
     // Permission handler
     scopedSetupPermissionHandler(client);
-
-    // Extension handlers
-    if (scopedExtMethodHandler) {
-      client.setExtMethodHandler(scopedExtMethodHandler);
-    }
-    if (scopedExtNotificationHandler) {
-      client.setExtNotificationHandler(scopedExtNotificationHandler);
-    }
 
     scopedCleanupFns.set(config.id, () => {
       unsubStatus();

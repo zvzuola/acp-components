@@ -20,8 +20,6 @@ export interface CapturedClient {
   disconnect: ReturnType<typeof vi.fn>;
   listSessions: ReturnType<typeof vi.fn>;
   setPermissionHandler: ReturnType<typeof vi.fn>;
-  setExtMethodHandler: ReturnType<typeof vi.fn>;
-  setExtNotificationHandler: ReturnType<typeof vi.fn>;
   agentInfo: any;
   capabilities: any;
 }
@@ -45,8 +43,6 @@ vi.mock('./client/AcpClient', () => {
     listSessions = vi.fn(async () => ({ sessions: [], nextCursor: null }));
     disconnect = vi.fn();
     setPermissionHandler = vi.fn();
-    setExtMethodHandler = vi.fn();
-    setExtNotificationHandler = vi.fn();
 
     onSessionUpdate(handler: SessionUpdateHandler) {
       this.onSessionUpdateHandlers.add(handler);
@@ -67,8 +63,6 @@ vi.mock('./client/AcpClient', () => {
         disconnect: this.disconnect,
         listSessions: this.listSessions,
         setPermissionHandler: this.setPermissionHandler,
-        setExtMethodHandler: this.setExtMethodHandler,
-        setExtNotificationHandler: this.setExtNotificationHandler,
         agentInfo: this.agentInfo,
         capabilities: this.capabilities,
       });

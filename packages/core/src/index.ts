@@ -1,5 +1,5 @@
 export { AcpClient } from './client/AcpClient';
-export type { SessionUpdateHandler, PermissionHandler, ExtMethodHandler, ExtNotificationHandler } from './client/AcpClient';
+export type { SessionUpdateHandler, PermissionHandler } from './client/AcpClient';
 export { StdioTransport, HttpTransport, WebSocketTransport } from './transport';
 export type { AcpTransport, Stream, AnyMessage } from './transport';
 export { acpStore, findWorkspaceBySession } from './store/acpStore';

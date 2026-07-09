@@ -1,7 +1,8 @@
 import {
-  ClientSideConnection,
-  type Agent,
-  type Client,
+  client,
+  methods,
+  type ClientConnection,
+  type ClientContext,
   type SessionNotification,
   type RequestPermissionRequest,
   type RequestPermissionResponse,
@@ -27,8 +28,8 @@ import {
   type ForkSessionResponse,
   type AuthenticateRequest,
   type AuthenticateResponse,
+  type AgentCapabilities,
 } from '@agentclientprotocol/sdk';
-import type { AgentCapabilities } from '@agentclientprotocol/sdk';
 import { StdioTransport, HttpTransport, WebSocketTransport } from '../transport';
 import type { AcpTransport } from '../transport';
 import type { ConnectionStatus, Implementation, TransportConfig } from '../types';
@@ -36,8 +37,6 @@ import type { Skill } from '../store/skillStore';
 
 export type SessionUpdateHandler = (update: SessionNotification) => void;
 export type PermissionHandler = (request: RequestPermissionRequest) => Promise<RequestPermissionResponse>;
-export type ExtMethodHandler = (method: string, params: Record<string, unknown>) => Promise<Record<string, unknown>>;
-export type ExtNotificationHandler = (method: string, params: Record<string, unknown>) => void;
 
 /**
  * A skill entry already normalized to the core `Skill` shape, paired with the
@@ -131,7 +130,8 @@ function createTransport(config: TransportConfig): AcpTransport {
 }
 
 export class AcpClient {
-  private connection: ClientSideConnection | null = null;
+  private connection: ClientConnection | null = null;
+  private context: ClientContext | null = null;
   private transport: AcpTransport | null = null;
   private _transportConfig: TransportConfig | null = null;
   private _status: ConnectionStatus = 'disconnected';
@@ -142,8 +142,6 @@ export class AcpClient {
 
   private sessionUpdateHandlers = new Set<SessionUpdateHandler>();
   private permissionHandler: PermissionHandler | null = null;
-  private extMethodHandler: ExtMethodHandler | null = null;
-  private extNotificationHandler: ExtNotificationHandler | null = null;
   private statusHandlers = new Set<(status: ConnectionStatus) => void>();
   private closeHandlers = new Set<() => void>();
 
@@ -187,14 +185,6 @@ export class AcpClient {
     this.permissionHandler = handler;
   }
 
-  setExtMethodHandler(handler: ExtMethodHandler): void {
-    this.extMethodHandler = handler;
-  }
-
-  setExtNotificationHandler(handler: ExtNotificationHandler): void {
-    this.extNotificationHandler = handler;
-  }
-
   async connect(config: TransportConfig): Promise<void> {
     if (this._status === 'connecting') {
       return;
@@ -223,37 +213,18 @@ export class AcpClient {
       throw err;
     }
 
-    const client: Client = {
-      sessionUpdate: (params: SessionNotification) => {
-        for (const h of this.sessionUpdateHandlers) h(params);
-        return Promise.resolve();
-      },
-      requestPermission: (params: RequestPermissionRequest) => {
-        if (this.permissionHandler) {
-          return this.permissionHandler(params);
-        }
-        return Promise.resolve({
-          outcome: { outcome: 'selected', optionId: params.options[0]?.optionId ?? '' },
-        });
-      },
-      extMethod: (method: string, params: Record<string, unknown>) => {
-        if (this.extMethodHandler) {
-          return this.extMethodHandler(method, params);
-        }
-        return Promise.reject(new Error(`extension method ${method} not supported`));
-      },
-      extNotification: (method: string, params: Record<string, unknown>) => {
-        if (this.extNotificationHandler) {
-          this.extNotificationHandler(method, params);
-        }
-        return Promise.resolve();
-      },
-    };
+    // Build the client app and register the built-in agent→client handlers
+    // BEFORE connecting (the app-builder API requires handlers up front). The
+    // permission handler delegates to a run-time-replaceable field, so callers
+    // can still setPermissionHandler after connect().
+    const app = client({ name: 'acp-components-client' })
+      .onNotification(methods.client.session.update, (ctx) => {
+        for (const h of this.sessionUpdateHandlers) h(ctx.params);
+      })
+      .onRequest(methods.client.session.requestPermission, (ctx) => this.handlePermission(ctx.params));
 
-    this.connection = new ClientSideConnection(
-      (_agent: Agent) => client,
-      stream,
-    );
+    this.connection = app.connect(stream);
+    this.context = this.connection.agent;
 
     this.connection.closed.then(() => {
       this.setStatus('disconnected');
@@ -266,8 +237,22 @@ export class AcpClient {
     });
   }
 
+  /**
+   * Resolve a `session/request_permission` request. Delegates to the
+   * permission handler if set; otherwise auto-selects the first option
+   * (preserving the legacy behaviour).
+   */
+  private async handlePermission(params: RequestPermissionRequest): Promise<RequestPermissionResponse> {
+    if (this.permissionHandler) {
+      return this.permissionHandler(params);
+    }
+    return {
+      outcome: { outcome: 'selected', optionId: params.options[0]?.optionId ?? '' },
+    };
+  }
+
   async initialize(clientInfo?: Implementation, clientCapabilities?: ClientCapabilities): Promise<InitializeResponse> {
-    if (!this.connection) throw new Error('Not connected');
+    if (!this.context) throw new Error('Not connected');
 
     this._clientInfo = clientInfo;
     this._clientCapabilities = clientCapabilities;
@@ -278,7 +263,7 @@ export class AcpClient {
       clientCapabilities: clientCapabilities ?? undefined,
     };
 
-    const res = await this.connection.initialize(req);
+    const res = await this.context.request(methods.agent.initialize, req);
     this._agentInfo = res.agentInfo ?? null;
     this._capabilities = res.agentCapabilities ?? null;
     this.setStatus('connected');
@@ -286,41 +271,41 @@ export class AcpClient {
   }
 
   async newSession(cwd: string, mcpServers: NewSessionRequest['mcpServers'] = []): Promise<NewSessionResponse> {
-    if (!this.connection) throw new Error('Not connected');
-    return this.connection.newSession({ cwd, mcpServers });
+    if (!this.context) throw new Error('Not connected');
+    return this.context.request(methods.agent.session.new, { cwd, mcpServers });
   }
 
   async forkSession(sessionId: string, cwd: string, mcpServers: ForkSessionRequest['mcpServers'] = []): Promise<ForkSessionResponse> {
-    if (!this.connection) throw new Error('Not connected');
-    return this.connection.unstable_forkSession({ sessionId, cwd, mcpServers });
+    if (!this.context) throw new Error('Not connected');
+    return this.context.request(methods.agent.session.fork, { sessionId, cwd, mcpServers });
   }
 
   async prompt(sessionId: string, prompt: PromptRequest['prompt']): Promise<PromptResponse> {
-    if (!this.connection) throw new Error('Not connected');
-    return this.connection.prompt({ sessionId, prompt });
+    if (!this.context) throw new Error('Not connected');
+    return this.context.request(methods.agent.session.prompt, { sessionId, prompt });
   }
 
   async cancel(sessionId: string): Promise<void> {
-    if (!this.connection) throw new Error('Not connected');
+    if (!this.context) throw new Error('Not connected');
     const params: CancelNotification = { sessionId };
-    await this.connection.cancel(params);
+    await this.context.notify(methods.agent.session.cancel, params);
   }
 
   async listSessions(cursor?: string, cwd?: string): Promise<ListSessionsResponse> {
-    if (!this.connection) throw new Error('Not connected');
+    if (!this.context) throw new Error('Not connected');
     const params: ListSessionsRequest = {};
     if (cursor) params.cursor = cursor;
     if (cwd) params.cwd = cwd;
-    return this.connection.listSessions(params);
+    return this.context.request(methods.agent.session.list, params);
   }
 
   async loadSession(sessionId: string, cwd: string, mcpServers: LoadSessionRequest['mcpServers'] = []): Promise<LoadSessionResponse> {
-    if (!this.connection) throw new Error('Not connected');
-    return this.connection.loadSession({ sessionId, cwd, mcpServers });
+    if (!this.context) throw new Error('Not connected');
+    return this.context.request(methods.agent.session.load, { sessionId, cwd, mcpServers });
   }
 
   async setSessionConfigOption(sessionId: string, configId: string, value: string | boolean): Promise<SetSessionConfigOptionResponse> {
-    if (!this.connection) throw new Error('Not connected');
+    if (!this.context) throw new Error('Not connected');
     const params: SetSessionConfigOptionRequest = { sessionId, configId } as SetSessionConfigOptionRequest;
     if (typeof value === 'boolean') {
       (params as Record<string, unknown>).type = 'boolean';
@@ -328,30 +313,30 @@ export class AcpClient {
     } else {
       (params as Record<string, unknown>).value = value;
     }
-    return this.connection.setSessionConfigOption(params);
+    return this.context.request(methods.agent.session.setConfigOption, params);
   }
 
   async closeSession(sessionId: string): Promise<CloseSessionResponse> {
-    if (!this.connection) throw new Error('Not connected');
+    if (!this.context) throw new Error('Not connected');
     const params: CloseSessionRequest = { sessionId };
-    return this.connection.closeSession(params);
+    return this.context.request(methods.agent.session.close, params);
   }
 
   async deleteSession(sessionId: string): Promise<DeleteSessionResponse> {
-    if (!this.connection) throw new Error('Not connected');
+    if (!this.context) throw new Error('Not connected');
     const params: DeleteSessionRequest = { sessionId };
-    return this.connection.deleteSession(params);
+    return this.context.request(methods.agent.session.delete, params);
   }
 
   async authenticate(methodId: string): Promise<AuthenticateResponse> {
-    if (!this.connection) throw new Error('Not connected');
+    if (!this.context) throw new Error('Not connected');
     const params: AuthenticateRequest = { methodId };
-    return this.connection.authenticate(params);
+    return this.context.request(methods.agent.authenticate, params);
   }
 
   async extMethod(method: string, params: Record<string, unknown>): Promise<Record<string, unknown>> {
-    if (!this.connection) throw new Error('Not connected');
-    return this.connection.extMethod(method, params);
+    if (!this.context) throw new Error('Not connected');
+    return this.context.request<Record<string, unknown>, Record<string, unknown>>(method, params);
   }
 
   /**
@@ -368,7 +353,7 @@ export class AcpClient {
    *   sending.
    */
   async listSkills(cwds?: string[]): Promise<Skill[]> {
-    if (!this.connection) throw new Error('Not connected');
+    if (!this.context) throw new Error('Not connected');
     const params: Record<string, unknown> = {};
     if (cwds && cwds.length > 0) params.cwds = cwds;
     const res = await this.extMethod('_acp/skills/list', params);
@@ -380,14 +365,16 @@ export class AcpClient {
   }
 
   async extNotification(method: string, params: Record<string, unknown>): Promise<void> {
-    if (!this.connection) throw new Error('Not connected');
-    return this.connection.extNotification(method, params);
+    if (!this.context) throw new Error('Not connected');
+    await this.context.notify<Record<string, unknown>>(method, params);
   }
 
   disconnect(): void {
     this.transport?.disconnect();
+    this.connection?.close();
     // connection.closed handler fires async → setStatus + closeHandlers + clear
     this.connection = null;
+    this.context = null;
     this.transport = null;
   }
 

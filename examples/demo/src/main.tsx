@@ -86,13 +86,6 @@ function App() {
           }
           ]}
           theme="dark"
-          onExtMethod={async (method, params) => {
-            console.log(`[ext-method] agent → client: ${method}`, params);
-            throw new Error(`Unknown extension method: ${method}`);
-          }}
-          onExtNotification={(method, params) => {
-            console.log(`[ext-notification] agent → client: ${method}`, params);
-          }}
         >
           <AppInner />
         </AcpProvider>

@@ -3,7 +3,6 @@ import { AcpContext } from '../../context/AcpContext';
 import { SettingsContext } from '../../context/SettingsContext';
 import { useAcpProvider } from '../../hooks/useAcpProvider';
 import type { AgentConfig } from '@acp-components/core';
-import type { ExtMethodHandler, ExtNotificationHandler } from '@acp-components/core';
 import { useI18n } from '../../i18n';
 import styles from './loading.module.scss';
 
@@ -11,21 +10,15 @@ export interface AcpProviderProps {
   agents: AgentConfig[];
   theme?: 'light' | 'dark';
   children: React.ReactNode;
-  onExtMethod?: ExtMethodHandler;
-  onExtNotification?: ExtNotificationHandler;
 }
 
 export function AcpProvider({
   agents,
   theme: initialTheme = 'dark',
   children,
-  onExtMethod,
-  onExtNotification,
 }: AcpProviderProps) {
   const provider = useAcpProvider({
     agents,
-    onExtMethod,
-    onExtNotification,
   });
   const { t } = useI18n();
 
