@@ -151,7 +151,7 @@ export const enUS = {
 
   // SettingsView
   'settingsView.title': 'Settings',
-  'settingsView.back': 'Back',
+  'settingsView.back': 'Back to Session',
   'settingsView.sectionAppearance': 'Appearance',
   'settingsView.sectionAgents': 'Agents',
   'settingsView.theme': 'Theme',

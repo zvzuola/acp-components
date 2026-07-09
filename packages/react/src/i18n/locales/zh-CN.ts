@@ -151,7 +151,7 @@ export const zhCN = {
 
   // SettingsView
   'settingsView.title': '设置',
-  'settingsView.back': '返回',
+  'settingsView.back': '返回会话',
   'settingsView.sectionAppearance': '外观',
   'settingsView.sectionAgents': '智能体',
   'settingsView.theme': '主题',

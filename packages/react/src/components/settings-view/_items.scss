@@ -1,0 +1,33 @@
+// =============================================================================
+// Shared items list — the scrollable single-column container rendered by both
+// AppearancePanel and AgentsPanel. Declared once here and @use'd by each
+// panel's module so the rule body isn't duplicated across files.
+// =============================================================================
+
+.acp-settings-view__items {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 6px 8px;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--acp-color-text-muted);
+    border-radius: 3px;
+
+    &:hover {
+      background: var(--acp-color-text-secondary);
+    }
+  }
+}
