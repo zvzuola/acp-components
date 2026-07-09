@@ -1,4 +1,5 @@
 import { AcpClient } from './client/AcpClient';
+import type { StdioTransportFactory } from './client/AcpClient';
 import { acpStore } from './store/acpStore';
 import { sessionStore } from './store/sessionStore';
 import type { ToolCallState } from './types';
@@ -31,7 +32,13 @@ function isTextBlock(block: ContentBlock): block is ContentBlock & { type: 'text
 }
 
 export interface MultiAgentProviderOptions {
-  agents: AgentConfig[];
+  /**
+   * Initial built-in agent set supplied by the host (e.g. its default agent
+   * config). Optional — a host with no built-in agents can omit it and rely on
+   * user-added agents (persisted to `storage('agents')`) instead. Defaults to
+   * `[]`.
+   */
+  agents?: AgentConfig[];
 }
 
 export interface MultiAgentProviderInstance {
@@ -285,7 +292,11 @@ function buildCapabilities(
   return clientCapabilities;
 }
 
-export function createAcpProvider({ agents }: MultiAgentProviderOptions): MultiAgentProviderInstance {
+export function createAcpProvider(
+  options: MultiAgentProviderOptions,
+  stdioFactory: StdioTransportFactory | null = null,
+): MultiAgentProviderInstance {
+  const { agents = [] } = options;
   const scopedClientRegistry = new Map<string, AcpClient>();
   const scopedCleanupFns = new Map<string, () => void>();
   let permissionIdCounter = 0;
@@ -314,6 +325,11 @@ export function createAcpProvider({ agents }: MultiAgentProviderOptions): MultiA
 
   async function connectAgent(config: AgentConfig): Promise<void> {
     const client = new AcpClient();
+
+    // Inject the host stdio transport factory before connecting so `{ type:
+    // 'stdio' }` configs resolve against the host's spawn capability. A null
+    // factory (web host) leaves stdio configs to fail fast in createTransport.
+    client.setStdioTransportFactory(stdioFactory);
 
     // Register client immediately so getClient works during connection
     scopedClientRegistry.set(config.id, client);

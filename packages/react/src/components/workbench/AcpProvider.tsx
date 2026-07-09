@@ -9,13 +9,18 @@ import { useI18n } from '../../i18n';
 import styles from './loading.module.scss';
 
 export interface AcpProviderProps {
-  agents: AgentConfig[];
+  /**
+   * Initial built-in agent set supplied by the host (its default agent config).
+   * Optional — a host with no built-in agents can omit it; user-added agents are
+   * persisted to `storage('agents')` and restored on mount. Defaults to `[]`.
+   */
+  agents?: AgentConfig[];
   theme?: 'light' | 'dark';
   children: React.ReactNode;
 }
 
 export function AcpProvider({
-  agents,
+  agents = [],
   theme: initialTheme = 'dark',
   children,
 }: AcpProviderProps) {

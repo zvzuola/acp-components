@@ -7,6 +7,8 @@ import type {
   FileTreeNode,
   FileTreeWatchCallbacks,
   FileTreeWatcher,
+  StdioTransportOptions,
+  AcpTransport,
 } from '@acp-components/core';
 
 /**
@@ -83,6 +85,33 @@ export interface Clipboard {
 export type OpenExternalEditor = (path: string, line?: number | null) => void;
 
 /**
+ * Process / subprocess slice. A desktop host that can spawn an agent child
+ * process (Tauri Rust backend, Electron main, Node, …) provides a stdio
+ * transport factory here; a web host that cannot spawn omits it entirely.
+ *
+ * This is the bridge that lets a `{ type: 'stdio' }` `AgentConfig.transport`
+ * actually connect: `AcpProvider` resolves `platform.process.createStdioTransport`
+ * and injects it into `createAcpProvider`, which hands it to each `AcpClient`,
+ * where `createTransport` consults it for stdio configs. When omitted, stdio
+ * configs fail fast at connect time — the `AgentsPanel` picker filters `stdio`
+ * out for `platform === 'web'` so users never build an un-connectable config.
+ *
+ * `Platform` provides the *spawn capability*; *which* agent to spawn (command /
+ * args / env) is still plain data on `AgentConfig.transport`. The two concerns
+ * stay orthogonal, consistent with how `fs.readDirectory` (capability) is
+ * separate from the workspace `cwd` (data) it is called with.
+ */
+export interface PlatformProcess {
+  /**
+   * Build a concrete `AcpTransport` for a stdio spawn config. The returned
+   * transport owns the host-native subprocess lifecycle (spawn, stdin/stdout
+   * piping, close/error handlers) and adapts it to the ACP `Stream` shape.
+   * Called once per `AcpClient.connect()` for `{ type: 'stdio' }` configs.
+   */
+  createStdioTransport(options: StdioTransportOptions): AcpTransport;
+}
+
+/**
  * System / lifecycle slice. All members optional — a host that cannot back
  * them (e.g. a browser) omits the whole slice or the relevant methods.
  *
@@ -126,9 +155,9 @@ export interface PlatformSystem {
  * `Platform`.
  *
  * Capability is expressed by slice / method presence: `fs?`, `dialogs?`,
- * `clipboard?`, `updater?`, `system?`, `openExternalEditor?` are optional, and
- * callers guard with `?.` at the use site. `storage` is the one always-required
- * slice (i18n and workspace persistence both depend on it).
+ * `clipboard?`, `updater?`, `system?`, `process?`, `openExternalEditor?` are
+ * optional, and callers guard with `?.` at the use site. `storage` is the one
+ * always-required slice (i18n and workspace persistence both depend on it).
  *
  * Note: workspace load/save was previously on this interface; it has moved to
  * the `useWorkspacesPersistence` hook, which is built on `storage`.
@@ -153,6 +182,13 @@ export interface Platform {
   updater?: Updater;
   /** System / lifecycle capabilities (locale, restart, …). Optional. */
   system?: PlatformSystem;
+  /**
+   * Process / subprocess slice. Optional — a web host that cannot spawn a
+   * child process omits it; a desktop host provides `createStdioTransport` so
+   * `{ type: 'stdio' }` agent configs can connect. Callers (the provider)
+   * guard with `?.`.
+   */
+  process?: PlatformProcess;
 }
 
 export const PlatformContext = createContext<Platform | null>(null);

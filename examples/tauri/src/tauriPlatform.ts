@@ -3,6 +3,8 @@ import type {
   PlatformStorage,
   FileTreeNode,
 } from '@acp-components/react';
+import type { StdioTransportOptions, AcpTransport } from '@acp-components/core';
+import { TauriIpcTransport } from './tauriIpcTransport';
 
 // ---------------------------------------------------------------------------
 // Tauri Platform — backs the desktop template's native-capability surface.
@@ -111,6 +113,30 @@ function createTauriStorage(name: string): PlatformStorage {
 }
 
 // ---------------------------------------------------------------------------
+// Stdio transport factory — Tauri backend spawns the agent process and bridges
+// stdin/stdout through Tauri IPC commands/events (see TauriIpcTransport). This
+// lets `{ type: 'stdio', command, args }` agent configs (plain data, JSON-
+// persistable) connect without resorting to a `{ type: 'custom' }` transport
+// carrying a live instance. Each call gets a fresh unique agent id so multiple
+// stdio agents can run concurrently and the Rust side can route their IPC.
+// ---------------------------------------------------------------------------
+
+let stdioAgentIdSeq = 0;
+
+function createTauriStdioTransport(options: StdioTransportOptions): AcpTransport {
+  // Agent id is scoped to this transport instance; the Rust `start_agent`
+  // command uses it to route stdout/stderr/closed/error events back here.
+  // A monotonic counter is sufficient — ids only need to be unique within one
+  // app session, never persisted (the transport instance itself is not).
+  const agentId = `stdio-${Date.now()}-${++stdioAgentIdSeq}`;
+  return new TauriIpcTransport({
+    agentId,
+    command: options.command,
+    args: options.args,
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Factory
 // ---------------------------------------------------------------------------
 
@@ -198,5 +224,11 @@ export function createTauriPlatform(): Platform {
 
     // openExternalEditor / updater — interface-only, omitted. Wire them up
     // when adopting tauri-plugin-shell / tauri-plugin-updater etc.
+
+    process: {
+      // Tauri can spawn an agent child process via its Rust backend — expose it
+      // so `{ type: 'stdio' }` agent configs connect through TauriIpcTransport.
+      createStdioTransport: createTauriStdioTransport,
+    },
   };
 }

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   BgColorsOutlined,
   DeleteOutlined,
@@ -160,7 +160,12 @@ const agentStatusDotClass: Record<AgentConnection['status'], string> = {
  * pre-built transport instance the form can't synthesize from text fields. */
 type AddableTransportType = 'websocket' | 'http' | 'stdio';
 
-const TRANSPORT_OPTIONS: SelectOption[] = [
+/** Full set of addable transport options. `stdio` requires a host-provided
+ * spawn capability (`Platform.process.createStdioTransport`); when the host
+ * omits it, `stdio` is filtered out of the picker (see `transportOptions` in
+ * `AgentsPanel`) — offering it would let the user build a config that can
+ * never connect. */
+const ALL_TRANSPORT_OPTIONS: SelectOption[] = [
   { value: 'websocket', label: 'WebSocket' },
   { value: 'http', label: 'HTTP' },
   { value: 'stdio', label: 'Stdio' },
@@ -197,6 +202,22 @@ function deriveAgentId(name: string, existingIds: Set<string>): string {
 function AgentsPanel() {
   const { t } = useI18n();
   const { agents, addAgent, removeAgent, builtinAgentIds } = useAcpContext();
+  const { process: processSlice } = usePlatform();
+
+  // stdio is only usable when the host provides a spawn capability
+  // (`Platform.process.createStdioTransport`). A web host that can't spawn a
+  // child process omits the slice → drop `stdio` from the picker so users
+  // can't build a config that can never connect. Desktop hosts that provide
+  // the factory keep the full set. This is the same capability check the
+  // provider uses when injecting the factory, so the picker can never offer a
+  // transport the connection layer would reject.
+  const canStdio = !!processSlice?.createStdioTransport;
+  const transportOptions = useMemo(
+    () => canStdio
+      ? ALL_TRANSPORT_OPTIONS
+      : ALL_TRANSPORT_OPTIONS.filter((o) => o.value !== 'stdio'),
+    [canStdio],
+  );
 
   // Add-form state
   const [name, setName] = useState('');
@@ -319,7 +340,7 @@ function AgentsPanel() {
               aria-label={t('agentsView.transport')}
               value={transportType}
               onChange={handleTransportTypeChange}
-              options={TRANSPORT_OPTIONS}
+              options={transportOptions}
             />
           </label>
         </div>

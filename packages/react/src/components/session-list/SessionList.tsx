@@ -364,13 +364,11 @@ function WorkspaceGroup({ cwd, workspace, isWorkspaceActive, onSelectSession }: 
 // ---------------------------------------------------------------------------
 
 export function SessionList({ onSelectSession }: { onSelectSession?: (session: SessionMeta) => void } = {}) {
-  const agents = useAcpStore((s) => s.agents);
   const { workspaces, addWorkspace, activeWorkspaceCwd } = useWorkspaces();
   const { t } = useI18n();
   const { dialogs } = usePlatform();
   const openFilePicker = dialogs?.openFilePicker;
 
-  const agentList = Array.from(agents.values());
   const workspaceList = workspaces.map((ws) => [ws.cwd, ws] as const);
 
   const handleAddClick = useCallback(() => {
@@ -397,11 +395,6 @@ export function SessionList({ onSelectSession }: { onSelectSession?: (session: S
         </button>
       </div>
       <div className={styles.acpSessionListItems} role="listbox" aria-label={t('sessionList.title')}>
-        {agentList.length === 0 && (
-          <div className={styles.acpSessionListEmptyState}>
-            {t('sessionList.emptyState')}
-          </div>
-        )}
         {workspaceList.map(([cwd, ws]) => (
           <WorkspaceGroup
             key={cwd}

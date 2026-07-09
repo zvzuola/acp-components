@@ -43,14 +43,17 @@ import { LoginDialog } from '@acp-components/react';
 import { I18nProvider } from '@acp-components/react';
 import { PlatformProvider } from '@acp-components/react';
 import { useAcpStore } from '@acp-components/react';
-import { TauriIpcTransport } from './tauriIpcTransport';
 import { createTauriPlatform } from './tauriPlatform';
 
-// Tauri IPC transport: the Rust backend spawns the agent process and bridges
-// stdin/stdout through Tauri commands and events. No WebSocket server needed.
+// The agent is configured as a plain-data `{ type: 'stdio' }` transport. The
+// actual spawn capability is supplied by `Platform.process.createStdioTransport`
+// (see tauriPlatform.ts → createTauriStdioTransport), which the Rust backend
+// backs: it spawns the agent process and bridges stdin/stdout through Tauri
+// commands/events (TauriIpcTransport). No WebSocket server needed.
 //
-// To customize the agent binary or arguments:
-//   new TauriIpcTransport({ command: 'opencode', args: ['acp'] })
+// To customize the agent binary or arguments, just edit the command/args below
+// — it is plain data and round-trips through JSON storage, unlike a `custom`
+// transport carrying a live instance.
 
 function AppInner() {
   const activeSessionId = useAcpStore((s) => s.activeSessionId);
@@ -79,12 +82,9 @@ function AcpAssembly() {
         id: 'default',
         name: 'OpenCode',
         transport: {
-          type: 'custom',
-          transport: new TauriIpcTransport({
-            agentId: 'default',
-            command: 'npx',
-            args: ['opencode-ai@latest', 'acp'],
-          }),
+          type: 'stdio',
+          command: 'npx',
+          args: ['opencode-ai@latest', 'acp'],
         },
       }]}
       theme="dark"

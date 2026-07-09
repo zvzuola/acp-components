@@ -20,6 +20,7 @@ export interface CapturedClient {
   disconnect: ReturnType<typeof vi.fn>;
   listSessions: ReturnType<typeof vi.fn>;
   setPermissionHandler: ReturnType<typeof vi.fn>;
+  setStdioTransportFactory: ReturnType<typeof vi.fn>;
   agentInfo: any;
   capabilities: any;
 }
@@ -43,6 +44,9 @@ vi.mock('./client/AcpClient', () => {
     listSessions = vi.fn(async () => ({ sessions: [], nextCursor: null }));
     disconnect = vi.fn();
     setPermissionHandler = vi.fn();
+    // The provider injects a host stdio transport factory before connecting;
+    // tests don't drive a real transport, so a no-op satisfies the interface.
+    setStdioTransportFactory = vi.fn();
 
     onSessionUpdate(handler: SessionUpdateHandler) {
       this.onSessionUpdateHandlers.add(handler);
@@ -63,6 +67,7 @@ vi.mock('./client/AcpClient', () => {
         disconnect: this.disconnect,
         listSessions: this.listSessions,
         setPermissionHandler: this.setPermissionHandler,
+        setStdioTransportFactory: this.setStdioTransportFactory,
         agentInfo: this.agentInfo,
         capabilities: this.capabilities,
       });

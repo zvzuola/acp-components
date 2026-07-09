@@ -1,7 +1,7 @@
 export { AcpClient } from './client/AcpClient';
-export type { SessionUpdateHandler, PermissionHandler } from './client/AcpClient';
-export { StdioTransport, HttpTransport, WebSocketTransport } from './transport';
-export type { AcpTransport, Stream, AnyMessage } from './transport';
+export type { SessionUpdateHandler, PermissionHandler, StdioTransportFactory } from './client/AcpClient';
+export { HttpTransport, WebSocketTransport } from './transport';
+export type { AcpTransport, Stream, AnyMessage, StdioTransportOptions } from './transport';
 export { acpStore, findWorkspaceBySession } from './store/acpStore';
 export { sessionStore } from './store/sessionStore';
 export { fileTreeStore, findNodeByPath } from './store/fileTreeStore';

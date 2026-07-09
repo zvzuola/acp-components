@@ -54,7 +54,6 @@ export const zhCN = {
   'sessionList.deleteSession': '删除会话',
   'sessionList.forkSession': '复刻会话',
   'sessionList.defaultSessionTitle': '新会话',
-  'sessionList.emptyState': '暂无会话，点击 + 开始',
   'sessionList.loadMore': '加载更多',
   'sessionList.statusRunning': '运行中',
   'sessionList.statusNeedsAction': '待操作',

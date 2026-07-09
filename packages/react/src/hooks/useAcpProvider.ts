@@ -2,14 +2,23 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useStore } from 'zustand/react';
 import { useShallow } from 'zustand/shallow';
 import { createAcpProvider, acpStore } from '@acp-components/core';
-import type { MultiAgentProviderOptions, MultiAgentProviderInstance, AgentConfig } from '@acp-components/core';
+import type { MultiAgentProviderOptions, MultiAgentProviderInstance, AgentConfig, StdioTransportFactory } from '@acp-components/core';
+import { usePlatform } from '../context/PlatformContext';
 
 export function useAcpProvider(options: MultiAgentProviderOptions) {
   const providerRef = useRef<MultiAgentProviderInstance | null>(null);
   const [ready, setReady] = useState(false);
 
+  // Resolve the host stdio transport factory from Platform.process. A host
+  // that can't spawn a child process (e.g. web) omits the slice → `null` →
+  // `{ type: 'stdio' }` configs fail fast at connect. The AgentsPanel picker
+  // gates `stdio` on the same capability, so the two never disagree.
+  const { process: processSlice } = usePlatform();
+  const stdioFactory: StdioTransportFactory | null =
+    processSlice?.createStdioTransport ?? null;
+
   if (!providerRef.current) {
-    providerRef.current = createAcpProvider(options);
+    providerRef.current = createAcpProvider(options, stdioFactory);
   }
 
   useEffect(() => {

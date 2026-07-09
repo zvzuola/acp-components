@@ -30,10 +30,20 @@ import {
   type AuthenticateResponse,
   type AgentCapabilities,
 } from '@agentclientprotocol/sdk';
-import { StdioTransport, HttpTransport, WebSocketTransport } from '../transport';
-import type { AcpTransport } from '../transport';
+import { HttpTransport, WebSocketTransport } from '../transport';
+import type { AcpTransport, StdioTransportOptions } from '../transport';
 import type { ConnectionStatus, Implementation, TransportConfig } from '../types';
 import type { Skill } from '../store/skillStore';
+
+/**
+ * Host-injected factory that turns a stdio spawn config into a concrete
+ * `AcpTransport`. core does not own a stdio spawn implementation (spawning a
+ * child process is a host-native capability a browser cannot back), so a host
+ * provides this via `Platform.process.createStdioTransport`; the React
+ * `AcpProvider` resolves it and injects it through `createAcpProvider`. When
+ * unset, a `{ type: 'stdio' }` config fails fast at connect time.
+ */
+export type StdioTransportFactory = (options: StdioTransportOptions) => AcpTransport;
 
 export type SessionUpdateHandler = (update: SessionNotification) => void;
 export type PermissionHandler = (request: RequestPermissionRequest) => Promise<RequestPermissionResponse>;
@@ -114,10 +124,21 @@ function normalizeSkill(raw: Record<string, unknown>): Skill {
   return skill;
 }
 
-function createTransport(config: TransportConfig): AcpTransport {
+function createTransport(
+  config: TransportConfig,
+  stdioFactory: StdioTransportFactory | null,
+): AcpTransport {
   switch (config.type) {
     case 'stdio':
-      return new StdioTransport({ command: config.command, args: config.args, env: config.env });
+      if (!stdioFactory) {
+        // No host stdio capability was injected (e.g. a web platform that cannot
+        // spawn a process). Fail fast here rather than inside a baked-in spawn
+        // — the host must provide `Platform.process.createStdioTransport`.
+        throw new Error(
+          'stdio transport requires a host-provided factory (Platform.process.createStdioTransport); none was injected.',
+        );
+      }
+      return stdioFactory({ command: config.command, args: config.args, env: config.env });
     case 'http':
       return new HttpTransport({ url: config.url, headers: config.headers });
     case 'websocket':
@@ -144,6 +165,22 @@ export class AcpClient {
   private permissionHandler: PermissionHandler | null = null;
   private statusHandlers = new Set<(status: ConnectionStatus) => void>();
   private closeHandlers = new Set<() => void>();
+  /**
+   * Host-injected stdio transport factory (`Platform.process.createStdioTransport`).
+   * Resolved by the React `AcpProvider` and injected before `connect()`. `null`
+   * means the host cannot spawn a process — a `{ type: 'stdio' }` config then
+   * throws in `createTransport`.
+   */
+  private stdioFactory: StdioTransportFactory | null = null;
+
+  /**
+   * Inject the host stdio transport factory. Called once by the provider before
+   * connecting each agent; subsequent calls replace the previous factory (used
+   * when the host swaps its `Platform` capability set at runtime).
+   */
+  setStdioTransportFactory(factory: StdioTransportFactory | null): void {
+    this.stdioFactory = factory;
+  }
 
   get status(): ConnectionStatus {
     return this._status;
@@ -193,7 +230,7 @@ export class AcpClient {
       this.disconnect();
     }
     this._transportConfig = config;
-    this.transport = createTransport(config);
+    this.transport = createTransport(config, this.stdioFactory);
     this.setStatus('connecting');
 
     this.transport.onClose?.(() => {
