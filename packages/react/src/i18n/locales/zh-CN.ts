@@ -144,10 +144,22 @@ export const zhCN = {
 
   // Settings
   'settings.title': '设置',
+  'settings.openSettings': '设置',
   'settings.theme': '主题',
   'settings.themeDark': '深色',
   'settings.themeLight': '浅色',
   'settings.language': '语言',
+
+  // SettingsView
+  'settingsView.title': '设置',
+  'settingsView.back': '返回',
+  'settingsView.sectionAppearance': '外观',
+  'settingsView.theme': '主题',
+  'settingsView.themeDark': '深色',
+  'settingsView.themeLight': '浅色',
+  'settingsView.language': '语言',
+  'settingsView.langEnglish': 'English',
+  'settingsView.langChinese': '中文',
 
   // Sidebar
   'sidebar.noWorkspace': '请选择工作区',

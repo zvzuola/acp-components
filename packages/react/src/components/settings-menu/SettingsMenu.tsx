@@ -12,6 +12,12 @@ import styles from './settings-menu.module.scss';
 
 export interface SettingsMenuProps {
   className?: string;
+  /**
+   * Called when the "Open settings" item is clicked — typically the host
+   * switches its main view to a full-page Settings view. When omitted, the
+   * item is not rendered (no dead entry on hosts without a settings view).
+   */
+  onOpenSettings?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -25,7 +31,7 @@ function ToggleSwitch({ on }: { on: boolean }) {
   );
 }
 
-export function SettingsMenu({ className }: SettingsMenuProps) {
+export function SettingsMenu({ className, onOpenSettings }: SettingsMenuProps) {
   const { t, i18n } = useI18n();
   const { theme, setTheme } = useSettings();
   const { storage } = usePlatform();
@@ -84,6 +90,16 @@ export function SettingsMenu({ className }: SettingsMenuProps) {
                 onClick={() => switchLanguage('zh-CN')}
               />
             </Dropdown.Submenu>
+
+            {/* Open the full settings view (host-switched). Hidden when the
+                host doesn't wire a settings view (no callback). */}
+            {onOpenSettings && (
+              <Dropdown.Item
+                icon={<SettingOutlined />}
+                label={t('settings.openSettings')}
+                onClick={onOpenSettings}
+              />
+            )}
           </Dropdown.Section>
         </Dropdown.Content>
       </Dropdown>

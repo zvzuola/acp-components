@@ -35,3 +35,15 @@
   margin: 0 auto;
   padding: 8px 0 0;
 }
+
+// SettingsView in the main area: same readable-column treatment as SkillView
+// so rows don't stretch edge-to-edge on wide screens. SettingsView manages
+// its own scrolling.
+.acp-workbench-shell__main-settings-view {
+  flex: 1 1 0;
+  min-height: 0;
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 8px 0 0;
+}

@@ -144,10 +144,22 @@ export const enUS = {
 
   // Settings
   'settings.title': 'Settings',
+  'settings.openSettings': 'Settings',
   'settings.theme': 'Theme',
   'settings.themeDark': 'Dark',
   'settings.themeLight': 'Light',
   'settings.language': 'Language',
+
+  // SettingsView
+  'settingsView.title': 'Settings',
+  'settingsView.back': 'Back',
+  'settingsView.sectionAppearance': 'Appearance',
+  'settingsView.theme': 'Theme',
+  'settingsView.themeDark': 'Dark',
+  'settingsView.themeLight': 'Light',
+  'settingsView.language': 'Language',
+  'settingsView.langEnglish': 'English',
+  'settingsView.langChinese': '中文',
 
   // Sidebar
   'sidebar.noWorkspace': 'Select a workspace',

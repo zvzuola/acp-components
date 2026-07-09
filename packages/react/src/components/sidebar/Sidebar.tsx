@@ -47,6 +47,13 @@ export interface SidebarProps {
    * session even when the clicked session is the current one.
    */
   onSelectSession?: (session: SessionMeta) => void;
+  /**
+   * Called when the footer's SettingsMenu "Open settings" item is clicked.
+   * Lets the host flip its main view to the settings view. Forwarded to
+   * <SettingsMenu>; omitted when the host has no settings view to open (the
+   * menu item is then hidden).
+   */
+  onOpenSettings?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -101,6 +108,7 @@ export function Sidebar({
   onActiveViewChange,
   navItems = [],
   onSelectSession,
+  onOpenSettings,
 }: SidebarProps) {
   const { t } = useI18n();
 
@@ -132,7 +140,7 @@ export function Sidebar({
       </div>
 
       <div className={styles.acpSidebarFooter}>
-        <SettingsMenu />
+        <SettingsMenu onOpenSettings={onOpenSettings} />
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import type { SidebarNavItem, SidebarViewId } from '../sidebar/Sidebar';
 import { SessionView } from '../session-view/SessionView';
 import { SkillView } from '../skill-view/SkillView';
 import { NewSessionView } from '../new-session-view';
+import { SettingsView, SettingsSidebar } from '../settings-view';
 import { useAcpStore } from '../../hooks/useAcpStore';
 import { useI18n } from '../../i18n';
 import styles from './workbench-shell.module.scss';
@@ -20,6 +21,7 @@ import styles from './workbench-shell.module.scss';
 export const SIDEBAR_VIEW_SESSIONS = 'sessions';
 export const SIDEBAR_VIEW_SKILLS = 'skills';
 export const SIDEBAR_VIEW_NEW_SESSION = 'new-session';
+export const SIDEBAR_VIEW_SETTINGS = 'settings';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -89,14 +91,23 @@ export function WorkbenchShell({
     SIDEBAR_VIEW_NEW_SESSION,
   );
 
+  // Active settings sub-section. Only meaningful while
+  // `current === SIDEBAR_VIEW_SETTINGS`; survives leaving/entering settings
+  // so returning to a section keeps your place.
+  const [settingsSection, setSettingsSection] = useState<string>(
+    'appearance',
+  );
+
   // Selecting a session in the sidebar's SessionList flips the store's
   // activeSessionId. When that happens while the main area is showing a
-  // non-session view (Skills or New Session), switch back to the session
-  // view — clicking a session means "show me this conversation".
+  // non-session view (Skills, New Session, or Settings), switch back to the
+  // session view — clicking a session means "show me this conversation".
   useEffect(() => {
     if (
       storeSessionId &&
-      (current === SIDEBAR_VIEW_SKILLS || current === SIDEBAR_VIEW_NEW_SESSION)
+      (current === SIDEBAR_VIEW_SKILLS ||
+        current === SIDEBAR_VIEW_NEW_SESSION ||
+        current === SIDEBAR_VIEW_SETTINGS)
     ) {
       setCurrent(SIDEBAR_VIEW_SESSIONS);
     }
@@ -106,10 +117,10 @@ export function WorkbenchShell({
   }, [storeSessionId]);
 
   // ── Sidebar nav items ─────────────────────────────────────────────────
-  // The built-in entries are configured here (not hardcoded in <Sidebar>)
-  // so the sidebar stays a pure renderer. The "New session" action sits at
-  // the top (a primary affordance, like codex's new-chat button), followed
-  // by Skills; the host's items follow in order.
+  // The built-in entries for the NORMAL sidebar (New Session / Skills + host
+  // items). The settings-mode sidebar is a separate <SettingsSidebar> with its
+  // own nav (Back + section list sourced from SETTINGS_SECTIONS), so this list
+  // only feeds the non-settings sidebar.
   const sidebarNavItems: SidebarNavItem[] = useMemo(
     () => [
       {
@@ -153,6 +164,14 @@ export function WorkbenchShell({
         />
       );
     }
+    if (current === SIDEBAR_VIEW_SETTINGS) {
+      return (
+        <SettingsView
+          activeSection={settingsSection}
+          className={styles.acpWorkbenchShellMainSettingsView}
+        />
+      );
+    }
     // Host-injected view: look up content from navItems.
     const injected = navItems.find((it) => it.id === current);
     return injected?.content ?? null;
@@ -160,16 +179,28 @@ export function WorkbenchShell({
     current,
     resolvedSessionId,
     navItems,
+    settingsSection,
   ]);
 
-  const sidebar = (
-    <Sidebar
-      activeView={current}
-      onActiveViewChange={setCurrent}
-      navItems={sidebarNavItems}
-      onSelectSession={() => setCurrent(SIDEBAR_VIEW_SESSIONS)}
-    />
-  );
+  // ── Sidebar: pick the dedicated settings sidebar while in settings mode,
+  // the normal workspace sidebar otherwise. Two separate components keep each
+  // path self-contained — no shared router, sentinel ids, or region overrides.
+  const sidebar =
+    current === SIDEBAR_VIEW_SETTINGS ? (
+      <SettingsSidebar
+        activeSection={settingsSection}
+        onBack={() => setCurrent(SIDEBAR_VIEW_NEW_SESSION)}
+        onSelectSection={setSettingsSection}
+      />
+    ) : (
+      <Sidebar
+        activeView={current}
+        onActiveViewChange={setCurrent}
+        navItems={sidebarNavItems}
+        onSelectSession={() => setCurrent(SIDEBAR_VIEW_SESSIONS)}
+        onOpenSettings={() => setCurrent(SIDEBAR_VIEW_SETTINGS)}
+      />
+    );
 
   return (
     <Workbench
