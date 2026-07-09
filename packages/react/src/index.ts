@@ -36,6 +36,11 @@ export { NewSessionView } from './components/new-session-view';
 export type { NewSessionViewProps } from './components/new-session-view/NewSessionView';
 export { SettingsView } from './components/settings-view';
 export type { SettingsViewProps } from './components/settings-view/SettingsView';
+export {
+  SETTINGS_SECTIONS,
+  SETTINGS_SECTION_APPEARANCE,
+  SETTINGS_SECTION_AGENTS,
+} from './components/settings-view/SettingsView';
 export { Markdown } from './components/markdown';
 export type { MarkdownProps } from './components/markdown/Markdown';
 export { ChatView, MessageBubble, ChatComposer, ToolCallCard, StreamingIndicator, ThoughtView, PlanView } from './components/chat-view';
@@ -93,6 +98,7 @@ export type { OpenFileEntry, UseFileViewerReturn } from './hooks/useFileViewer';
 export { useSkills } from './hooks/useSkills';
 export type { UseSkillsReturn } from './hooks/useSkills';
 export { loadWorkspaces, saveWorkspaces } from './components/platform/PlatformWorkspacesAuto';
+export { loadAgents, saveAgents } from './utils/agentStorage';
 export { useResizable } from './hooks/useResizable';
 export type { UseResizableOptions, UseResizableReturn } from './hooks/useResizable';
 export { AcpContext, useAcpContext } from './context/AcpContext';

@@ -441,6 +441,28 @@ export function createAcpProvider({ agents }: MultiAgentProviderOptions): MultiA
     });
 
     await connectAgent(config);
+
+    // A newly-connected agent may own sessions in workspaces that already
+    // exist — the initial batch refresh (run once after the prop agents
+    // connected) and the per-workspace refresh (run when a workspace is
+    // added) both predate this agent, so its sessions for existing
+    // workspaces would otherwise never load. Mirror that refresh here for
+    // every known workspace, scoped to just this agent (the per-cwd helper
+    // iterates all agents, but its "skip if this agent already has sessions
+    // in this workspace" guard makes it a no-op for the already-loaded ones).
+    const client = scopedClientRegistry.get(config.id);
+    if (client?.capabilities?.sessionCapabilities?.list) {
+      for (const cwd of knownCwds) {
+        client.listSessions(undefined, cwd).then((res) => {
+          acpStore.getState().setSessions(res.sessions, config.id, cwd);
+          if (res.nextCursor) {
+            acpStore.getState().appendSessions([], config.id, cwd, res.nextCursor);
+          }
+        }).catch((err) => {
+          console.error(`Agent ${config.id} session list failed for ${cwd}:`, err);
+        });
+      }
+    }
   }
 
   async function removeAgent(agentId: string): Promise<void> {

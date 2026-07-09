@@ -1,6 +1,7 @@
 import { createStore } from 'zustand/vanilla';
 import type { SessionMeta, AgentConnection, WorkspaceState } from '../types';
 import type { SessionId, SessionInfo } from '@agentclientprotocol/sdk';
+import { sessionStore } from './sessionStore';
 
 interface PendingAuth {
   agentId: string;
@@ -89,7 +90,20 @@ export const acpStore = createStore<AcpStoreState>((set) => ({
       return { agents: next };
     }),
 
-  removeAgent: (id) =>
+  removeAgent: (id) => {
+    // Snapshot the sessions owned by this agent before mutating, so their
+    // message cache in `sessionStore` can be dropped AFTER the `set` (the
+    // reducer must stay pure — no cross-store writes inside it). Without this,
+    // messages/plan/tool-calls survive as orphans once the agent and its
+    // session meta are gone. Mirrors the per-session cleanup in
+    // `deleteSession`/`closeSession` (acpStore + sessionStore).
+    const orphanedSessionIds: SessionId[] = [];
+    for (const [, ws] of acpStore.getState().workspaces) {
+      for (const [sid, meta] of ws.sessions) {
+        if (meta.agentId === id) orphanedSessionIds.push(sid);
+      }
+    }
+
     set((state) => {
       const next = new Map(state.agents);
       next.delete(id);
@@ -127,7 +141,13 @@ export const acpStore = createStore<AcpStoreState>((set) => ({
         workspaces: nextWorkspaces,
         ...(activeSessionId !== state.activeSessionId ? { activeSessionId: null } : {}),
       };
-    }),
+    });
+
+    // Drop the orphaned sessions' message caches now that the meta is gone.
+    for (const sid of orphanedSessionIds) {
+      sessionStore.getState().removeSession(sid);
+    }
+  },
 
   updateAgent: (id, update) =>
     set((state) => {

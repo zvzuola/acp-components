@@ -210,3 +210,280 @@
     background: var(--acp-color-text-inverse);
   }
 }
+
+// =============================================================================
+// AgentsPanel — agent rows + add form
+// =============================================================================
+
+// Empty state — centered muted text, same treatment as SkillView's empty.
+.acp-settings-view__agents-empty {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 12px;
+  color: var(--acp-color-text-muted);
+  font-size: 12px;
+  text-align: center;
+  user-select: none;
+}
+
+// Agent row — icon + name + status dot + status label + transport summary +
+// trailing delete button. Visually continuous with the appearance rows (same
+// padding/radius/hover) but uses a non-button root so the delete action is a
+// distinct trailing control.
+.acp-settings-view__agent-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 8px 8px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--acp-radius-sm);
+  background: transparent;
+  transition: background var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover {
+    background: var(--acp-color-bg-hover);
+  }
+}
+
+.acp-settings-view__agent-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--acp-radius-xs);
+  background: var(--acp-color-bg-tertiary);
+  color: var(--acp-color-text-secondary);
+  font-size: 13px;
+}
+
+.acp-settings-view__agent-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--acp-color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// "Built-in" tag — marks agents supplied via the `agents` prop (not removable).
+// Visually a quiet pill so it reads as metadata, not an action.
+.acp-settings-view__agent-builtin {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 0 5px;
+  border: none;
+  border-radius: var(--acp-radius-xs);
+  background: var(--acp-color-bg-tertiary);
+  color: var(--acp-color-text-muted);
+  font-size: 10px;
+  line-height: 16px;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.acp-settings-view__agent-dot {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--acp-color-text-muted);
+}
+
+.acp-settings-view__agent-dot--connected {
+  background: var(--acp-color-success);
+}
+
+.acp-settings-view__agent-dot--connecting {
+  background: var(--acp-color-warning);
+  animation: acp-settings-view-pulse 1.5s infinite;
+}
+
+.acp-settings-view__agent-dot--disconnected {
+  background: var(--acp-color-text-muted);
+}
+
+.acp-settings-view__agent-dot--error {
+  background: var(--acp-color-error);
+}
+
+.acp-settings-view__agent-status {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--acp-color-text-muted);
+  user-select: none;
+}
+
+.acp-settings-view__agent-transport {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--acp-color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.acp-settings-view__agent-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: var(--acp-radius-xs);
+  background: transparent;
+  color: var(--acp-color-text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    background var(--acp-duration-fast) var(--acp-ease-out),
+    color var(--acp-duration-fast) var(--acp-ease-out),
+    opacity var(--acp-duration-fast) var(--acp-ease-out);
+
+  .acp-settings-view__agent-row:hover & {
+    opacity: 1;
+  }
+
+  &:hover {
+    background: var(--acp-color-bg-tertiary);
+    color: var(--acp-color-error);
+  }
+
+  &:focus-visible {
+    opacity: 1;
+    outline: 2px solid var(--acp-color-accent);
+    outline-offset: 1px;
+  }
+}
+
+@keyframes acp-settings-view-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+// ---------------------------------------------------------------------------
+// Add form — stacked field rows + an Add button
+// ---------------------------------------------------------------------------
+.acp-settings-view__add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid var(--acp-color-border-subtle);
+  border-radius: var(--acp-radius-sm);
+  background: var(--acp-color-bg-secondary);
+}
+
+.acp-settings-view__add-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.acp-settings-view__field {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.acp-settings-view__field-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--acp-color-text-muted);
+  user-select: none;
+}
+
+// Text input — mirrors the SkillView search input tokens so the add form reads
+// as the same chrome family.
+.acp-settings-view__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--acp-color-border-subtle);
+  border-radius: var(--acp-radius-sm);
+  background: var(--acp-color-bg-input);
+  color: var(--acp-color-text-primary);
+  font-family: var(--acp-font-sans);
+  font-size: 12px;
+  outline: none;
+  transition:
+    border-color var(--acp-duration-fast) var(--acp-ease-out),
+    background var(--acp-duration-fast) var(--acp-ease-out);
+
+  &::placeholder {
+    color: var(--acp-color-text-muted);
+  }
+
+  &:focus {
+    border-color: var(--acp-color-border-accent);
+    background: var(--acp-color-bg-secondary);
+  }
+}
+
+// The <Select> transport picker — align its trigger to the 28px input height.
+.acp-settings-view__transport-select {
+  flex: 0 0 auto;
+  width: 120px;
+}
+
+.acp-settings-view__add-error {
+  padding: 4px 6px;
+  font-size: 11px;
+  color: var(--acp-color-error);
+}
+
+.acp-settings-view__add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  align-self: flex-start;
+  height: 30px;
+  padding: 0 14px;
+  border: 1px solid var(--acp-color-border-accent);
+  border-radius: var(--acp-radius-sm);
+  background: var(--acp-color-accent);
+  color: var(--acp-color-text-inverse);
+  font-family: var(--acp-font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background var(--acp-duration-fast) var(--acp-ease-out),
+    border-color var(--acp-duration-fast) var(--acp-ease-out),
+    opacity var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover:not(:disabled) {
+    background: var(--acp-color-accent-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--acp-color-accent);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

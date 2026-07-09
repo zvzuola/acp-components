@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { acpStore, findWorkspaceBySession } from './acpStore';
+import { sessionStore } from './sessionStore';
 import type { AgentConnection, SessionMeta } from '../types';
 import type { SessionInfo } from '@agentclientprotocol/sdk';
 
@@ -11,6 +12,9 @@ function resetStore(): void {
     activeSessionId: null,
     pendingAuth: null,
   });
+  // removeAgent now cascades into sessionStore (drops orphaned message
+  // caches), so keep the two stores in sync across tests to avoid leakage.
+  sessionStore.setState({ sessions: new Map() });
 }
 
 function makeAgent(id: string): AgentConnection {
@@ -110,6 +114,25 @@ describe('acpStore — agents', () => {
     acpStore.getState().setActiveSession('s-a2');
     acpStore.getState().removeAgent('a1');
     expect(acpStore.getState().activeSessionId).toBe('s-a2');
+  });
+
+  it('removeAgent drops the orphaned sessions’ message cache from sessionStore', () => {
+    acpStore.getState().addWorkspace('/a');
+    acpStore.getState().addAgent(makeAgent('a1'));
+    acpStore.getState().addAgent(makeAgent('a2'));
+    acpStore.getState().addSession(makeMeta('s-a1', '/a', 'a1'));
+    acpStore.getState().addSession(makeMeta('s-a2', '/a', 'a2'));
+    // Seed message caches for both sessions (ensureSession creates the entry).
+    sessionStore.getState().ensureSession('s-a1');
+    sessionStore.getState().ensureSession('s-a2');
+    expect(sessionStore.getState().sessions.has('s-a1')).toBe(true);
+    expect(sessionStore.getState().sessions.has('s-a2')).toBe(true);
+
+    acpStore.getState().removeAgent('a1');
+
+    // The removed agent’s session cache is gone; the other agent’s survives.
+    expect(sessionStore.getState().sessions.has('s-a1')).toBe(false);
+    expect(sessionStore.getState().sessions.has('s-a2')).toBe(true);
   });
 });
 
