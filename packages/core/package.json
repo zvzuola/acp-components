@@ -1,6 +1,25 @@
 {
   "name": "@acp-components/core",
   "version": "0.1.0",
+  "description": "Framework-agnostic core for the Agent Client Protocol — multi-agent provider, per-session stores, transports, and imperative actions.",
+  "keywords": [
+    "agent-client-protocol",
+    "acp",
+    "agent",
+    "ai",
+    "zustand",
+    "core"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zvzuola/acp-components.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/zvzuola/acp-components#readme",
+  "bugs": {
+    "url": "https://github.com/zvzuola/acp-components/issues"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -16,7 +35,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "vite build && tsc --emitDeclarationOnly",
+    "build": "vite build && tsc -p tsconfig.build.json --emitDeclarationOnly",
     "dev": "vite build --watch",
     "test": "vitest run",
     "test:watch": "vitest"

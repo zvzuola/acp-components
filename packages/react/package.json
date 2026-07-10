@@ -1,10 +1,33 @@
 {
   "name": "@acp-components/react",
   "version": "0.1.0",
+  "description": "React UI components for the Agent Client Protocol — chat, file tree, diff viewer, dialogs, and a composable workbench shell.",
+  "keywords": [
+    "agent-client-protocol",
+    "acp",
+    "react",
+    "chat-ui",
+    "agent",
+    "ai",
+    "components"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zvzuola/acp-components.git",
+    "directory": "packages/react"
+  },
+  "homepage": "https://github.com/zvzuola/acp-components#readme",
+  "bugs": {
+    "url": "https://github.com/zvzuola/acp-components/issues"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "sideEffects": [
+    "**/*.css"
+  ],
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
@@ -17,7 +40,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "vite build && tsc --emitDeclarationOnly",
+    "build": "vite build && tsc -p tsconfig.build.json --emitDeclarationOnly",
     "dev": "vite build --watch",
     "test": "vitest run",
     "test:watch": "vitest"
