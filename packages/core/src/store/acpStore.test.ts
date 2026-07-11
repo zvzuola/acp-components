@@ -179,6 +179,26 @@ describe('acpStore — session list sync', () => {
     acpStore.getState().setSessions([makeSessionInfo('s1', '/a')], 'a1', '/nope');
     expect(acpStore.getState()).toBe(before);
   });
+
+  it('setSessions drops the message cache for truly-removed sessions but keeps survivors', () => {
+    // Seed two sessions owned by a1, with message caches in sessionStore.
+    acpStore.getState().addSession(makeMeta('s1', '/a', 'a1'));
+    acpStore.getState().addSession(makeMeta('s2', '/a', 'a1'));
+    sessionStore.getState().ensureSession('s1');
+    sessionStore.getState().ensureSession('s2');
+    expect(sessionStore.getState().sessions.has('s1')).toBe(true);
+    expect(sessionStore.getState().sessions.has('s2')).toBe(true);
+
+    // Replace with a list that keeps s1 but drops s2.
+    acpStore.getState().setSessions([makeSessionInfo('s1', '/a')], 'a1', '/a');
+
+    // s2 is gone from acpStore AND its message cache was pruned.
+    expect(acpStore.getState().workspaces.get('/a')!.sessions.has('s2')).toBe(false);
+    expect(sessionStore.getState().sessions.has('s2')).toBe(false);
+    // s1 survives in both — its message cache was NOT wiped by the replace.
+    expect(acpStore.getState().workspaces.get('/a')!.sessions.has('s1')).toBe(true);
+    expect(sessionStore.getState().sessions.has('s1')).toBe(true);
+  });
 });
 
 describe('acpStore — single session ops', () => {

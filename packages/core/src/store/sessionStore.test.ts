@@ -304,6 +304,70 @@ describe('sessionStore — permissions', () => {
     sessionStore.getState().removePermissionRequest(SID, 'p1');
     expect(getState().pendingPermissions.map((r) => r.id)).toEqual(['p2']);
   });
+
+  it('rejectAllPermissions rejects every pending request and clears the queue', () => {
+    const rejects: string[] = [];
+    const r1: PermissionRequest = {
+      id: 'p1', sessionId: SID, toolCall: { toolCallId: 't1', title: 'T' }, options: [],
+      resolve: () => {}, reject: () => { rejects.push('p1'); },
+    };
+    const r2: PermissionRequest = {
+      id: 'p2', sessionId: SID, toolCall: { toolCallId: 't2', title: 'T2' }, options: [],
+      resolve: () => {}, reject: () => { rejects.push('p2'); },
+    };
+    sessionStore.getState().addPermissionRequest(SID, r1);
+    sessionStore.getState().addPermissionRequest(SID, r2);
+    sessionStore.getState().rejectAllPermissions(SID);
+    expect(rejects).toEqual(['p1', 'p2']);
+    expect(getState().pendingPermissions).toEqual([]);
+  });
+
+  it('rejectAllPermissions is a no-op on a session with no pending requests', () => {
+    const before = sessionStore.getState();
+    sessionStore.getState().rejectAllPermissions(SID);
+    expect(sessionStore.getState()).toBe(before);
+  });
+
+  it('removeSession rejects pending permissions before dropping the entry', () => {
+    const rejects: string[] = [];
+    const r: PermissionRequest = {
+      id: 'p1', sessionId: SID, toolCall: { toolCallId: 't1', title: 'T' }, options: [],
+      resolve: () => {}, reject: () => { rejects.push('p1'); },
+    };
+    sessionStore.getState().addPermissionRequest(SID, r);
+    sessionStore.getState().removeSession(SID);
+    expect(rejects).toEqual(['p1']);
+    expect(sessionStore.getState().sessions.has(SID)).toBe(false);
+  });
+
+  it('resetSession rejects pending permissions before wiping the entry', () => {
+    const rejects: string[] = [];
+    const r: PermissionRequest = {
+      id: 'p1', sessionId: SID, toolCall: { toolCallId: 't1', title: 'T' }, options: [],
+      resolve: () => {}, reject: () => { rejects.push('p1'); },
+    };
+    sessionStore.getState().addPermissionRequest(SID, r);
+    sessionStore.getState().resetSession(SID);
+    expect(rejects).toEqual(['p1']);
+    expect(getState().pendingPermissions).toEqual([]);
+  });
+
+  it('a misbehaving reject callback does not block cleanup of the rest', () => {
+    const good: string[] = [];
+    const bad: PermissionRequest = {
+      id: 'bad', sessionId: SID, toolCall: { toolCallId: 't0', title: 'T0' }, options: [],
+      resolve: () => {}, reject: () => { throw new Error('boom'); },
+    };
+    const r2: PermissionRequest = {
+      id: 'p2', sessionId: SID, toolCall: { toolCallId: 't2', title: 'T2' }, options: [],
+      resolve: () => {}, reject: () => { good.push('p2'); },
+    };
+    sessionStore.getState().addPermissionRequest(SID, bad);
+    sessionStore.getState().addPermissionRequest(SID, r2);
+    expect(() => sessionStore.getState().rejectAllPermissions(SID)).not.toThrow();
+    expect(good).toEqual(['p2']);
+    expect(getState().pendingPermissions).toEqual([]);
+  });
 });
 
 describe('sessionStore — plan / usage / config / commands / stopReason', () => {

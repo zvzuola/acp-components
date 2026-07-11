@@ -2,6 +2,7 @@ import { AcpClient } from './client/AcpClient';
 import type { StdioTransportFactory } from './client/AcpClient';
 import { acpStore } from './store/acpStore';
 import { sessionStore } from './store/sessionStore';
+import { skillStore } from './store/skillStore';
 import type { ToolCallState } from './types';
 import type { AgentConfig } from './types';
 import type { RequestPermissionResponse, ClientCapabilities, ContentBlock } from '@agentclientprotocol/sdk';
@@ -301,26 +302,53 @@ export function createAcpProvider(
   const scopedCleanupFns = new Map<string, () => void>();
   let permissionIdCounter = 0;
 
-  function scopedSetupPermissionHandler(client: AcpClient): void {
+  function scopedSetupPermissionHandler(client: AcpClient): () => void {
+    // Sessions for which THIS client currently has a pending permission
+    // request, so `onClose` can reject exactly its own outstanding requests
+    // without scanning every session in the store.
+    const pendingPermissionSessions = new Set<string>();
+
     client.setPermissionHandler((req) => {
       const sessStore = sessionStore.getState();
       return new Promise<RequestPermissionResponse>((resolve) => {
+        let settled = false;
         const permissionReq: PermissionRequest = {
           id: `perm_${++permissionIdCounter}`,
           sessionId: req.sessionId,
           toolCall: req.toolCall,
           options: req.options,
           resolve: (optionId: string) => {
+            if (settled) return;
+            settled = true;
             resolve({ outcome: { outcome: 'selected', optionId } });
           },
           reject: () => {
+            if (settled) return;
+            settled = true;
             resolve({ outcome: { outcome: 'cancelled' } });
           },
         };
         sessStore.ensureSession(req.sessionId);
         sessStore.addPermissionRequest(req.sessionId, permissionReq);
+        pendingPermissionSessions.add(req.sessionId);
       });
     });
+
+    // When the agent connection drops (process died, transport closed, …) any
+    // permission request still awaiting a user response can NEVER be answered —
+    // the SDK aborts the inbound `session/request_permission` responder on
+    // close. Reject those Promises now (→ `cancelled` outcome) and clear them
+    // from the store so neither the Promise nor the stale dialog leaks. Without
+    // this, the Promise pins the SDK responder forever and the dialog persists.
+    const unsubClose = client.onClose(() => {
+      const sessStore = sessionStore.getState();
+      for (const sid of pendingPermissionSessions) {
+        sessStore.rejectAllPermissions(sid);
+      }
+      pendingPermissionSessions.clear();
+    });
+
+    return unsubClose;
   }
 
   async function connectAgent(config: AgentConfig): Promise<void> {
@@ -342,12 +370,13 @@ export function createAcpProvider(
     // Session update handler
     const unsubSession = setupSessionUpdateHandler(client);
 
-    // Permission handler
-    scopedSetupPermissionHandler(client);
+    // Permission handler (also wires the `onClose` reject-all cleanup)
+    const unsubPermission = scopedSetupPermissionHandler(client);
 
     scopedCleanupFns.set(config.id, () => {
       unsubStatus();
       unsubSession();
+      unsubPermission();
     });
 
     // Connect and initialize
@@ -495,6 +524,10 @@ export function createAcpProvider(
     }
 
     acpStore.getState().removeAgent(agentId);
+    // The agent's skill catalog (skillStore.skillsByAgent) is per-agent and
+    // not cleaned by acpStore.removeAgent — drop it here so the Map doesn't
+    // grow unbounded as agents are added and removed over time.
+    skillStore.getState().removeAgentSkills(agentId);
   }
 
   return {

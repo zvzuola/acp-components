@@ -29,9 +29,17 @@ export function useAcpProvider(options: MultiAgentProviderOptions) {
     if (provider.ready) {
       setReady(true);
     }
+    // Subscribe only — do NOT `provider.destroy()` on cleanup. The provider is
+    // a singleton pinned by `providerRef`: destroying it on unmount (which
+    // React 18 StrictMode triggers as mount→unmount→mount in dev) would tear
+    // down every agent connection, and because the ref is NOT cleared, the
+    // remount would reuse the destroyed instance — leaving `getClient` dead and
+    // `ready` stale with no way to reconnect short of a full reload. Lifecycle
+    // teardown is the host app's responsibility (the provider lives for the
+    // whole app; a destroyed-on-unmount model only makes sense for a
+    // per-component provider, which this isn't).
     return () => {
       unsub();
-      provider.destroy();
     };
   }, []);
 

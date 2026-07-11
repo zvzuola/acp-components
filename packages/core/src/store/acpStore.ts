@@ -160,7 +160,24 @@ export const acpStore = createStore<AcpStoreState>((set) => ({
 
   // --- Session management ---
 
-  setSessions: (sessions, agentId, cwd) =>
+  setSessions: (sessions, agentId, cwd) => {
+    // Snapshot the sessions being DROPPED by this replace (i.e. owned by this
+    // agent but absent from the new list) BEFORE mutating, so their message
+    // cache in `sessionStore` can be dropped AFTER the `set` (the reducer must
+    // stay pure — no cross-store writes inside it). Sessions that survive the
+    // replace (same id reappears in `sessions`) keep their cache — only truly
+    // removed ids are pruned. Mirrors the per-session cleanup in `removeAgent`.
+    const droppedSessionIds: SessionId[] = [];
+    const wsBefore = acpStore.getState().workspaces.get(cwd);
+    if (wsBefore) {
+      const survivorIds = new Set(sessions.map((s) => s.sessionId));
+      for (const [sid, meta] of wsBefore.sessions) {
+        if (meta.agentId === agentId && !survivorIds.has(sid)) {
+          droppedSessionIds.push(sid);
+        }
+      }
+    }
+
     set((state) => {
       const next = new Map(state.workspaces);
       const ws = next.get(cwd);
@@ -183,7 +200,13 @@ export const acpStore = createStore<AcpStoreState>((set) => ({
       cursors.delete(agentId);
       next.set(cwd, { ...ws, sessions: nextSessions, sessionListCursors: cursors });
       return { workspaces: next };
-    }),
+    });
+
+    // Drop the truly-removed sessions' message caches now that the meta is gone.
+    for (const sid of droppedSessionIds) {
+      sessionStore.getState().removeSession(sid);
+    }
+  },
 
   appendSessions: (sessions, agentId, cwd, nextCursor) =>
     set((state) => {

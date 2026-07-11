@@ -31,6 +31,14 @@ interface SessionStoreState {
   updateToolCall: (sessionId: SessionId, id: string, update: Partial<ToolCallState>) => void;
   addPermissionRequest: (sessionId: SessionId, req: PermissionRequest) => void;
   removePermissionRequest: (sessionId: SessionId, requestId?: string) => void;
+  /**
+   * Reject every still-pending permission Promise for a session and clear the
+   * queue. Used on session removal/reset and on agent disconnect so the agent's
+   * `session/request_permission` RPC never hangs waiting for a response that
+   * will never arrive — the unresolved Promise would otherwise leak forever
+   * (it pins the SDK `RequestResponder` and leaves a stale dialog in the UI).
+   */
+  rejectAllPermissions: (sessionId: SessionId) => void;
   setPlan: (sessionId: SessionId, entries: PlanEntry[]) => void;
   setUsage: (sessionId: SessionId, usage: UsageUpdate) => void;
   setConfigOptions: (sessionId: SessionId, configOptions: SessionConfigOption[]) => void;
@@ -50,6 +58,26 @@ function createSessionData(): SessionData {
     configOptions: [],
     availableCommands: [],
   };
+}
+
+/**
+ * Settle every pending permission Promise for a session (reject → `cancelled`),
+ * then return the emptied queue so the caller can store it. A bare
+ * `pendingPermissions` reference is read directly off `SessionData` and may be
+ * `undefined` when the session was never ensured — the guard makes this safe.
+ * Side-effect-only (Promise rejection); must run OUTSIDE a Zustand `set`
+ * reducer to keep the reducer referentially clean.
+ */
+function rejectPendingPermissions(reqs: PermissionRequest[] | undefined): PermissionRequest[] {
+  if (!reqs || reqs.length === 0) return [];
+  for (const req of reqs) {
+    try {
+      req.reject();
+    } catch {
+      // A misbehaving reject callback must not block cleanup of the rest.
+    }
+  }
+  return [];
 }
 
 // --- Message update helpers (avoid O(n) message scans during streaming) ---
@@ -121,19 +149,30 @@ export const sessionStore = createStore<SessionStoreState>((set) => ({
       return { sessions: next };
     }),
 
-  removeSession: (id) =>
+  removeSession: (id) => {
+    // Reject any still-pending permission Promises BEFORE dropping the entry —
+    // otherwise the agent's `session/request_permission` RPC hangs forever
+    // (the Promise was created in `setupPermissionHandler` and only settles on
+    // user Allow/Deny; a removal would orphan it). Pure side-effect, done
+    // outside the reducer to keep `set` referentially clean.
+    rejectPendingPermissions(sessionStore.getState().sessions.get(id)?.pendingPermissions);
     set((s) => {
       const next = new Map(s.sessions);
       next.delete(id);
       return { sessions: next };
-    }),
+    });
+  },
 
-  resetSession: (id) =>
+  resetSession: (id) => {
+    // Same rationale as `removeSession`: reset drops the pending queue, so
+    // reject first to unblock any in-flight `request_permission` call.
+    rejectPendingPermissions(sessionStore.getState().sessions.get(id)?.pendingPermissions);
     set((s) => {
       const next = new Map(s.sessions);
       next.set(id, createSessionData());
       return { sessions: next };
-    }),
+    });
+  },
 
   addMessage: (sessionId, msg) =>
     set((s) => {
@@ -364,6 +403,19 @@ export const sessionStore = createStore<SessionStoreState>((set) => ({
       });
       return { sessions: next };
     }),
+
+  rejectAllPermissions: (sessionId) => {
+    // Reject outside the reducer (Promise settlement is a side effect), then
+    // clear the queue inside `set` so subscribers see the emptied array.
+    rejectPendingPermissions(sessionStore.getState().sessions.get(sessionId)?.pendingPermissions);
+    set((s) => {
+      const data = s.sessions.get(sessionId);
+      if (!data || data.pendingPermissions.length === 0) return s;
+      const next = new Map(s.sessions);
+      next.set(sessionId, { ...data, pendingPermissions: [] });
+      return { sessions: next };
+    });
+  },
 
   setPlan: (sessionId, entries) =>
     set((s) => {

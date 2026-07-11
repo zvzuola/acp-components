@@ -11,16 +11,20 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 export type SessionUpdateHandler = (n: any) => void;
 export type StatusHandler = (s: any) => void;
+export type CloseHandler = () => void;
 
 export interface CapturedClient {
   onSessionUpdateHandlers: Set<SessionUpdateHandler>;
   onStatusChangeHandlers: Set<StatusHandler>;
+  closeHandlers: Set<CloseHandler>;
   connect: ReturnType<typeof vi.fn>;
   initialize: ReturnType<typeof vi.fn>;
   disconnect: ReturnType<typeof vi.fn>;
   listSessions: ReturnType<typeof vi.fn>;
   setPermissionHandler: ReturnType<typeof vi.fn>;
   setStdioTransportFactory: ReturnType<typeof vi.fn>;
+  /** The permission handler the provider installed (drives fake requests). */
+  permissionHandler: ((req: any) => Promise<any>) | null;
   agentInfo: any;
   capabilities: any;
 }
@@ -31,8 +35,12 @@ vi.mock('./client/AcpClient', () => {
   class FakeAcpClient {
     onSessionUpdateHandlers = new Set<SessionUpdateHandler>();
     onStatusChangeHandlers = new Set<StatusHandler>();
+    closeHandlers = new Set<CloseHandler>();
     agentInfo = { name: 'fake-agent', version: '1.0.0' };
     capabilities = { sessionCapabilities: { list: true } };
+    // Captured view is written here in the constructor; `setPermissionHandler`
+    // keeps its `permissionHandler` field in sync so tests read the live handler.
+    private view: CapturedClient | null = null;
 
     connect = vi.fn(async () => {});
     initialize = vi.fn(async () => ({
@@ -43,7 +51,9 @@ vi.mock('./client/AcpClient', () => {
     }));
     listSessions = vi.fn(async () => ({ sessions: [], nextCursor: null }));
     disconnect = vi.fn();
-    setPermissionHandler = vi.fn();
+    setPermissionHandler = vi.fn((handler: (req: any) => Promise<any>) => {
+      if (this.view) this.view.permissionHandler = handler;
+    });
     // The provider injects a host stdio transport factory before connecting;
     // tests don't drive a real transport, so a no-op satisfies the interface.
     setStdioTransportFactory = vi.fn();
@@ -56,21 +66,30 @@ vi.mock('./client/AcpClient', () => {
       this.onStatusChangeHandlers.add(handler);
       return () => this.onStatusChangeHandlers.delete(handler);
     }
+    onClose(handler: CloseHandler) {
+      this.closeHandlers.add(handler);
+      return () => this.closeHandlers.delete(handler);
+    }
 
     constructor() {
       // Capture a view of this instance so tests can drive its handlers.
-      captured.push({
+      const view: CapturedClient = {
         onSessionUpdateHandlers: this.onSessionUpdateHandlers,
         onStatusChangeHandlers: this.onStatusChangeHandlers,
+        closeHandlers: this.closeHandlers,
         connect: this.connect,
         initialize: this.initialize,
         disconnect: this.disconnect,
         listSessions: this.listSessions,
         setPermissionHandler: this.setPermissionHandler,
         setStdioTransportFactory: this.setStdioTransportFactory,
+        // Populated by `setPermissionHandler`; null until the provider installs one.
+        permissionHandler: null,
         agentInfo: this.agentInfo,
         capabilities: this.capabilities,
-      });
+      };
+      this.view = view;
+      captured.push(view);
     }
   }
   return { AcpClient: FakeAcpClient };
@@ -80,6 +99,7 @@ vi.mock('./client/AcpClient', () => {
 import { createAcpProvider } from './provider';
 import { acpStore } from './store/acpStore';
 import { sessionStore } from './store/sessionStore';
+import { skillStore } from './store/skillStore';
 
 // ---------------------------------------------------------------------------
 // Helpers — ACP notification shape: { sessionId, update: { sessionUpdate, ... } }
@@ -118,6 +138,30 @@ function contentText(idx = 0): string {
   return '';
 }
 
+/**
+ * Drive the provider-installed permission handler for `sessionId` exactly as the
+ * ACP SDK would on an inbound `session/request_permission`. Returns the Promise
+ * the handler produced — the test asserts how/whether it settles.
+ */
+function requestPermission(
+  client: CapturedClient,
+  sessionId: string,
+  options: Array<{ optionId: string }> = [{ optionId: 'allow' }],
+): Promise<unknown> {
+  const handler = client.permissionHandler;
+  if (!handler) throw new Error('provider did not install a permission handler');
+  return handler({
+    sessionId,
+    toolCall: { toolCallId: 'tc-perm', title: 'Needs approval' },
+    options,
+  });
+}
+
+/** Fire the client's `onClose` handlers, simulating the agent process dying. */
+function fireClose(client: CapturedClient): void {
+  for (const h of client.closeHandlers) h();
+}
+
 function resetStores(): void {
   acpStore.setState({
     agents: new Map(),
@@ -126,6 +170,7 @@ function resetStores(): void {
     pendingAuth: null,
   });
   sessionStore.setState({ sessions: new Map() });
+  skillStore.setState({ skillsByAgent: new Map() });
 }
 
 /** Build a provider with one agent and flush microtasks/timers until ready. */
@@ -376,5 +421,143 @@ describe('createAcpProvider — chunk batching', () => {
     // Destroy flushes the pending batch even though the timer never fired.
     expect(getMessages()).toHaveLength(1);
     expect(contentText(0)).toBe('unflushed');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Permission lifecycle — the provider must settle outstanding permission
+// Promises when a session is removed or the agent disconnects, otherwise the
+// agent's `session/request_permission` RPC hangs forever and the Promise leaks.
+// ---------------------------------------------------------------------------
+describe('createAcpProvider — permission lifecycle', () => {
+  it('rejects a pending permission when the session is removed', async () => {
+    const { provider, client } = await makeProvider();
+
+    const p = requestPermission(client, SID);
+    // Still pending — no user response, no resolution yet.
+    const pending = vi.fn();
+    p.then(pending);
+    await Promise.resolve();
+    expect(pending).not.toHaveBeenCalled();
+    expect(sessionStore.getState().sessions.get(SID)!.pendingPermissions).toHaveLength(1);
+
+    // Removing the session must reject the orphaned permission Promise.
+    sessionStore.getState().removeSession(SID);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(pending).toHaveBeenCalledTimes(1);
+    expect(await p).toMatchObject({ outcome: { outcome: 'cancelled' } });
+    // Session (and its pending queue) is gone.
+    expect(sessionStore.getState().sessions.has(SID)).toBe(false);
+    provider.destroy();
+  });
+
+  it('rejects a pending permission when the session is reset', async () => {
+    const { provider, client } = await makeProvider();
+
+    const p = requestPermission(client, SID);
+    sessionStore.getState().resetSession(SID);
+    await Promise.resolve();
+    await Promise.resolve();
+    // Reset re-creates the session entry but with an empty queue; the Promise settled.
+    expect(await p).toMatchObject({ outcome: { outcome: 'cancelled' } });
+    expect(sessionStore.getState().sessions.get(SID)!.pendingPermissions).toHaveLength(0);
+    provider.destroy();
+  });
+
+  it('rejects pending permissions for the disconnecting client on close', async () => {
+    const { provider, client } = await makeProvider();
+    // Have the agent report SID as one of its sessions so the workspace refresh
+    // (triggered by addWorkspace) reconciles to [SID] rather than [] — otherwise
+    // the auto-refresh would correctly orphan the manually-added session and drop
+    // its message cache before close fires, masking the permission cleanup.
+    client.listSessions.mockResolvedValue({
+      sessions: [{ sessionId: SID, cwd: '/w', title: null, updatedAt: null }],
+      nextCursor: null,
+    });
+    // Attach the session to a workspace so it maps to agent 'a1'.
+    acpStore.getState().addWorkspace('/w');
+    acpStore.getState().addSession({ id: SID, cwd: '/w', agentId: 'a1', loaded: true });
+    // Let the workspace-refresh `listSessions` settle so the session is reconciled.
+    await vi.runAllTimersAsync();
+    await Promise.resolve();
+
+    const p1 = requestPermission(client, SID);
+    const p2 = requestPermission(client, SID); // a second queued request
+    expect(sessionStore.getState().sessions.get(SID)!.pendingPermissions).toHaveLength(2);
+
+    // Simulate the agent process dying → client fires onClose.
+    fireClose(client);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    // Both pending Promises settle with `cancelled`; the dialog queue is cleared.
+    expect(await p1).toMatchObject({ outcome: { outcome: 'cancelled' } });
+    expect(await p2).toMatchObject({ outcome: { outcome: 'cancelled' } });
+    expect(sessionStore.getState().sessions.get(SID)!.pendingPermissions).toHaveLength(0);
+    provider.destroy();
+  });
+
+  it('reject is idempotent — explicit deny after a close does not double-settle', async () => {
+    const { provider, client } = await makeProvider();
+    acpStore.getState().addWorkspace('/w');
+    acpStore.getState().addSession({ id: SID, cwd: '/w', agentId: 'a1', loaded: true });
+
+    let settled = 0;
+    const p = requestPermission(client, SID);
+    p.then(() => { settled++; });
+
+    fireClose(client);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(settled).toBe(1);
+
+    // A stray late `denyPermission` (e.g. a stale UI action) must NOT settle again.
+    const { denyPermission } = await import('./actions/permission');
+    expect(() => denyPermission(SID)).not.toThrow();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(settled).toBe(1);
+    provider.destroy();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Agent removal — `removeAgent` must also drop the agent's skill catalog so
+// the per-agent `skillsByAgent` Map doesn't grow unbounded as agents cycle.
+// ---------------------------------------------------------------------------
+describe('createAcpProvider — removeAgent cleans up skillStore', () => {
+  it('drops the removed agent’s skill catalog', async () => {
+    const { provider } = await makeProvider();
+    skillStore.getState().setAgentSkills('a1', [{ id: 'sk-1', name: 'Skill One' }]);
+    expect(skillStore.getState().skillsByAgent.has('a1')).toBe(true);
+
+    await provider.removeAgent('a1');
+
+    expect(acpStore.getState().agents.has('a1')).toBe(false);
+    expect(skillStore.getState().skillsByAgent.has('a1')).toBe(false);
+    provider.destroy();
+  });
+
+  it('leaves other agents’ skill catalogs intact', async () => {
+    const provider = createAcpProvider({
+      agents: [
+        { id: 'a1', name: 'A1', transport: { type: 'http', url: 'http://x' } },
+        { id: 'a2', name: 'A2', transport: { type: 'http', url: 'http://y' } },
+      ],
+    });
+    await vi.runAllTimersAsync();
+    await Promise.resolve();
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+
+    skillStore.getState().setAgentSkills('a1', [{ id: 'sk-1', name: 'Skill One' }]);
+    skillStore.getState().setAgentSkills('a2', [{ id: 'sk-2', name: 'Skill Two' }]);
+
+    await provider.removeAgent('a1');
+
+    expect(skillStore.getState().skillsByAgent.has('a1')).toBe(false);
+    expect(skillStore.getState().skillsByAgent.has('a2')).toBe(true);
+    provider.destroy();
   });
 });
