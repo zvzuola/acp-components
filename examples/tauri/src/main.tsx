@@ -38,7 +38,6 @@ self.MonacoEnvironment = {
 
 import { AcpProvider } from '@acp-components/react';
 import { WorkbenchShell } from '@acp-components/react';
-import { PermissionDialog } from '@acp-components/react';
 import { LoginDialog } from '@acp-components/react';
 import { I18nProvider } from '@acp-components/react';
 import { PlatformProvider } from '@acp-components/react';
@@ -63,7 +62,6 @@ function AppInner() {
   return (
     <>
       <WorkbenchShell sessionId={activeSessionId} />
-      <PermissionDialog sessionId={activeSessionId} />
       <LoginDialog />
     </>
   );

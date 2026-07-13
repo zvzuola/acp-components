@@ -129,7 +129,7 @@ SessionUpdate dispatch mapping (in `provider.ts:setupSessionUpdateHandler`):
 ```
 Agent → requestPermission → AcpClient.permissionHandler (Promise-wrapped)
   → sessionStore.addPermissionRequest()
-    → PermissionDialog displays
+    → PermissionPrompt displays
       → Allow → respondToPermission(id, optionId) → resolve(optionId)
       → Deny  → denyPermission(id) → reject()
 ```

@@ -48,7 +48,7 @@ export const enUS = {
   'splitView.closePane': 'Close pane',
   'splitView.resize': 'Resize panes',
 
-  // PermissionDialog
+  // PermissionPrompt
   'permission.ariaLabel': 'Permission required',
   'permission.title': 'Permission Required',
   'permission.description': 'The agent wants to execute a tool that requires your approval.',

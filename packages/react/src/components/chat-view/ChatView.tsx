@@ -1,6 +1,6 @@
 import React, { useRef, useMemo, useState, useCallback, useEffect } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import { useSessionMessages, useSessionIsStreaming, useSessionPlan, useSessionAvailableCommands } from '../../hooks/useSession';
+import { useSessionMessages, useSessionIsStreaming, useSessionPlan, useSessionAvailableCommands, useSessionPendingPermissions } from '../../hooks/useSession';
 import { useAcpStore } from '../../hooks/useAcpStore';
 import { useFileViewer } from '../../hooks/useFileViewer';
 import { usePrompt } from '../../hooks/usePrompt';
@@ -15,6 +15,7 @@ import { UsageBar } from '../status-bar/UsageBar';
 import { SessionConfigPanel } from '../session-config-panel';
 import { useI18n } from '../../i18n';
 import styles from './chat-view.module.scss';
+import { PermissionPrompt } from '../permission-prompt/PermissionPrompt';
 
 export interface ChatViewProps {
   sessionId: SessionId | null;
@@ -142,6 +143,7 @@ export function ChatView({ sessionId, onNavigateFile, showHeader = true }: ChatV
   const isStreaming = useSessionIsStreaming(sessionId);
   const plan = useSessionPlan(sessionId);
   const availableCommands = useSessionAvailableCommands(sessionId);
+  const pendingPermissions = useSessionPendingPermissions(sessionId);
   const { send, cancel } = usePrompt(sessionId);
   const promptCapabilities = useAcpStore((s) => {
     if (!sessionId) return undefined;
@@ -401,16 +403,20 @@ export function ChatView({ sessionId, onNavigateFile, showHeader = true }: ChatV
         {plan.some((e) => e.status !== 'completed') && (
           <PlanView entries={plan} isStreaming={isStreaming} />
         )}
-        <ChatComposer
-          value={composerValue}
-          onChange={setComposerValue}
-          onSend={handleComposerSend}
-          onCancel={handleComposerCancel}
-          isStreaming={isStreaming}
-          disabled={!sessionId}
-          promptCapabilities={promptCapabilities}
-          availableCommands={availableCommands}
-        />
+        {pendingPermissions.length > 0 ? (
+          <PermissionPrompt sessionId={sessionId} />
+        ) : (
+          <ChatComposer
+            value={composerValue}
+            onChange={setComposerValue}
+            onSend={handleComposerSend}
+            onCancel={handleComposerCancel}
+            isStreaming={isStreaming}
+            disabled={!sessionId}
+            promptCapabilities={promptCapabilities}
+            availableCommands={availableCommands}
+          />
+        )}
         <div className={styles.acpChatFooter}>
           <SessionConfigPanel sessionId={sessionId} />
           <UsageBar sessionId={sessionId} />

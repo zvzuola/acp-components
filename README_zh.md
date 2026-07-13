@@ -65,7 +65,7 @@ import {
   PlatformProvider,
   AcpProvider,
   WorkbenchShell,
-  PermissionDialog,
+  PermissionPrompt,
   LoginDialog,
   useAcpStore,
 } from '@acp-components/react';
@@ -79,7 +79,6 @@ function AppInner() {
   return (
     <>
       <WorkbenchShell sessionId={activeSessionId} />
-      <PermissionDialog sessionId={activeSessionId} />
       <LoginDialog />
     </>
   );
@@ -191,7 +190,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
 | `ThoughtView` | 可折叠的 Agent 推理/思考内容视图 |
 | `PlanView` | 流式输出时展示 Agent 计划条目 |
 | `DiffView` | 文件变更的并排对比视图 |
-| `PermissionDialog` | 用于批准/拒绝工具权限请求的模态弹窗 |
+| `PermissionPrompt` | 用于批准/拒绝工具权限请求的内联提示框 |
 | `LoginDialog` | Agent 认证模态弹窗：支持 env_var 和 terminal 两种认证方式、环境变量表单输入、5 分钟超时 |
 | `ConnectionStatus` | 每个 Agent 的连接状态指示器，含 Agent 名称和版本 |
 | `UsageBar` | Token 用量进度条，展示上下文窗口消耗 |

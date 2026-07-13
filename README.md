@@ -63,7 +63,7 @@ import {
   PlatformProvider,
   AcpProvider,
   WorkbenchShell,
-  PermissionDialog,
+  PermissionPrompt,
   LoginDialog,
   useAcpStore,
 } from '@acp-components/react';
@@ -77,7 +77,6 @@ function AppInner() {
   return (
     <>
       <WorkbenchShell sessionId={activeSessionId} />
-      <PermissionDialog sessionId={activeSessionId} />
       <LoginDialog />
     </>
   );
@@ -189,7 +188,7 @@ Each agent in the `agents` array gets its own transport configuration:
 | `ThoughtView` | Collapsible view for agent reasoning / thinking content |
 | `PlanView` | Displays the agent's plan entries during streaming |
 | `DiffView` | Side-by-side diff viewer for file changes |
-| `PermissionDialog` | Modal for approving / rejecting tool permission requests |
+| `PermissionPrompt` | Inline prompt for approving / rejecting tool permission requests |
 | `LoginDialog` | Modal for agent authentication: supports env_var and terminal-based auth methods, env var form input, 5-minute timeout |
 | `ConnectionStatus` | Per-agent connection state indicator with agent name and version |
 | `UsageBar` | Token usage progress bar showing context window consumption |

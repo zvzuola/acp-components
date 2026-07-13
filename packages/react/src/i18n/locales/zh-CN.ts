@@ -48,7 +48,7 @@ export const zhCN = {
   'splitView.closePane': '关闭面板',
   'splitView.resize': '调整面板宽度',
 
-  // PermissionDialog
+  // PermissionPrompt
   'permission.ariaLabel': '需要授权',
   'permission.title': '需要授权',
   'permission.description': '智能体想要执行一个需要您批准的工具操作。',

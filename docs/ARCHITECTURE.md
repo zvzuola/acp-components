@@ -179,7 +179,7 @@ sequenceDiagram
 | Agent 管理 | `addAgent` / `removeAgent` | Provider 暴露的 API，支持运行时动态增加或移除 Agent 连接 |
 | 框架适配 | core 与框架解耦 | core 为 vanilla store + actions，目前有 React 适配层，后续可增加 Vue、Svelte 等 |
 | UI 组件 | 独立可组合 | 各组件独立消费 store，宿主可按需拼装工作台布局，也可替换任意组件 |
-| 宿主能力 | 回调 + store | 文件读写通过 Provider 回调（`onFileRead`/`onFileWrite`）交给宿主实现；权限策略通过 `sessionStore` 中的请求队列 + `PermissionDialog` 组件完成用户交互，宿主可替换 UI 或在 core 层覆盖 `setPermissionHandler` 实现自动审批 |
+| 宿主能力 | 回调 + store | 文件读写通过 Provider 回调（`onFileRead`/`onFileWrite`）交给宿主实现；权限策略通过 `sessionStore` 中的请求队列 + `PermissionPrompt` 组件完成用户交互，宿主可替换 UI 或在 core 层覆盖 `setPermissionHandler` 实现自动审批 |
 
 ## 8. 后续规划
 
