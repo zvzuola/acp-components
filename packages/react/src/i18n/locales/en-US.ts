@@ -42,6 +42,12 @@ export const enUS = {
   'sessionView.closeTab': 'Close tab',
   'sessionView.resizeFilesSplit': 'Resize opened files and file tree',
 
+  // SessionView — split pane
+  'splitView.ariaLabel': 'Split conversation view',
+  'splitView.split': 'Split pane',
+  'splitView.closePane': 'Close pane',
+  'splitView.resize': 'Resize panes',
+
   // PermissionDialog
   'permission.ariaLabel': 'Permission required',
   'permission.title': 'Permission Required',

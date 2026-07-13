@@ -24,6 +24,12 @@ export interface ChatViewProps {
    * file navigation to a custom destination instead.
    */
   onNavigateFile?: (path: string, line?: number | null) => void;
+  /**
+   * Whether to render the built-in header bar (session title). Defaults to
+   * true. Set to false when embedding ChatView inside a container that
+   * provides its own header (e.g. split panes in SessionView).
+   */
+  showHeader?: boolean;
 }
 
 interface Round {
@@ -131,7 +137,7 @@ function useRounds(messages: Message[], sessionId: SessionId | null): Round[] {
   }, [messages, sessionId]);
 }
 
-export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
+export function ChatView({ sessionId, onNavigateFile, showHeader = true }: ChatViewProps) {
   const messages = useSessionMessages(sessionId);
   const isStreaming = useSessionIsStreaming(sessionId);
   const plan = useSessionPlan(sessionId);
@@ -362,9 +368,11 @@ export function ChatView({ sessionId, onNavigateFile }: ChatViewProps) {
 
   return (
     <div className={styles.acpChatView}>
-      <div className={styles.acpChatHeader}>
-        <span className={styles.acpChatHeaderTitle}>{sessionTitle || t('chat.title')}</span>
-      </div>
+      {showHeader && (
+        <div className={styles.acpChatHeader}>
+          <span className={styles.acpChatHeaderTitle}>{sessionTitle || t('chat.title')}</span>
+        </div>
+      )}
       <div className={styles.acpMessageListWrapper}>
         <Virtuoso
           key={sessionId} // reset virtuoso state when sessionId changes

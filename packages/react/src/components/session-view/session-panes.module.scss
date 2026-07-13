@@ -1,0 +1,177 @@
+// =============================================================================
+// SessionPanes — multi-pane horizontal conversation layout
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// Root container — horizontal flex of panes + resize handles
+// ---------------------------------------------------------------------------
+.acp-split-view {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  background: var(--acp-color-bg-primary);
+  overflow: hidden;
+}
+
+// ---------------------------------------------------------------------------
+// Pane — single chat column (rendered the same way for 1 or N panes)
+// ---------------------------------------------------------------------------
+.acp-split-pane {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  flex-basis: 0;
+
+  // Active pane: subtle top accent bar so the user knows which pane receives
+  // sidebar session selections.
+  &--active {
+    box-shadow: inset 0 2px 0 0 var(--acp-color-accent);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Pane header — title + action buttons (replaces ChatView's built-in header)
+// ---------------------------------------------------------------------------
+.acp-split-pane__header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 36px;
+  padding: 0 8px 0 16px;
+  border-bottom: 1px solid var(--acp-color-border-subtle);
+  background: var(--acp-color-bg-primary);
+  user-select: none;
+}
+
+.acp-split-pane__title {
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--acp-color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.acp-split-pane__actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+}
+
+// ---------------------------------------------------------------------------
+// Pane action buttons (panel toggle / split / close)
+// ---------------------------------------------------------------------------
+.acp-split-pane__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: var(--acp-radius-sm);
+  background: transparent;
+  color: var(--acp-color-text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    background var(--acp-duration-fast) var(--acp-ease-out),
+    color var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover {
+    background: var(--acp-color-bg-hover);
+    color: var(--acp-color-text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--acp-color-accent);
+    outline-offset: -1px;
+    border-radius: var(--acp-radius-sm);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Pane body — holds the ChatView (header hidden)
+// ---------------------------------------------------------------------------
+.acp-split-pane__body {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+// ---------------------------------------------------------------------------
+// Resize handle between panes
+// ---------------------------------------------------------------------------
+.acp-split-handle {
+  position: relative;
+  flex: 0 0 auto;
+  width: 1px;
+  height: 100%;
+  cursor: col-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  user-select: none;
+  z-index: 2;
+  outline: none;
+
+  &__line {
+    position: relative;
+    display: block;
+    width: 1px;
+    height: 100%;
+    background: var(--acp-color-border-subtle);
+    transition:
+      width var(--acp-duration-fast) var(--acp-ease-out),
+      background var(--acp-duration-fast) var(--acp-ease-out);
+  }
+
+  // Invisible hit-area expander for easier targeting
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 -3px;
+  }
+
+  &:hover &__line {
+    background: var(--acp-color-border-accent);
+  }
+
+  &--active &__line,
+  &:focus-visible &__line {
+    width: 2px;
+    background: var(--acp-color-accent);
+  }
+
+  &:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--acp-color-accent-muted);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Empty state (no session selected)
+// ---------------------------------------------------------------------------
+.acp-split-empty {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 12px;
+  color: var(--acp-color-text-muted);
+  font-size: 13px;
+  font-family: var(--acp-font-sans);
+  text-align: center;
+}

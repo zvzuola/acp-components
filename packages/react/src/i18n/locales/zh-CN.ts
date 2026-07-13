@@ -42,6 +42,12 @@ export const zhCN = {
   'sessionView.closeTab': '关闭标签',
   'sessionView.resizeFilesSplit': '调整已打开文件与文件树',
 
+  // SessionView — split pane
+  'splitView.ariaLabel': '分屏对话视图',
+  'splitView.split': '分屏',
+  'splitView.closePane': '关闭面板',
+  'splitView.resize': '调整面板宽度',
+
   // PermissionDialog
   'permission.ariaLabel': '需要授权',
   'permission.title': '需要授权',

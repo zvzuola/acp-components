@@ -1,0 +1,187 @@
+// =============================================================================
+// SessionPanel — collapsible tabbed side panel (files, terminal, etc.)
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// Panel section
+// ---------------------------------------------------------------------------
+.acp-session-panel {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--acp-color-bg-primary);
+  overflow: hidden;
+}
+
+// ---------------------------------------------------------------------------
+// Tab list
+// ---------------------------------------------------------------------------
+.acp-session-panel__tabs {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: stretch;
+  min-height: 44px;
+  padding: 6px 8px;
+  gap: 4px;
+  background: var(--acp-color-bg-primary);
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  &::-webkit-scrollbar {
+    height: 0;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Single tab
+// ---------------------------------------------------------------------------
+.acp-session-panel__tab {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  max-width: 180px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--acp-radius-sm);
+  background: transparent;
+  color: var(--acp-color-text-secondary);
+  font-family: var(--acp-font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--acp-duration-fast) var(--acp-ease-out),
+    color var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover:not(&--disabled):not(&--active) {
+    background: var(--acp-color-bg-hover);
+    color: var(--acp-color-text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--acp-color-accent);
+    outline-offset: -1px;
+    border-radius: var(--acp-radius-sm);
+  }
+
+  &--active {
+    color: var(--acp-color-text-primary);
+    background: var(--acp-color-bg-selected);
+    font-weight: 600;
+  }
+
+  &--disabled {
+    color: var(--acp-color-text-muted);
+    cursor: not-allowed;
+  }
+}
+
+.acp-session-panel__tab-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  font-size: 13px;
+  color: var(--acp-color-text-muted);
+  flex-shrink: 0;
+}
+
+.acp-session-panel__tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12.5px;
+}
+
+.acp-session-panel__tab-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 2px;
+  border: none;
+  border-radius: var(--acp-radius-xs);
+  background: transparent;
+  color: var(--acp-color-text-muted);
+  font-size: 10px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background var(--acp-duration-fast) var(--acp-ease-out),
+    color var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover {
+    background: var(--acp-color-bg-hover);
+    color: var(--acp-color-text-primary);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Tab panel body
+// ---------------------------------------------------------------------------
+.acp-session-panel__body {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+
+  &:focus-visible {
+    outline: none;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Empty state
+// ---------------------------------------------------------------------------
+.acp-session-panel__empty {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 12px;
+  color: var(--acp-color-text-muted);
+  font-size: 12px;
+  font-family: var(--acp-font-sans);
+  text-align: center;
+}
+
+// ---------------------------------------------------------------------------
+// Files tab — two-column body (opened files | file tree)
+// ---------------------------------------------------------------------------
+.acp-session-panel__files-columns {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: row;
+  align-items: stretch;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.acp-session-panel__files-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+
+  &:last-child {
+    flex: 1 1 0;
+  }
+}
+
+.acp-session-panel__files-col--opened {
+  flex: 0 0 auto;
+  border-right: none;
+  background: var(--acp-color-bg-primary);
+}
