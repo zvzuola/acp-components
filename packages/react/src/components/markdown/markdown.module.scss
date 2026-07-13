@@ -159,3 +159,34 @@
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
+
+.acp-markdown-code-lang {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.acp-markdown-code-copy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: var(--acp-radius-xs);
+  background: transparent;
+  color: var(--acp-color-text-muted);
+  cursor: pointer;
+  padding: 0;
+  font-size: 13px;
+  flex-shrink: 0;
+  transition: color var(--acp-duration-fast) var(--acp-ease-out),
+              background var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover {
+    color: var(--acp-color-text-primary);
+    background: var(--acp-color-bg-hover);
+  }
+}

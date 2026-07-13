@@ -26,7 +26,7 @@
   }
 
   &__input {
-    flex: 1;
+    flex: 0 1 auto;
     resize: none;
     border: none;
     padding: 10px 14px;
@@ -38,6 +38,7 @@
     min-height: 42px;
     max-height: 200px;
     outline: none;
+    overflow-y: auto;
 
     &::placeholder {
       color: var(--acp-color-text-muted);
@@ -72,9 +73,12 @@
   &__fileThumb {
     width: 24px;
     height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
     border-radius: 2px;
     object-fit: cover;
-    flex-shrink: 0;
   }
 
   &__fileName {
@@ -214,4 +218,30 @@
   left: 20px;
   right: 20px;
   z-index: 100;
+}
+
+.acp-chat-composer-drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 2px dashed var(--acp-color-accent);
+  border-radius: var(--acp-radius-md);
+  background: var(--acp-color-accent-muted);
+  pointer-events: none;
+}
+
+.acp-chat-composer-drop-icon {
+  font-size: 28px;
+  color: var(--acp-color-accent);
+}
+
+.acp-chat-composer-drop-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--acp-color-accent-text);
 }

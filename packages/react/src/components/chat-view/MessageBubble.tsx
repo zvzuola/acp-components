@@ -1,14 +1,54 @@
 import React from 'react';
-import { FileTextOutlined, LinkOutlined } from '@ant-design/icons';
+import { FileTextOutlined, LinkOutlined, CopyOutlined, CheckOutlined } from '@ant-design/icons';
 import type { Message, MessagePart, SessionId } from '@acp-components/core';
 import type { ContentBlock } from '@acp-components/core';
 import { sessionStore } from '@acp-components/core';
+import { useCopy } from '../../hooks/useCopy';
 import { useI18n } from '../../i18n';
 import { Markdown } from '../markdown';
 import { ToolCallCard } from './ToolCallCard';
 import { ThoughtView } from './ThoughtView';
 import { PlanView } from './PlanView';
 import styles from './chat-view.module.scss';
+
+// ---------------------------------------------------------------------------
+// Agent text extraction - walks message parts to collect all visible text so
+// the hover copy button can copy the agent reply as plain text.
+// ---------------------------------------------------------------------------
+
+function extractAgentText(messages: Message[]): string {
+  const parts: string[] = [];
+  for (const msg of messages) {
+    for (const part of msg.parts) {
+      if (part.type === 'content') {
+        for (const block of part.content) {
+          if ('annotations' in block && block.annotations != null) continue;
+          if (block.type === 'text') {
+            parts.push((block as { text: string }).text);
+          }
+        }
+      }
+    }
+  }
+  return parts.join('\n\n');
+}
+
+/** Hover-revealed copy button for agent message bubbles. */
+function AgentCopyButton({ messages }: { messages: Message[] }) {
+  const { copied, copy } = useCopy();
+  const { t } = useI18n();
+  return (
+    <button
+      type="button"
+      className={styles.acpMessageBubbleCopyBtn}
+      onClick={() => void copy(extractAgentText(messages))}
+      aria-label={t('agentMessage.copy')}
+      title={t('agentMessage.copy')}
+    >
+      {copied ? <CheckOutlined /> : <CopyOutlined />}
+    </button>
+  );
+}
 
 export interface MessageBubbleProps {
   sessionId: SessionId | null;
@@ -170,6 +210,7 @@ export const MessageBubble = React.memo(function MessageBubble({ sessionId, mess
             onNavigateFile={onNavigateFile}
           />
         ))}
+        {!isStreaming && <AgentCopyButton messages={messages} />}
       </div>
     </div>
   );

@@ -92,6 +92,8 @@ export { useToolCalls } from './hooks/useToolCalls';
 export { usePermission } from './hooks/usePermission';
 export { useConnectionStatus, useAllAgentStatuses } from './hooks/useConnectionStatus';
 export { useExtensions } from './hooks/useExtensions';
+export { useCopy } from './hooks/useCopy';
+export type { UseCopyReturn } from './hooks/useCopy';
 export { useFileTree } from './hooks/useFileTree';
 export { useFileViewer } from './hooks/useFileViewer';
 export type { OpenFileEntry, UseFileViewerReturn } from './hooks/useFileViewer';

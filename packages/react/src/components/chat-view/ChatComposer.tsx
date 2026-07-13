@@ -1,10 +1,11 @@
-import React, { useCallback, useRef, useMemo, useState } from 'react';
+import React, { useCallback, useRef, useMemo, useState, useEffect } from 'react';
 import {
   FileTextOutlined,
   CloseOutlined,
   PaperClipOutlined,
   PauseOutlined,
   ArrowUpOutlined,
+  InboxOutlined,
 } from '@ant-design/icons';
 import type { ContentBlock, AvailableCommand, PromptCapabilities } from '@acp-components/core';
 import { CommandPalette } from '../command-palette';
@@ -20,8 +21,8 @@ import styles from './chat-composer.module.scss';
  * palette; the text value is controlled by the caller, and sending / cancelling
  * is delegated entirely to {@link ChatComposerProps.onSend} /
  * {@link ChatComposerProps.onCancel}. The component never touches the prompt
- * action or the acp store — that wiring lives in the host (ChatView,
- * NewSessionView, …).
+ * action or the acp store - that wiring lives in the host (ChatView,
+ * NewSessionView, ...).
  */
 export interface ChatComposerProps {
   /** Controlled text value. */
@@ -157,6 +158,7 @@ export function ChatComposer({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useI18n();
 
+  const [isDragOver, setIsDragOver] = useState(false);
   const [paletteSuppressed, setPaletteSuppressed] = useState(false);
 
   const commandState = useMemo(() => {
@@ -250,6 +252,8 @@ export function ChatComposer({
               selectAndSendCommand(filteredCommands[activeIndex]);
               return;
             }
+            // Shift+Enter falls through to insert a newline instead of selecting.
+            if (e.shiftKey) break;
             break;
           case 'Escape':
             e.preventDefault();
@@ -265,7 +269,8 @@ export function ChatComposer({
         }
       }
 
-      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      // Insert a newline on Shift+Enter or Ctrl/Cmd+Enter (default textarea behavior).
+      if (e.key === 'Enter' && (e.shiftKey || e.ctrlKey || e.metaKey)) {
         return;
       }
 
@@ -277,21 +282,29 @@ export function ChatComposer({
     [showPalette, filteredCommands, activeIndex, selectCommand, selectAndSendCommand, closePalette, handleSend]
   );
 
-  const handleAttachClick = useCallback(() => {
-    fileInputRef.current?.click();
+  // Auto-resize the textarea to fit its content (capped by CSS max-height so
+  // long drafts scroll internally instead of growing the layout indefinitely).
+  const autoResize = useCallback(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = 'auto';
+    ta.style.height = `${ta.scrollHeight}px`;
   }, []);
 
-  const handleFilesChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
-    if (files.length === 0) return;
+  useEffect(() => {
+    autoResize();
+  }, [value, autoResize]);
 
+  // Reusable attachment path shared by the file input, drag-and-drop, and paste.
+  const addFiles = useCallback((files: File[]) => {
+    if (files.length === 0) return;
     const newEntries: AttachedFile[] = files.map((file) => ({
       file,
-      previewUrl: file.type.startsWith('image/') ? null : null,
+      previewUrl: null,
     }));
     setAttachedFiles((prev) => [...prev, ...newEntries]);
 
-    // Generate previews for image files asynchronously
+    // Generate previews for image files asynchronously.
     for (const entry of newEntries) {
       if (entry.file.type.startsWith('image/')) {
         const reader = new FileReader();
@@ -305,10 +318,57 @@ export function ChatComposer({
         reader.readAsDataURL(entry.file);
       }
     }
-
-    // Reset input so the same file can be re-selected
-    e.target.value = '';
   }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    if (disabled) return;
+    if (Array.from(e.dataTransfer.types).includes('Files')) {
+      e.preventDefault();
+      setIsDragOver(true);
+    }
+  }, [disabled]);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    const related = e.relatedTarget as Node | null;
+    if (related === null || !e.currentTarget.contains(related)) {
+      setIsDragOver(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    if (disabled) return;
+    e.preventDefault();
+    setIsDragOver(false);
+    addFiles(Array.from(e.dataTransfer.files ?? []));
+  }, [disabled, addFiles]);
+
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    if (disabled) return;
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    const files: File[] = [];
+    for (const item of Array.from(items)) {
+      if (item.kind === 'file') {
+        const f = item.getAsFile();
+        if (f) files.push(f);
+      }
+    }
+    if (files.length > 0) {
+      e.preventDefault();
+      addFiles(files);
+    }
+  }, [disabled, addFiles]);
+
+  const handleAttachClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFilesChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    addFiles(files);
+    // Reset input so the same file can be re-selected.
+    e.target.value = '';
+  }, [addFiles]);
 
   const handleRemoveFile = useCallback((index: number) => {
     setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
@@ -326,7 +386,12 @@ export function ChatComposer({
     (value.trim().length > 0 || attachedFiles.length > 0) && !disabled && !isStreaming;
 
   return (
-    <div className={styles.acpChatComposer}>
+    <div
+      className={styles.acpChatComposer}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       {showPalette && (
         <CommandPalette
           inline
@@ -374,6 +439,7 @@ export function ChatComposer({
               setPaletteSuppressed(false);
             }}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             onBlur={() => showPalette && closePalette()}
             rows={1}
             disabled={disabled}
@@ -421,6 +487,12 @@ export function ChatComposer({
         </div>
       </div>
 
+      {isDragOver && (
+        <div className={styles.acpChatComposerDropOverlay} aria-hidden="true">
+          <span className={styles.acpChatComposerDropIcon}><InboxOutlined /></span>
+          <span className={styles.acpChatComposerDropText}>{t('composer.dropFiles')}</span>
+        </div>
+      )}
     </div>
   );
 }

@@ -6,9 +6,9 @@ export const zhCN = {
   'commandPalette.filterCommands': '过滤命令',
   'commandPalette.noMatching': '无匹配命令',
 
-  // ChatComposer
-  'composer.placeholder': '输入消息...（Enter 发送，/ 触发命令）',
-  'composer.ariaLabel': '消息输入',
+ // ChatComposer
+  'composer.placeholder': '输入消息...（Enter 发送，Shift+Enter 换行，/ 触发命令）',
+ 'composer.ariaLabel': '消息输入',
   'composer.cancelAriaLabel': '取消生成',
   'composer.cancel': '取消',
   'composer.sendAriaLabel': '发送消息',
@@ -16,9 +16,10 @@ export const zhCN = {
 
   'composer.attachFile': '添加文件',
   'composer.attachFileAriaLabel': '添加文件',
-  'composer.removeFileAriaLabel': '移除文件',
+ 'composer.removeFileAriaLabel': '移除文件',
+  'composer.dropFiles': '拖放文件以添加',
 
-  // ChatView
+ // ChatView
   'chat.emptyState': '选择或创建一个会话以开始',
   'chat.title': '对话',
   'chat.scrollToBottom': '滚动到底部',
@@ -103,9 +104,15 @@ export const zhCN = {
   // UserMessage
   'userMessage.copy': '复制',
   'userMessage.copied': '已复制',
-  'userMessage.edit': '编辑',
+ 'userMessage.edit': '编辑',
 
-  // StopReason
+  // Markdown
+  'markdown.copyCode': '复制代码',
+
+  // AgentMessage
+  'agentMessage.copy': '复制',
+
+ // StopReason
   'stopReason.end_turn': '回复完毕',
   'stopReason.max_tokens': '已达到 Token 上限',
   'stopReason.max_turn_requests': '已达到最大轮次',
