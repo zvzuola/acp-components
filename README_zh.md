@@ -13,23 +13,26 @@
 
 - **多 Agent 支持** — 同时连接多个 ACP Agent，每个 Agent 拥有独立的传输层、能力和会话管理。用户添加的 Agent 会持久化到 `storage('agents')` 并在下次启动时恢复；内置（宿主提供的）Agent 不可被用户移除
 - **多工作区支持** — 按工作目录（cwd）组织会话，可无缝切换工作区。工作区列表通过内置的 `<PlatformWorkspacesAuto>` 驱动持久化到 `storage('workspaces')`
+- **多会话支持** — 并发运行多个会话并在可拖拽的分割窗格中并排查看；每个会话拥有完全隔离的状态（消息、流式、工具调用、权限）。按会话分批聚合让并发流互不干扰
 - **框架无关核心** — Zustand vanilla stores，零 React 依赖；支持 Vue、Svelte、Solid 或纯 JS
 - **多传输协议** — 每个 Agent 可独立配置 Stdio、HTTP、WebSocket 及自定义传输。Stdio 的启动能力由宿主通过 `platform.process.createStdioTransport` 提供（无法启动子进程的 Web 宿主直接省略即可）；附带 Tauri IPC 传输示例
 - **统一的 Workbench Shell** — `WorkbenchShell` 将 `Sidebar`（顶部导航按钮 + 可切换主体 + 底部栏）与主区域串联：按导航项切换主视图（Sessions → `SessionView`、Skills → `SkillView`、New Session、Settings，以及宿主注入的视图）
-- **丰富的 UI 组件** — SessionView（聊天 + Files 侧边栏，含 FileTree 与 FileViewer）、SkillView、SettingsView、聊天视图（回合分组）、Diff 视图、权限弹窗、计划视图、思考视图、命令面板、登录弹窗、Dropdown、Select、状态栏等 25+ 组件
+- **丰富的 UI 组件** — SessionView（分割会话窗格 + Files 侧边栏，含 FileTree 与 FileViewer）、SkillView、SettingsView、聊天视图（回合分组 + 内联权限提示）、Diff 视图、计划视图、思考视图、命令面板、登录弹窗、Dropdown、Select、状态栏等 25+ 组件
 - **文件树与文件查看器** — 按工作区分的文件树（懒加载展开、可选实时监听）以及面板内基于 Monaco 的文件查看器（语法高亮、行定位）；两者均由 `platform.fs` 零配置驱动
 - **技能目录** — `SkillView` 通过 `listSkills()` 实时拉取每个已连接 Agent 的技能目录，按作用域（用户级 vs 项目 cwd）分组展示
 - **设置界面** — 全屏 `SettingsView`，含 Appearance（主题）与 Agents 管理 panels，通过追加 `SETTINGS_SECTIONS` 即可扩展
 - **流式交互体验** — 实时内容与思考过程流式展示（按会话批次聚合），动画指示器，工具调用状态跟踪，Token 用量统计
-- **会话管理** — 完整 CRUD：创建、加载、切换、关闭、删除、fork、刷新、加载更多——按工作区和 Agent 维度管理
+- **会话管理** — 完整 CRUD：创建、加载、切换、关闭、删除、fork、刷新、加载更多——按工作区和 Agent 维度管理；分割窗格让你同时关注多个会话
 - **工具调用可视化** — 追踪 Agent 工具调用，展示状态、输入/输出、文件定位和差异对比
 - **认证** — 内置认证流程，包含 `LoginDialog` 组件，支持 env_var 和 terminal 两种认证方式，以及 `authenticate`/`authenticateWithEnv` 编程式 actions
-- **权限处理** — 基于 Promise 的权限流程，内置模态弹窗用于批准或拒绝工具调用请求
+- **权限处理** — 基于按会话隔离的 Promise 权限流程，内联提示框（在 `ChatView` 内渲染）用于批准或拒绝工具调用请求；会话关闭或 Agent 断连时自动拒绝
 - **主题系统** — 通过 CSS 自定义属性（`--acp-*` 设计令牌）提供暗色/亮色主题；运行时通过 `useSettings().setTheme()` 切换；通过 `data-acp-theme` 属性可扩展自定义主题
 - **国际化** — 内置 i18n（英文、中文）基于 i18next，语言自动检测来源于宿主 `Platform.system.getLocale()`
 - **桌面端就绪** — 包含 Tauri 和 stdio 传输示例，可直接用于原生桌面应用开发
 
 ## 效果截图
+
+支持会话分割，展示多会话
 
 ### Web 演示
 
@@ -179,9 +182,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
 | `WorkbenchShell` | 串联整套布局：左侧 `Sidebar`（顶部导航 + 可切换主体 + 底部栏），主区域按当前导航项切换视图（Sessions → `SessionView`、Skills → `SkillView`、New Session → `NewSessionView`、Settings → `SettingsView`，以及宿主注入的 `navItems`）。Props：`sessionId`、`navItems`、`sidebarWidth`、`panelWidth`…… |
 | `Workbench` | 底层三栏布局（侧边栏、主区域、面板），基于 CSS Grid——`WorkbenchShell` 构建在其之上 |
 | `Sidebar` | 纯渲染组件：全宽图标+文字导航按钮 + `SessionList` 主体 + `SettingsMenu` 底部栏。Props：`activeView`、`onActiveViewChange`、`navItems`、`onSelectSession`、`onOpenSettings` |
-| `SessionView` | 当前会话界面：左侧 `ChatView`，右侧可调整大小的侧边栏，内置 Files 标签页（`FileTree` + 已打开的 `FileViewer`，双列）及宿主注入的标签页。Props：`sessionId`、`tabs`、`activeTabId`、`panelWidth`、`showFilesTab`…… |
-| `SessionList` | 侧边栏主体：按工作区目录分组，工作区内按 Agent 分组展示会话，支持添加工作区/创建/选择/删除操作 |
-| `ChatView` | 主聊天区域：将消息分组为用户/Agent 回合，渲染计划、用量条和配置面板。Props：`sessionId`、`onNavigateFile` |
+| `SessionView` | 当前会话界面：左侧 `SessionPanes`（可分割的聊天列），右侧可调整大小的 `SessionPanel`，内置 Files 标签页（`FileTree` + 已打开的 `FileViewer`，双列）及宿主注入的标签页。Props：`sessionId`、`tabs`、`activeTabId`、`panelWidth`、`showFilesTab`…… |
+| `SessionPanes` | 多会话分割视图：并排渲染一个或多个 `ChatView` 列，支持百分比拖拽调整。点击分割图标复制窗格，点击关闭移除窗格。激活窗格跟踪 `activeSessionId`。Props：`sessionId`、`onNavigateFile`、`headerExtras` |
+| `SessionPanel` | 右侧面板，含标签栏（内置 Files + 宿主注入标签页）和可调整大小的 `FileTree` / `FileViewer` 双列布局。Props：`cwd`、`tabs`、`activeTabId`、`panelWidth`、`showFilesTab`…… |
+| `SessionList` | 侧边栏主体：按工作区目录分组，会话跨 Agent 扁平化并按时间倒序排列，支持添加工作区/创建/选择/fork/删除操作 |
+| `ChatView` | 主聊天区域：将消息分组为用户/Agent 回合，渲染计划、用量条、配置面板和内联 `PermissionPrompt`。Props：`sessionId`、`onNavigateFile`、`showHeader` |
 | `MessageBubble` | 渲染消息内容（内容块、思考块、工具调用），通过 `react-markdown` 支持 Markdown |
 | `Markdown` | 可复用的 Markdown 渲染器，支持语法高亮代码块和 GFM |
 | `ChatComposer` | 文本输入框，集成斜杠命令面板和发送/取消控制 |

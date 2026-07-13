@@ -11,23 +11,26 @@ You can use the data layer alone to build UI component libraries with Vue, Svelt
 
 - **Multi-Agent** — Connect to multiple ACP agents simultaneously, each with independent transport, capabilities, and session management. User-added agents are persisted to `storage('agents')` and restored on next launch; built-in (host-supplied) agents are never user-removable
 - **Multi-Workspace** — Organize sessions by working directory (cwd); switch between workspaces seamlessly. Workspace list is persisted to `storage('workspaces')` via the built-in `<PlatformWorkspacesAuto>` driver
+- **Multi-Session** — Run and view multiple sessions side-by-side in resizable split panes; each session has fully isolated state (messages, streaming, tool calls, permissions). Per-session chunk batching keeps concurrent streams independent
 - **Framework-Agnostic Core** — Zustand vanilla stores with zero React dependency; works with Vue, Svelte, Solid, or vanilla JS
 - **Multi-Transport** — Stdio, HTTP, WebSocket, and custom transports per agent. Stdio spawn capability is supplied by the host via `platform.process.createStdioTransport` (a web host that cannot spawn a child process simply omits it); ships with a Tauri IPC example
 - **Unified Workbench Shell** — `WorkbenchShell` wires the `Sidebar` (top nav buttons + switchable body + footer) to a main area that swaps views by nav item: Sessions → `SessionView`, Skills → `SkillView`, New Session, Settings, plus host-injected views
-- **Rich UI Components** — SessionView (chat + Files side panel with FileTree & FileViewer), SkillView, SettingsView, chat view (with round grouping), diff view, permission dialog, plan view, thought view, command palette, login dialog, dropdown, select, status bar, and more — 25+ components
+- **Rich UI Components** — SessionView (split session panes + Files side panel with FileTree & FileViewer), SkillView, SettingsView, chat view (with round grouping + inline permission prompt), diff view, plan view, thought view, command palette, login dialog, dropdown, select, status bar, and more — 25+ components
 - **File Tree & File Viewer** — Per-workspace file tree (lazy expand, optional live watch) and an in-panel Monaco-backed file viewer with syntax highlighting and reveal-line; both driven zero-config by `platform.fs`
 - **Skills Catalog** — `SkillView` fetches each connected agent's skill catalog live via `listSkills()`, grouped by scope (user-level vs per-project cwd)
 - **Settings Surface** — Full-page `SettingsView` with Appearance (theme) and Agents management panels; extensible by appending to `SETTINGS_SECTIONS`
 - **Streaming UX** — Real-time content and thought streaming (per-session chunk batching) with animated indicators, live tool call status, and token usage tracking
-- **Session Management** — Full CRUD: create, load, switch, close, delete, fork, refresh, and load-more — scoped by workspace and agent
+- **Session Management** — Full CRUD: create, load, switch, close, delete, fork, refresh, and load-more — scoped by workspace and agent; split panes let you watch several at once
 - **Tool Call Visualization** — Track agent tool invocations with status, input/output, file locations, and diffs
 - **Authentication** — Built-in auth flow with `LoginDialog` component, env_var and terminal-based auth methods, and programmatic `authenticate`/`authenticateWithEnv` actions
-- **Permission Handling** — Promise-based permission flow with built-in modal dialog for approving or rejecting tool call requests
+- **Permission Handling** — Promise-based per-session permission flow with an inline prompt (rendered inside `ChatView`) for approving or rejecting tool call requests; auto-rejected on session close or agent disconnect
 - **Theming** — Dark and light themes via CSS custom properties (`--acp-*` design tokens); runtime switching through `useSettings().setTheme()`; extensible via `data-acp-theme` attribute
 - **Internationalization** — Built-in i18n (en-US, zh-CN) via i18next with locale auto-detection sourced from the host `Platform.system.getLocale()`
 - **Desktop Ready** — Includes Tauri and stdio transport examples for native desktop applications
 
 ## Screenshots
+
+Supports session splitting to display multiple sessions
 
 ### Web Demo
 
@@ -177,9 +180,11 @@ Each agent in the `agents` array gets its own transport configuration:
 | `WorkbenchShell` | Orchestrates the whole layout: a `Sidebar` (top nav + switchable body + footer) on the left, and a main area that swaps views by active nav item (Sessions → `SessionView`, Skills → `SkillView`, New Session → `NewSessionView`, Settings → `SettingsView`, plus host-injected `navItems`). Props: `sessionId`, `navItems`, `sidebarWidth`, `panelWidth`, … |
 | `Workbench` | Low-level three-panel layout (sidebar, main, panel) using CSS Grid — `WorkbenchShell` builds on top of this |
 | `Sidebar` | Pure renderer: full-width icon+text nav buttons + a `SessionList` body + a `SettingsMenu` footer. Props: `activeView`, `onActiveViewChange`, `navItems`, `onSelectSession`, `onOpenSettings` |
-| `SessionView` | Active-session surface: `ChatView` on the left, a resizable side panel with the built-in Files tab (`FileTree` + opened-`FileViewer`, two columns) on the right, plus host-injected tabs. Props: `sessionId`, `tabs`, `activeTabId`, `panelWidth`, `showFilesTab`, … |
-| `SessionList` | Sidebar body: workspaces grouped by directory, sessions grouped by agent within each workspace, with add workspace / create / select / delete actions |
-| `ChatView` | Main chat area: groups messages into user/agent rounds, renders plan, usage bar, and config panel. Props: `sessionId`, `onNavigateFile` |
+| `SessionView` | Active-session surface: `SessionPanes` (split-able chat columns) on the left, a resizable `SessionPanel` with the built-in Files tab (`FileTree` + opened-`FileViewer`, two columns) on the right, plus host-injected tabs. Props: `sessionId`, `tabs`, `activeTabId`, `panelWidth`, `showFilesTab`, … |
+| `SessionPanes` | Multi-session split view: renders one or more `ChatView` columns side-by-side with percentage-based resize handles. Click the split icon to duplicate a pane; close a pane to remove it. The active pane tracks `activeSessionId`. Props: `sessionId`, `onNavigateFile`, `headerExtras` |
+| `SessionPanel` | Right-side panel with a tab bar (built-in Files + host-injected tabs) and a resizable `FileTree` / `FileViewer` two-column layout. Props: `cwd`, `tabs`, `activeTabId`, `panelWidth`, `showFilesTab`, … |
+| `SessionList` | Sidebar body: workspaces grouped by directory, sessions flattened across agents and sorted newest-first, with add workspace / create / select / fork / delete actions |
+| `ChatView` | Main chat area: groups messages into user/agent rounds, renders plan, usage bar, config panel, and inline `PermissionPrompt`. Props: `sessionId`, `onNavigateFile`, `showHeader` |
 | `MessageBubble` | Renders message parts (content blocks, thought blocks, tool calls) with Markdown via `react-markdown` |
 | `Markdown` | Reusable Markdown renderer with syntax-highlighted code blocks and GFM support |
 | `ChatComposer` | Text input with slash-command palette integration and send / cancel controls |
