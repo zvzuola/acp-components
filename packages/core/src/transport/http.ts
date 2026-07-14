@@ -1,4 +1,5 @@
 import type { Stream, AnyMessage } from '@agentclientprotocol/sdk';
+import { createHttpStream } from '@agentclientprotocol/sdk/experimental/http-client';
 import type { AcpTransport } from './types';
 
 interface HttpTransportOptions {
@@ -7,49 +8,79 @@ interface HttpTransportOptions {
 }
 
 export class HttpTransport implements AcpTransport {
-  private abortController: AbortController | null = null;
+  private reader: ReadableStreamDefaultReader<AnyMessage> | null = null;
   private closeHandlers: Array<() => void> = [];
   private errorHandlers: Array<(err: Error) => void> = [];
+  private disconnecting = false;
 
   constructor(private options: HttpTransportOptions) {}
 
   async connect(): Promise<Stream> {
-    this.abortController = new AbortController();
+    this.disconnecting = false;
     const { url, headers } = this.options;
 
-    const writable = new WritableStream<AnyMessage>({
-      write: async (msg) => {
-        try {
-          const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...headers },
-            body: JSON.stringify(msg),
-            signal: this.abortController!.signal,
-          });
-          if (!res.ok) {
-            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-          }
-        } catch (err) {
-          if ((err as Error).name !== 'AbortError') {
-            for (const h of this.errorHandlers) h(err as Error);
-          }
-        }
-      },
+    // The SDK's HttpStreamTransport implements the full Streamable HTTP
+    // contract: POST for outgoing JSON-RPC, SSE GET for incoming messages,
+    // Acp-Connection-Id lifecycle, session routing, cookie affinity, and
+    // clean teardown on cancel/close.
+    const inner = createHttpStream(url, {
+      headers,
+      cookies: 'include',
     });
 
+    const self = this;
+
+    // Wrap the inner readable so we can surface close/error to the
+    // onClose/onError lifecycle callbacks. The SDK's app.connect(stream)
+    // reads from this wrapper; we pump messages from the inner readable and
+    // detect when it ends or errors.
     const readable = new ReadableStream<AnyMessage>({
-      start: () => {},
-      cancel: () => {
-        this.abortController?.abort();
+      start(controller) {
+        self.reader = inner.readable.getReader();
+
+        const pump = (): void => {
+          self.reader!.read().then(
+            ({ done, value }) => {
+              if (done) {
+                controller.close();
+                for (const h of self.closeHandlers) h();
+                return;
+              }
+              controller.enqueue(value);
+              pump();
+            },
+            (err: Error) => {
+              if (!self.disconnecting) {
+                for (const h of self.errorHandlers) h(err);
+              }
+              try {
+                controller.error(err);
+              } catch {
+                // already closed or cancelled
+              }
+              for (const h of self.closeHandlers) h();
+            },
+          );
+        };
+        pump();
+      },
+      cancel() {
+        // Consumer cancelled the wrapper — forward to the inner readable,
+        // which drives the SDK's close().
+        self.reader?.cancel().catch(() => {});
       },
     });
 
-    return { writable, readable };
+    return { writable: inner.writable, readable };
   }
 
   disconnect(): void {
-    this.abortController?.abort();
-    for (const h of this.closeHandlers) h();
+    this.disconnecting = true;
+    // Cancelling the reader triggers the SDK's close(): aborts in-flight
+    // requests, DELETEs the connection, and closes the readable. The pump
+    // then detects the close and fires onClose handlers.
+    this.reader?.cancel().catch(() => {});
+    this.reader = null;
   }
 
   onClose(handler: () => void): () => void {

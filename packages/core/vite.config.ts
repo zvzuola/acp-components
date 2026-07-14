@@ -10,7 +10,7 @@ export default defineConfig({
     rollupOptions: {
       external: [
         'zustand/vanilla',
-        '@agentclientprotocol/sdk',
+        /^@agentclientprotocol\/sdk/,
       ],
       output: {
         globals: {},
