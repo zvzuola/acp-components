@@ -17,6 +17,7 @@ export { skillStore } from './store/skillStore';
 export type { Skill, SkillStoreState } from './store/skillStore';
 export { createAcpProvider } from './provider';
 export type { MultiAgentProviderOptions, MultiAgentProviderInstance } from './provider';
+export { isUserVisibleContent } from './utils/content';
 export { createSession, loadSession, selectSession, closeSession, deleteSession, forkSession, refreshSessions, loadMoreSessions, setSessionConfigOption, authenticate, authenticateWithEnv } from './actions/sessions';
 export { sendPrompt, cancelPrompt } from './actions/prompt';
 export { respondToPermission, denyPermission } from './actions/permission';

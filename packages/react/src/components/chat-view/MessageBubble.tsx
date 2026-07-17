@@ -2,7 +2,7 @@ import React from 'react';
 import { FileTextOutlined, LinkOutlined, CopyOutlined, CheckOutlined } from '@ant-design/icons';
 import type { Message, MessagePart, SessionId } from '@acp-components/core';
 import type { ContentBlock } from '@acp-components/core';
-import { sessionStore } from '@acp-components/core';
+import { sessionStore, isUserVisibleContent } from '@acp-components/core';
 import { useCopy } from '../../hooks/useCopy';
 import { useI18n } from '../../i18n';
 import { Markdown } from '../markdown';
@@ -22,7 +22,7 @@ function extractAgentText(messages: Message[]): string {
     for (const part of msg.parts) {
       if (part.type === 'content') {
         for (const block of part.content) {
-          if ('annotations' in block && block.annotations != null) continue;
+          if (!isUserVisibleContent(block)) continue;
           if (block.type === 'text') {
             parts.push((block as { text: string }).text);
           }
@@ -58,7 +58,7 @@ export interface MessageBubbleProps {
 }
 
 function renderContent(content: ContentBlock) {
-  if ('annotations' in content && content.annotations != null) return null;
+  if (!isUserVisibleContent(content)) return null;
   switch (content.type) {
     case 'text':
       return <Markdown>{(content as { text: string }).text}</Markdown>;
