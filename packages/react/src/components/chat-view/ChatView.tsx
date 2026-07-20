@@ -1,9 +1,12 @@
 import React, { useRef, useMemo, useState, useCallback, useEffect } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import { useSessionMessages, useSessionIsStreaming, useSessionPlan, useSessionAvailableCommands, useSessionPendingPermissions } from '../../hooks/useSession';
+import { CloseOutlined } from '@ant-design/icons';
+import { useSessionMessages, useSessionIsStreaming, useSessionPlan, useSessionAvailableCommands, useSessionPendingPermissions, useSessionQueuedMessages } from '../../hooks/useSession';
 import { useAcpStore } from '../../hooks/useAcpStore';
 import { useFileViewer } from '../../hooks/useFileViewer';
 import { usePrompt } from '../../hooks/usePrompt';
+import { useComposerStorage } from '../../hooks/useComposerStorage';
+import { dequeuePrompt } from '@acp-components/core';
 import type { SessionId, ContentBlock, PromptCapabilities } from '@acp-components/core';
 import type { Message } from '@acp-components/core';
 import { MessageBubble } from './MessageBubble';
@@ -36,6 +39,25 @@ export interface ChatViewProps {
 interface Round {
   userMessage?: Message;
   agentMessages: Message[];
+}
+
+/** One-line preview of a queued prompt: text plus compact attachment markers. */
+function extractQueuedPreview(content: ContentBlock[], labels: { image: string; file: string }): string {
+  const parts: string[] = [];
+  for (const b of content) {
+    if (b.type === 'text') {
+      const text = (b as { text: string }).text.trim();
+      if (text) parts.push(text);
+    } else if (b.type === 'resource_link') {
+      const name = (b as { name?: string | null }).name;
+      parts.push(`@${name || (b as { uri: string }).uri}`);
+    } else if (b.type === 'image') {
+      parts.push(labels.image);
+    } else if (b.type === 'resource') {
+      parts.push(labels.file);
+    }
+  }
+  return parts.join(' ');
 }
 
 function groupMessagesIntoRounds(messages: Message[]): Round[] {
@@ -144,6 +166,7 @@ export function ChatView({ sessionId, onNavigateFile, showHeader = true }: ChatV
   const plan = useSessionPlan(sessionId);
   const availableCommands = useSessionAvailableCommands(sessionId);
   const pendingPermissions = useSessionPendingPermissions(sessionId);
+  const queuedMessages = useSessionQueuedMessages(sessionId);
   const { send, cancel } = usePrompt(sessionId);
   const promptCapabilities = useAcpStore((s) => {
     if (!sessionId) return undefined;
@@ -182,7 +205,7 @@ export function ChatView({ sessionId, onNavigateFile, showHeader = true }: ChatV
   // chunk. Cancelled if we return to bottom within the window.
   const showBtnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [composerValue, setComposerValue] = useState('');
+  const { draft: composerValue, setDraft: setComposerValue, history: composerHistory, pushHistory } = useComposerStorage(sessionId);
 
   const rounds = useRounds(messages, sessionId);
 
@@ -203,7 +226,7 @@ export function ChatView({ sessionId, onNavigateFile, showHeader = true }: ChatV
         ta.setSelectionRange(text.length, text.length);
       }
     }, 0);
-  }, []);
+  }, [setComposerValue]);
 
   const handleComposerSend = useCallback(
     async (blocks: ContentBlock[]) => {
@@ -211,7 +234,7 @@ export function ChatView({ sessionId, onNavigateFile, showHeader = true }: ChatV
       setComposerValue('');
       await send(blocks);
     },
-    [sessionId, send],
+    [sessionId, send, setComposerValue],
   );
 
   const handleComposerCancel = useCallback(() => {
@@ -403,6 +426,26 @@ export function ChatView({ sessionId, onNavigateFile, showHeader = true }: ChatV
         {plan.some((e) => e.status !== 'completed') && (
           <PlanView entries={plan} isStreaming={isStreaming} />
         )}
+        {queuedMessages.length > 0 && (
+          <div className={styles.acpChatQueue} aria-label={t('chat.queueAriaLabel')}>
+            {queuedMessages.map((q) => (
+              <div key={q.id} className={styles.acpChatQueueItem}>
+                <span className={styles.acpChatQueueText}>
+                  {extractQueuedPreview(q.content, { image: t('chat.queueImage'), file: t('chat.queueFile') })}
+                </span>
+                <button
+                  type="button"
+                  className={styles.acpChatQueueRemove}
+                  aria-label={t('chat.dequeueMessageAriaLabel')}
+                  title={t('chat.dequeueMessage')}
+                  onClick={() => sessionId && dequeuePrompt(sessionId, q.id)}
+                >
+                  <CloseOutlined />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
         {pendingPermissions.length > 0 ? (
           <PermissionPrompt sessionId={sessionId} />
         ) : (
@@ -415,6 +458,8 @@ export function ChatView({ sessionId, onNavigateFile, showHeader = true }: ChatV
             disabled={!sessionId}
             promptCapabilities={promptCapabilities}
             availableCommands={availableCommands}
+            history={composerHistory}
+            onSent={pushHistory}
           />
         )}
         <div className={styles.acpChatFooter}>

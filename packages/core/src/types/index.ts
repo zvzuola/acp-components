@@ -43,6 +43,18 @@ export interface Message {
   stopReason?: StopReason;
 }
 
+/**
+ * A prompt the user submitted while the agent was still streaming. Held in a
+ * per-session FIFO and sent (in order) once the current turn ends. Queued
+ * messages are NOT part of `messages` — they become user messages only when
+ * actually sent.
+ */
+export interface QueuedMessage {
+  id: string;
+  content: ContentBlock[];
+  queuedAt: number;
+}
+
 export interface ToolCallState extends ToolCall {
   /** UI-only expanded state — not sent over the wire */
   expanded?: boolean;

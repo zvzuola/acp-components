@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useAcpContext } from '../context/AcpContext';
-import { sendPrompt, cancelPrompt, acpStore } from '@acp-components/core';
+import { queuePrompt, cancelPrompt, acpStore } from '@acp-components/core';
 import type { SessionId, ContentBlock, PromptResponse } from '@acp-components/core';
 
 export function usePrompt(sessionId: SessionId | null): {
@@ -21,7 +21,7 @@ export function usePrompt(sessionId: SessionId | null): {
 
   const send = useCallback(async (contentBlocks: ContentBlock[]) => {
     if (!sessionId || !client) return;
-    return sendPrompt(client, sessionId, contentBlocks);
+    return queuePrompt(client, sessionId, contentBlocks);
   }, [sessionId, client]);
 
   const cancel = useCallback(async () => {

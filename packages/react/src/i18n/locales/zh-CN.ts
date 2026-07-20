@@ -23,6 +23,11 @@ export const zhCN = {
   'chat.emptyState': '选择或创建一个会话以开始',
   'chat.title': '对话',
   'chat.scrollToBottom': '滚动到底部',
+  'chat.queueAriaLabel': '排队消息',
+  'chat.dequeueMessage': '移出队列',
+  'chat.dequeueMessageAriaLabel': '移除排队消息',
+  'chat.queueImage': '[图片]',
+  'chat.queueFile': '[文件]',
 
   // Workbench
   'workbench.ariaLabel': 'ACP 工作台',

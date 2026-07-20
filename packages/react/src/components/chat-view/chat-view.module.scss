@@ -258,6 +258,58 @@
   padding: 10px 20px;
 }
 
+// ── Queued messages (pending prompts shown above the composer) ──────────
+.acp-chat-queue {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.acp-chat-queue__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px dashed var(--acp-color-border);
+  border-radius: var(--acp-radius-sm);
+  background: var(--acp-color-bg-glass);
+  color: var(--acp-color-text-secondary);
+  font-size: 13px;
+}
+
+.acp-chat-queue__text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.acp-chat-queue__remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--acp-color-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0;
+  transition: color var(--acp-duration-fast) var(--acp-ease-out),
+              background var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover {
+    color: var(--acp-color-error);
+    background: var(--acp-color-error-muted);
+  }
+}
+
 .acp-chat-composer-wrap {
   position: relative;
 }

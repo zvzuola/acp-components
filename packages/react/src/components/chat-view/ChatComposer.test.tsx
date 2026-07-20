@@ -1,7 +1,35 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import React from 'react';
+import React, { useState } from 'react';
 import { ChatComposer } from './ChatComposer';
+import type { ChatComposerProps } from './ChatComposer';
+
+/** Stateful wrapper so keyboard-driven value changes are observable. */
+function Controlled({
+  initial = '',
+  ...rest
+}: Partial<ChatComposerProps> & { initial?: string }) {
+  const [v, setV] = useState(initial);
+  const onSend = rest.onSend ?? (async () => {});
+  return (
+    <ChatComposer
+      availableCommands={rest.availableCommands}
+      history={rest.history}
+      onSent={rest.onSent}
+      onCancel={rest.onCancel}
+      promptCapabilities={rest.promptCapabilities}
+      disabled={rest.disabled}
+      placeholder={rest.placeholder}
+      isStreaming={rest.isStreaming ?? false}
+      value={v}
+      onChange={(val) => {
+        setV(val);
+        rest.onChange?.(val);
+      }}
+      onSend={onSend}
+    />
+  );
+}
 
 describe('ChatComposer', () => {
   afterEach(() => {
@@ -143,6 +171,62 @@ describe('ChatComposer', () => {
     );
     const sendBtn = screen.getByRole('button', { name: 'composer.sendAriaLabel' });
     expect(sendBtn.hasAttribute('disabled')).toBe(true);
+    unmount();
+  });
+});
+
+describe('ChatComposer — prompt history', () => {
+  it('recalls the latest entry on ArrowUp and walks back', () => {
+    const { unmount } = render(<Controlled history={['first', 'second']} />);
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    fireEvent.keyDown(textarea, { key: 'ArrowUp' });
+    expect(textarea.value).toBe('second');
+    fireEvent.keyDown(textarea, { key: 'ArrowUp' });
+    expect(textarea.value).toBe('first');
+    unmount();
+  });
+
+  it('walks forward on ArrowDown and restores the draft at the end', () => {
+    const { unmount } = render(<Controlled history={['first', 'second']} />);
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: 'wip' } });
+    fireEvent.keyDown(textarea, { key: 'ArrowUp' });
+    expect(textarea.value).toBe('second');
+    fireEvent.keyDown(textarea, { key: 'ArrowDown' });
+    expect(textarea.value).toBe('wip');
+    unmount();
+  });
+
+  it('does NOT hijack ArrowUp when the cursor is not on the first line', () => {
+    const { unmount } = render(<Controlled history={['entry']} />);
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: 'line1\nline2' } });
+    // jsdom places the caret at the end (second line) after change.
+    fireEvent.keyDown(textarea, { key: 'ArrowUp' });
+    expect(textarea.value).toBe('line1\nline2');
+    unmount();
+  });
+
+  it('calls onSent with the text after a successful send', async () => {
+    const onSent = vi.fn();
+    const onSend = vi.fn().mockResolvedValue(undefined);
+    const { unmount } = render(<Controlled initial="hello" onSend={onSend} onSent={onSent} />);
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    fireEvent.keyDown(textarea, { key: 'Enter' });
+    await vi.waitFor(() => expect(onSent).toHaveBeenCalledWith('hello'));
+    unmount();
+  });
+});
+
+describe('ChatComposer — queue while streaming', () => {
+  it('still calls onSend on Enter while streaming (host decides queueing)', async () => {
+    const onSend = vi.fn().mockResolvedValue(undefined);
+    const { unmount } = render(
+      <Controlled initial="queued" isStreaming onSend={onSend} onCancel={() => {}} />,
+    );
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    fireEvent.keyDown(textarea, { key: 'Enter' });
+    await vi.waitFor(() => expect(onSend).toHaveBeenCalledTimes(1));
     unmount();
   });
 });

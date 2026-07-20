@@ -1,7 +1,7 @@
 import { useStore } from 'zustand/react';
 import { useShallow } from 'zustand/react/shallow';
 import { sessionStore } from '@acp-components/core';
-import type { Message, ToolCallState, PermissionRequest } from '@acp-components/core';
+import type { Message, ToolCallState, PermissionRequest, QueuedMessage } from '@acp-components/core';
 import type { SessionId, PlanEntry, UsageUpdate, SessionConfigOption, AvailableCommand } from '@acp-components/core';
 
 // Module-level stable empty defaults so Object.is comparisons work when session is absent
@@ -11,6 +11,7 @@ const EMPTY_TOOL_CALLS: ToolCallState[] = [];
 const EMPTY_PERMISSIONS: PermissionRequest[] = [];
 const EMPTY_CONFIG_OPTIONS: SessionConfigOption[] = [];
 const EMPTY_COMMANDS: AvailableCommand[] = [];
+const EMPTY_QUEUED: QueuedMessage[] = [];
 
 // ---------------------------------------------------------------------------
 // Fine-grained hooks — each subscribes to a SINGLE slice of session state.
@@ -81,5 +82,12 @@ export function useSessionUsage(sessionId: SessionId | null): UsageUpdate | null
   return useStore(sessionStore, (s) => {
     if (!sessionId) return null;
     return s.sessions.get(sessionId)?.usage ?? null;
+  });
+}
+
+export function useSessionQueuedMessages(sessionId: SessionId | null): QueuedMessage[] {
+  return useStore(sessionStore, (s) => {
+    if (!sessionId) return EMPTY_QUEUED;
+    return s.sessions.get(sessionId)?.queuedMessages ?? EMPTY_QUEUED;
   });
 }

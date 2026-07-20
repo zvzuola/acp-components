@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { sendPrompt, cancelPrompt } from './prompt';
+import { sendPrompt, cancelPrompt, queuePrompt, dequeuePrompt } from './prompt';
 import { sessionStore } from '../store/sessionStore';
 import type { PromptResponse } from '@agentclientprotocol/sdk';
 import type { ContentBlock } from '@agentclientprotocol/sdk';
@@ -86,5 +86,119 @@ describe('cancelPrompt', () => {
     const client: FakePromptClient = { prompt: vi.fn(), cancel: vi.fn().mockResolvedValue(undefined) };
     await cancelPrompt(client as unknown as Parameters<typeof cancelPrompt>[0], SID);
     expect(client.cancel).toHaveBeenCalledWith(SID);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// queuePrompt
+// ---------------------------------------------------------------------------
+
+type QueueClient = Parameters<typeof queuePrompt>[0];
+
+function makeDeferredClient() {
+  const res: PromptResponse = { stopReason: 'end_turn', usage: null };
+  let resolveCurrent: ((value: PromptResponse) => void) | null = null;
+  const prompt = vi.fn(
+    () =>
+      new Promise<PromptResponse>((resolve) => {
+        resolveCurrent = resolve;
+      }),
+  );
+  return {
+    prompt,
+    cancel: vi.fn(),
+    /** Resolve the in-flight prompt call (ending the current turn). */
+    finishTurn: () => resolveCurrent?.(res),
+  };
+}
+
+async function flushMicrotasks(times = 5): Promise<void> {
+  for (let i = 0; i < times; i++) {
+    await Promise.resolve();
+  }
+}
+
+describe('queuePrompt', () => {
+  const sid = 'queue-sess';
+
+  it('sends immediately when the session is idle', async () => {
+    const client = makeDeferredClient();
+    const promise = queuePrompt(client as unknown as QueueClient, sid, [textBlock]);
+    client.finishTurn();
+    await promise;
+    expect(client.prompt).toHaveBeenCalledTimes(1);
+    expect(sessionStore.getState().sessions.get(sid)!.queuedMessages).toHaveLength(0);
+  });
+
+  it('queues while streaming and flushes after the turn ends', async () => {
+    const client = makeDeferredClient();
+    // Start a turn so isStreaming=true.
+    const first = queuePrompt(client as unknown as QueueClient, sid, [textBlock]);
+    expect(sessionStore.getState().sessions.get(sid)!.isStreaming).toBe(true);
+
+    // Second prompt lands in the queue instead of being sent.
+    const secondBlock: ContentBlock = { type: 'text', text: 'queued', _meta: null, annotations: null };
+    await queuePrompt(client as unknown as QueueClient, sid, [secondBlock]);
+    expect(client.prompt).toHaveBeenCalledTimes(1);
+    expect(sessionStore.getState().sessions.get(sid)!.queuedMessages).toHaveLength(1);
+
+    // End the first turn — the queued prompt is sent automatically.
+    client.finishTurn();
+    await first;
+    await flushMicrotasks();
+    expect(client.prompt).toHaveBeenCalledTimes(2);
+    expect(client.prompt).toHaveBeenLastCalledWith(sid, [secondBlock]);
+    expect(sessionStore.getState().sessions.get(sid)!.queuedMessages).toHaveLength(0);
+    client.finishTurn();
+    await flushMicrotasks();
+  });
+
+  it('flushes multiple queued messages in FIFO order', async () => {
+    const client = makeDeferredClient();
+    const first = queuePrompt(client as unknown as QueueClient, sid, [textBlock]);
+    const block2: ContentBlock = { type: 'text', text: 'q2', _meta: null, annotations: null };
+    const block3: ContentBlock = { type: 'text', text: 'q3', _meta: null, annotations: null };
+    await queuePrompt(client as unknown as QueueClient, sid, [block2]);
+    await queuePrompt(client as unknown as QueueClient, sid, [block3]);
+    expect(sessionStore.getState().sessions.get(sid)!.queuedMessages).toHaveLength(2);
+
+    client.finishTurn();
+    await first;
+    await flushMicrotasks();
+    expect(client.prompt).toHaveBeenNthCalledWith(2, sid, [block2]);
+
+    client.finishTurn();
+    await flushMicrotasks();
+    expect(client.prompt).toHaveBeenNthCalledWith(3, sid, [block3]);
+    expect(sessionStore.getState().sessions.get(sid)!.queuedMessages).toHaveLength(0);
+    client.finishTurn();
+    await flushMicrotasks();
+  });
+
+  it('dequeuePrompt removes a queued message so it is never sent', async () => {
+    const client = makeDeferredClient();
+    const first = queuePrompt(client as unknown as QueueClient, sid, [textBlock]);
+    await queuePrompt(client as unknown as QueueClient, sid, [textBlock]);
+    const queuedId = sessionStore.getState().sessions.get(sid)!.queuedMessages[0].id;
+
+    dequeuePrompt(sid, queuedId);
+    expect(sessionStore.getState().sessions.get(sid)!.queuedMessages).toHaveLength(0);
+
+    client.finishTurn();
+    await first;
+    await flushMicrotasks();
+    expect(client.prompt).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not flush after the session is removed', async () => {
+    const client = makeDeferredClient();
+    const first = queuePrompt(client as unknown as QueueClient, sid, [textBlock]);
+    await queuePrompt(client as unknown as QueueClient, sid, [textBlock]);
+
+    sessionStore.getState().removeSession(sid);
+    client.finishTurn();
+    await first;
+    await flushMicrotasks();
+    expect(client.prompt).toHaveBeenCalledTimes(1);
   });
 });

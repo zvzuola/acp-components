@@ -47,6 +47,10 @@ export interface ChatComposerProps {
   promptCapabilities?: PromptCapabilities;
   /** Slash-command catalog; when empty the palette never opens. */
   availableCommands?: AvailableCommand[];
+  /** Prompt history (oldest → newest) for ↑/↓ recall at the first/last line. */
+  history?: string[];
+  /** Called after a successful send with the sent text (e.g. to record history). */
+  onSent?: (text: string) => void;
 }
 
 interface AttachedFile {
@@ -151,6 +155,8 @@ export function ChatComposer({
   placeholder,
   promptCapabilities,
   availableCommands,
+  history,
+  onSent,
 }: ChatComposerProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
@@ -160,6 +166,8 @@ export function ChatComposer({
 
   const [isDragOver, setIsDragOver] = useState(false);
   const [paletteSuppressed, setPaletteSuppressed] = useState(false);
+
+  const historyRef = useRef<{ index: number | null; draft: string }>({ index: null, draft: '' });
 
   const commandState = useMemo(() => {
     if (!availableCommands || availableCommands.length === 0) return null;
@@ -209,12 +217,13 @@ export function ChatComposer({
 
   const sendText = useCallback(
     async (text: string) => {
-      if ((!text.trim() && attachedFiles.length === 0) || isStreaming || disabled) return;
+      if ((!text.trim() && attachedFiles.length === 0) || disabled) return;
       const blocks = await buildContentBlocks(text, attachedFiles, promptCapabilities);
       setAttachedFiles([]);
       await onSend(blocks);
+      onSent?.(text);
     },
-    [isStreaming, disabled, attachedFiles, onSend, promptCapabilities]
+    [disabled, attachedFiles, onSend, promptCapabilities, onSent]
   );
 
   const handleSend = useCallback(async () => {
@@ -232,6 +241,41 @@ export function ChatComposer({
       await sendText(finalText);
     },
     [value, commandState, sendText]
+  );
+
+  const navigateHistory = useCallback(
+    (dir: 'up' | 'down') => {
+      const hist = history ?? [];
+      if (hist.length === 0) return;
+      const nav = historyRef.current;
+      if (dir === 'up') {
+        if (nav.index === null) {
+          nav.draft = value;
+          nav.index = hist.length - 1;
+        } else if (nav.index > 0) {
+          nav.index -= 1;
+        } else {
+          return;
+        }
+        onChange(hist[nav.index]);
+      } else {
+        if (nav.index === null) return;
+        if (nav.index < hist.length - 1) {
+          nav.index += 1;
+          onChange(hist[nav.index]);
+        } else {
+          nav.index = null;
+          onChange(nav.draft);
+        }
+      }
+      setTimeout(() => {
+        const ta = textareaRef.current;
+        if (!ta) return;
+        const len = ta.value.length;
+        ta.setSelectionRange(len, len);
+      }, 0);
+    },
+    [history, value, onChange]
   );
 
   const handleKeyDown = useCallback(
@@ -252,7 +296,6 @@ export function ChatComposer({
               selectAndSendCommand(filteredCommands[activeIndex]);
               return;
             }
-            // Shift+Enter falls through to insert a newline instead of selecting.
             if (e.shiftKey) break;
             break;
           case 'Escape':
@@ -269,6 +312,24 @@ export function ChatComposer({
         }
       }
 
+      const ta = textareaRef.current;
+      const pos = ta?.selectionStart ?? 0;
+      const beforeCursor = value.slice(0, pos);
+      const afterCursor = value.slice(pos);
+      const onFirstLine = !beforeCursor.includes('\n');
+      const onLastLine = !afterCursor.includes('\n');
+
+      if (e.key === 'ArrowUp' && history && history.length > 0 && onFirstLine) {
+        e.preventDefault();
+        navigateHistory('up');
+        return;
+      }
+      if (e.key === 'ArrowDown' && historyRef.current.index !== null && onLastLine) {
+        e.preventDefault();
+        navigateHistory('down');
+        return;
+      }
+
       // Insert a newline on Shift+Enter or Ctrl/Cmd+Enter (default textarea behavior).
       if (e.key === 'Enter' && (e.shiftKey || e.ctrlKey || e.metaKey)) {
         return;
@@ -279,7 +340,18 @@ export function ChatComposer({
         handleSend();
       }
     },
-    [showPalette, filteredCommands, activeIndex, selectCommand, selectAndSendCommand, closePalette, handleSend]
+    [
+      showPalette,
+      filteredCommands,
+      activeIndex,
+      selectCommand,
+      selectAndSendCommand,
+      closePalette,
+      history,
+      value,
+      navigateHistory,
+      handleSend,
+    ]
   );
 
   // Auto-resize the textarea to fit its content (capped by CSS max-height so
@@ -382,8 +454,7 @@ export function ChatComposer({
     }
   }
 
-  const canSend =
-    (value.trim().length > 0 || attachedFiles.length > 0) && !disabled && !isStreaming;
+  const canSend = (value.trim().length > 0 || attachedFiles.length > 0) && !disabled;
 
   return (
     <div
@@ -435,12 +506,15 @@ export function ChatComposer({
             value={value}
             onChange={(e) => {
               onChange(e.target.value);
+              historyRef.current.index = null;
               setActiveIndex(0);
               setPaletteSuppressed(false);
             }}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
-            onBlur={() => showPalette && closePalette()}
+            onBlur={() => {
+              if (showPalette) closePalette();
+            }}
             rows={1}
             disabled={disabled}
             aria-label={t('composer.ariaLabel')}

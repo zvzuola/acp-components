@@ -23,6 +23,11 @@ export const enUS = {
   'chat.emptyState': 'Select or create a session to begin',
   'chat.title': 'Chat',
   'chat.scrollToBottom': 'Scroll to bottom',
+  'chat.queueAriaLabel': 'Queued messages',
+  'chat.dequeueMessage': 'Remove from queue',
+  'chat.dequeueMessageAriaLabel': 'Remove queued message',
+  'chat.queueImage': '[image]',
+  'chat.queueFile': '[file]',
 
   // Workbench
   'workbench.ariaLabel': 'ACP Workbench',

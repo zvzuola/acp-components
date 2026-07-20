@@ -1,5 +1,5 @@
 import { createStore } from 'zustand/vanilla';
-import type { Message, ToolCallState, PermissionRequest } from '../types';
+import type { Message, ToolCallState, PermissionRequest, QueuedMessage } from '../types';
 import type { SessionId, ContentBlock, StopReason, PlanEntry, UsageUpdate, SessionConfigOption, AvailableCommand } from '@agentclientprotocol/sdk';
 import { generateId } from '../utils/id';
 
@@ -12,6 +12,7 @@ interface SessionData {
   usage: UsageUpdate | null;
   configOptions: SessionConfigOption[];
   availableCommands: AvailableCommand[];
+  queuedMessages: QueuedMessage[];
 }
 
 interface SessionStoreState {
@@ -45,6 +46,10 @@ interface SessionStoreState {
   setAvailableCommands: (sessionId: SessionId, commands: AvailableCommand[]) => void;
   setPartExpanded: (sessionId: SessionId, messageId: string, partIndex: number, expanded: boolean) => void;
   setToolCallExpanded: (sessionId: SessionId, toolCallId: string, expanded: boolean) => void;
+  enqueueMessage: (sessionId: SessionId, msg: QueuedMessage) => void;
+  dequeueMessage: (sessionId: SessionId, queuedId: string) => void;
+  /** Remove and return the head of the queue (FIFO). Returns undefined when empty. */
+  shiftQueuedMessage: (sessionId: SessionId) => QueuedMessage | undefined;
 }
 
 function createSessionData(): SessionData {
@@ -57,6 +62,7 @@ function createSessionData(): SessionData {
     usage: null,
     configOptions: [],
     availableCommands: [],
+    queuedMessages: [],
   };
 }
 
@@ -514,4 +520,39 @@ export const sessionStore = createStore<SessionStoreState>((set) => ({
       next.set(sessionId, { ...data, pendingToolCalls, messages });
       return { sessions: next };
     }),
+
+  enqueueMessage: (sessionId, msg) =>
+    set((s) => {
+      const data = s.sessions.get(sessionId);
+      if (!data) return s;
+      const next = new Map(s.sessions);
+      next.set(sessionId, { ...data, queuedMessages: [...data.queuedMessages, msg] });
+      return { sessions: next };
+    }),
+
+  dequeueMessage: (sessionId, queuedId) =>
+    set((s) => {
+      const data = s.sessions.get(sessionId);
+      if (!data) return s;
+      const next = new Map(s.sessions);
+      next.set(sessionId, {
+        ...data,
+        queuedMessages: data.queuedMessages.filter((m) => m.id !== queuedId),
+      });
+      return { sessions: next };
+    }),
+
+  shiftQueuedMessage: (sessionId): QueuedMessage | undefined => {
+    const data: SessionData | undefined = sessionStore.getState().sessions.get(sessionId);
+    if (!data || data.queuedMessages.length === 0) return undefined;
+    const head: QueuedMessage = data.queuedMessages[0];
+    set((s) => {
+      const current = s.sessions.get(sessionId);
+      if (!current) return s;
+      const next = new Map(s.sessions);
+      next.set(sessionId, { ...current, queuedMessages: current.queuedMessages.slice(1) });
+      return { sessions: next };
+    });
+    return head;
+  },
 }));

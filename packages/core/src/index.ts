@@ -19,7 +19,7 @@ export { createAcpProvider } from './provider';
 export type { MultiAgentProviderOptions, MultiAgentProviderInstance } from './provider';
 export { isUserVisibleContent } from './utils/content';
 export { createSession, loadSession, selectSession, closeSession, deleteSession, forkSession, refreshSessions, loadMoreSessions, setSessionConfigOption, authenticate, authenticateWithEnv } from './actions/sessions';
-export { sendPrompt, cancelPrompt } from './actions/prompt';
+export { sendPrompt, cancelPrompt, queuePrompt, dequeuePrompt } from './actions/prompt';
 export { respondToPermission, denyPermission } from './actions/permission';
 export { callExtMethod, sendExtNotification } from './actions/extensions';
 export { loadFileTree, expandDirectory, collapseDirectory, refreshFileTree, refreshNode } from './actions/fileTree';
@@ -30,6 +30,7 @@ export type {
   Session,
   Message,
   MessagePart,
+  QueuedMessage,
   ToolCallState,
   AcpClientConfig,
   TransportConfig,
