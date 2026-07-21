@@ -52,6 +52,9 @@ export const zhCN = {
   'splitView.split': '分屏',
   'splitView.closePane': '关闭面板',
   'splitView.resize': '调整面板宽度',
+  'splitView.dropToAdd': '拖放以添加分屏',
+  'splitView.dropToReplace': '拖放以在当前面板打开',
+  'splitView.maxPanes': '已达分屏上限',
 
   // PermissionPrompt
   'permission.ariaLabel': '需要授权',

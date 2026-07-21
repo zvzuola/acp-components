@@ -44,7 +44,7 @@
     font-size: 14px;
     cursor: pointer;
     transition: background var(--acp-duration-fast) var(--acp-ease-out),
-                color var(--acp-duration-fast) var(--acp-ease-out);
+      color var(--acp-duration-fast) var(--acp-ease-out);
 
     &:hover {
       background: var(--acp-color-bg-hover);
@@ -124,7 +124,7 @@
   align-items: center;
   padding: 8px 8px 8px 20px;
   border-radius: var(--acp-radius-sm);
-  cursor: pointer;
+  cursor: grab;
   border: none;
   background: transparent;
   color: var(--acp-color-text-primary);
@@ -150,7 +150,14 @@
     background: var(--acp-color-bg-tertiary);
   }
 
-  // Active state — accent left border indicator
+  // Dimmed source row while its session is being dragged onto the split
+  // view. Reinforces "you are dragging this" alongside the grab cursor.
+  &--dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+  }
+
+  // Active state - accent left border indicator
   &--active {
     background: var(--acp-color-bg-selected);
 
@@ -280,8 +287,8 @@
     align-items: center;
     justify-content: center;
     transition: opacity var(--acp-duration-fast) var(--acp-ease-out),
-                color var(--acp-duration-fast) var(--acp-ease-out),
-                background var(--acp-duration-fast) var(--acp-ease-out);
+      color var(--acp-duration-fast) var(--acp-ease-out),
+      background var(--acp-duration-fast) var(--acp-ease-out);
 
     &:hover {
       color: var(--acp-color-error);
@@ -303,8 +310,8 @@
     align-items: center;
     justify-content: center;
     transition: opacity var(--acp-duration-fast) var(--acp-ease-out),
-                color var(--acp-duration-fast) var(--acp-ease-out),
-                background var(--acp-duration-fast) var(--acp-ease-out);
+      color var(--acp-duration-fast) var(--acp-ease-out),
+      background var(--acp-duration-fast) var(--acp-ease-out);
 
     &:hover {
       color: var(--acp-color-accent);
@@ -324,7 +331,7 @@
 .acp-session-workspace-group {
   margin-bottom: 2px;
 
-  & + & {
+  &+& {
     margin-top: 2px;
     padding-top: 2px;
     border-top: 1px solid var(--acp-color-border-subtle);
@@ -414,8 +421,8 @@
     opacity: 0;
     flex-shrink: 0;
     transition: opacity var(--acp-duration-fast) var(--acp-ease-out),
-                color var(--acp-duration-fast) var(--acp-ease-out),
-                background var(--acp-duration-fast) var(--acp-ease-out);
+      color var(--acp-duration-fast) var(--acp-ease-out),
+      background var(--acp-duration-fast) var(--acp-ease-out);
 
     &:hover {
       color: var(--acp-color-text-primary);
@@ -457,8 +464,8 @@
   opacity: 0;
   flex-shrink: 0;
   transition: opacity var(--acp-duration-fast) var(--acp-ease-out),
-              color var(--acp-duration-fast) var(--acp-ease-out),
-              background var(--acp-duration-fast) var(--acp-ease-out);
+    color var(--acp-duration-fast) var(--acp-ease-out),
+    background var(--acp-duration-fast) var(--acp-ease-out);
 
   &:hover {
     color: var(--acp-color-text-primary);
@@ -484,8 +491,8 @@
     padding: 4px 14px;
     cursor: pointer;
     transition: background var(--acp-duration-fast) var(--acp-ease-out),
-                color var(--acp-duration-fast) var(--acp-ease-out),
-                border-color var(--acp-duration-fast) var(--acp-ease-out);
+      color var(--acp-duration-fast) var(--acp-ease-out),
+      border-color var(--acp-duration-fast) var(--acp-ease-out);
 
     &:hover {
       background: var(--acp-color-bg-hover);
@@ -519,6 +526,39 @@
 // Keyframes
 // ---------------------------------------------------------------------------
 @keyframes acp-spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Drag preview - the clean drag image set in onDragStart. Rendered off-screen
+// (position: fixed; top: -1000px) just long enough for setDragImage to
+// snapshot it, then removed. Styled as a compact title chip so the native
+// ghost (which would include the hover-revealed fork/delete buttons) is
+// never seen.
+// ---------------------------------------------------------------------------
+.acp-session-drag-preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 220px;
+  padding: 5px 10px;
+  border-radius: var(--acp-radius-md);
+  background: var(--acp-color-bg-secondary);
+  color: var(--acp-color-text-primary);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: var(--acp-font-sans);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid var(--acp-color-border-accent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  user-select: none;
+  pointer-events: none;
 }

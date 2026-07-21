@@ -11,6 +11,7 @@ import { Dropdown } from '../dropdown';
 import type { SessionMeta, WorkspaceState } from '@acp-components/core';
 import type { SessionId } from '@acp-components/core';
 import { getAgentName } from '../../utils/agentName';
+import { SESSION_DRAG_MIME } from '../../constants';
 import styles from './session-list.module.scss';
 
 // ---------------------------------------------------------------------------
@@ -89,9 +90,33 @@ function SessionItem({ session, isActive, onSelect, agentName, agentStatus, show
   const supportsDelete = useAcpStore((s) => !!s.agents.get(session.agentId)?.capabilities?.sessionCapabilities?.delete);
   const [isForking, setIsForking] = useState(false);
 
+  // Tracks an active native drag so the source row can dim, signalling where
+  // the session is being dragged from. Cleared in onDragEnd (fires on drop,
+  // escape, and every other drag termination).
+  const [isDragging, setIsDragging] = useState(false);
+
   return (
     <div
-      className={`${styles.acpSessionItem}${isActive ? ` ${styles.acpSessionItemActive}` : ''}`}
+      className={`${styles.acpSessionItem}${isActive ? ` ${styles.acpSessionItemActive}` : ''}${isDragging ? ` ${styles.acpSessionItemDragging}` : ''}`}
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData(SESSION_DRAG_MIME, session.id);
+        e.dataTransfer.effectAllowed = 'copy';
+        // Clean drag image: a title-only chip instead of the native ghost,
+        // which would include the hover-revealed fork/delete buttons.
+        setIsDragging(true);
+        const preview = document.createElement('div');
+        preview.className = styles.acpSessionDragPreview;
+        preview.textContent = session.title || t('sessionList.defaultSessionTitle');
+        preview.style.position = 'fixed';
+        preview.style.top = '-1000px';
+        document.body.appendChild(preview);
+        e.dataTransfer.setDragImage(preview, 8, 8);
+        // setDragImage snapshots the node synchronously; remove it on the
+        // next tick so it never lingers in the DOM.
+        setTimeout(() => preview.remove(), 0);
+      }}
+      onDragEnd={() => setIsDragging(false)}
       onClick={() => {
         // Clicking a session always signals "show me this conversation" —
         // including when it's already the active one (the host may be on a

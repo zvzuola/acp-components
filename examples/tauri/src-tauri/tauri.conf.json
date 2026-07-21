@@ -17,7 +17,8 @@
         "height": 800,
         "resizable": true,
         "fullscreen": false,
-        "devtools": true
+        "devtools": true,
+        "dragDropEnabled": false
       }
     ],
     "security": {

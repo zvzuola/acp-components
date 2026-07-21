@@ -34,6 +34,13 @@
   &--active {
     box-shadow: inset 0 2px 0 0 var(--acp-color-accent);
   }
+
+  // Drop target highlight: pane outlined when the cursor hovers over it during
+  // a session drag (replace mode). Defined after &--active so it wins when a
+  // pane is both active and targeted.
+  &--drop-target {
+    box-shadow: inset 0 0 0 2px var(--acp-color-accent);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -97,6 +104,11 @@
     outline: 2px solid var(--acp-color-accent);
     outline-offset: -1px;
     border-radius: var(--acp-radius-sm);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
   }
 }
 
@@ -174,4 +186,81 @@
   font-size: 13px;
   font-family: var(--acp-font-sans);
   text-align: center;
+}
+
+// ---------------------------------------------------------------------------
+// Drop overlay: shown while dragging a session from the sidebar over the split
+// view. pointer-events:none keeps it from swallowing the drop event.
+// ---------------------------------------------------------------------------
+.acp-split-drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--acp-color-bg-overlay);
+  backdrop-filter: blur(2px);
+  pointer-events: none;
+}
+
+.acp-split-drop-overlay__text {
+  padding: 10px 18px;
+  border: 1.5px dashed var(--acp-color-accent);
+  border-radius: var(--acp-radius-lg);
+  background: var(--acp-color-bg-secondary);
+  color: var(--acp-color-text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  user-select: none;
+}
+
+// ---------------------------------------------------------------------------
+// Insertion bar: shown at a pane boundary while dragging a session from the
+// sidebar, indicating where a new pane will be inserted (gap drop target).
+// pointer-events:none keeps it from swallowing the drop event.
+// ---------------------------------------------------------------------------
+.acp-split-drop-insert {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  z-index: 20;
+  background: var(--acp-color-accent);
+  box-shadow: 0 0 0 1px var(--acp-color-accent-muted), 0 0 8px var(--acp-color-accent-muted);
+  pointer-events: none;
+  transform: translateX(-1.5px);
+}
+
+// ---------------------------------------------------------------------------
+// Drop zone tint: a translucent accent fill showing where a dragged session
+// will land. Below the pane cap it covers the half the cursor is in
+// (left/right -> insert beside it); at the cap it covers the whole pane
+// (replace). pointer-events:none keeps it from swallowing the drop event.
+// ---------------------------------------------------------------------------
+.acp-split-pane__drop-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 15;
+  background: var(--acp-color-accent);
+  opacity: 0.14;
+  pointer-events: none;
+
+  &--left {
+    left: 0;
+    width: 50%;
+  }
+
+  &--right {
+    right: 0;
+    width: 50%;
+  }
+
+  // Replace mode (at the pane cap): tint the entire pane, since the drop
+  // swaps the session rather than splitting it.
+  &--full {
+    left: 0;
+    right: 0;
+  }
 }

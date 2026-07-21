@@ -1,4 +1,5 @@
 import { afterEach } from 'vitest';
+import { cleanup } from '@testing-library/react';
 import { acpStore, sessionStore, fileTreeStore, fileViewerStore } from '@acp-components/core';
 
 /**
@@ -26,6 +27,11 @@ function resetCoreStores(): void {
 }
 
 afterEach(() => {
+  // Unmount every React root before resetting the shared core stores. Without
+  // this, orphaned fibers keep their useSyncExternalStore subscriptions alive;
+  // the store mutations below notify them and schedule React renders via the
+  // scheduler macrotask, which fires after jsdom tears down `window`.
+  cleanup();
   resetCoreStores();
   // useResizable mutates document.body style/classList while dragging; restore.
   document.body.style.cursor = '';

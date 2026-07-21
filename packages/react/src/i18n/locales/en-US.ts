@@ -8,18 +8,18 @@ export const enUS = {
 
   // ChatComposer
   'composer.placeholder': 'Type a message... (Enter to send, Shift+Enter for newline, / for commands)',
- 'composer.ariaLabel': 'Message input',
+  'composer.ariaLabel': 'Message input',
   'composer.cancelAriaLabel': 'Cancel generation',
   'composer.cancel': 'Cancel',
   'composer.sendAriaLabel': 'Send message',
   'composer.send': 'Send (Enter)',
 
   'composer.attachFile': 'Attach file',
- 'composer.attachFileAriaLabel': 'Attach a file',
- 'composer.removeFileAriaLabel': 'Remove file',
+  'composer.attachFileAriaLabel': 'Attach a file',
+  'composer.removeFileAriaLabel': 'Remove file',
   'composer.dropFiles': 'Drop files to attach',
 
- // ChatView
+  // ChatView
   'chat.emptyState': 'Select or create a session to begin',
   'chat.title': 'Chat',
   'chat.scrollToBottom': 'Scroll to bottom',
@@ -52,6 +52,9 @@ export const enUS = {
   'splitView.split': 'Split pane',
   'splitView.closePane': 'Close pane',
   'splitView.resize': 'Resize panes',
+  'splitView.dropToAdd': 'Drop to add pane',
+  'splitView.dropToReplace': 'Drop to open in active pane',
+  'splitView.maxPanes': 'Max panes reached',
 
   // PermissionPrompt
   'permission.ariaLabel': 'Permission required',
@@ -113,9 +116,9 @@ export const enUS = {
   'workspace.selectWorkspace': 'Select a workspace',
 
   // UserMessage
- 'userMessage.copy': 'Copy',
- 'userMessage.copied': 'Copied',
- 'userMessage.edit': 'Edit',
+  'userMessage.copy': 'Copy',
+  'userMessage.copied': 'Copied',
+  'userMessage.edit': 'Edit',
 
   // Markdown
   'markdown.copyCode': 'Copy code',
@@ -123,7 +126,7 @@ export const enUS = {
   // AgentMessage
   'agentMessage.copy': 'Copy',
 
- // StopReason
+  // StopReason
   'stopReason.end_turn': 'Reply complete',
   'stopReason.max_tokens': 'Reached token limit',
   'stopReason.max_turn_requests': 'Reached max turns',
