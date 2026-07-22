@@ -28,46 +28,44 @@ export class HttpTransport implements AcpTransport {
       cookies: 'include',
     });
 
-    const self = this;
-
     // Wrap the inner readable so we can surface close/error to the
     // onClose/onError lifecycle callbacks. The SDK's app.connect(stream)
     // reads from this wrapper; we pump messages from the inner readable and
     // detect when it ends or errors.
     const readable = new ReadableStream<AnyMessage>({
-      start(controller) {
-        self.reader = inner.readable.getReader();
+      start: (controller) => {
+        this.reader = inner.readable.getReader();
 
         const pump = (): void => {
-          self.reader!.read().then(
+          this.reader!.read().then(
             ({ done, value }) => {
               if (done) {
                 controller.close();
-                for (const h of self.closeHandlers) h();
+                for (const h of this.closeHandlers) h();
                 return;
               }
               controller.enqueue(value);
               pump();
             },
             (err: Error) => {
-              if (!self.disconnecting) {
-                for (const h of self.errorHandlers) h(err);
+              if (!this.disconnecting) {
+                for (const h of this.errorHandlers) h(err);
               }
               try {
                 controller.error(err);
               } catch {
                 // already closed or cancelled
               }
-              for (const h of self.closeHandlers) h();
+              for (const h of this.closeHandlers) h();
             },
           );
         };
         pump();
       },
-      cancel() {
+      cancel: () => {
         // Consumer cancelled the wrapper — forward to the inner readable,
         // which drives the SDK's close().
-        self.reader?.cancel().catch(() => {});
+        this.reader?.cancel().catch(() => {});
       },
     });
 

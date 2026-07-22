@@ -7,7 +7,7 @@ import { useI18n } from '../../i18n';
 import styles from './markdown.module.scss';
 
 // ---------------------------------------------------------------------------
-// Hast helpers 鈥?extract raw text from a code block for the copy button.
+// Hast helpers - extract raw text from a code block for the copy button.
 // react-markdown passes the source hast `node` to custom components; we walk
 // it to recover the code text without relying on DOM textContent (more robust
 // against re-render timing and streaming updates).

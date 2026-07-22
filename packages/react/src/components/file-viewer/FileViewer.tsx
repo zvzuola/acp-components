@@ -3,6 +3,7 @@ import { CloseOutlined } from '@ant-design/icons';
 import { useFileViewer } from '../../hooks/useFileViewer';
 import { getMonacoTheme } from '../../utils/monacoTheme';
 import { useI18n } from '../../i18n';
+import { useSettings } from '../../context/SettingsContext';
 import styles from './file-viewer.module.scss';
 
 // ---------------------------------------------------------------------------
@@ -46,15 +47,10 @@ export function FileViewer({ className }: FileViewerProps) {
   const [monacoError, setMonacoError] = useState<string | null>(null);
   const [loadingMonaco, setLoadingMonaco] = useState(true);
 
-  // Detect current ACP theme from the closest data-acp-theme attribute
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-  useEffect(() => {
-    const el = editorContainerRef.current?.closest('[data-acp-theme]');
-    if (el) {
-      const attr = el.getAttribute('data-acp-theme');
-      setTheme(attr === 'light' ? 'light' : 'dark');
-    }
-  }, []);
+  // Theme comes from SettingsContext so the editor follows live theme
+  // switches. Reading `data-acp-theme` once on mount (as before) missed any
+  // change made afterwards, leaving the Monaco theme stuck.
+  const { theme } = useSettings();
 
   // Lazy load Monaco
   useEffect(() => {
@@ -110,7 +106,12 @@ export function FileViewer({ className }: FileViewerProps) {
         modelRef.current = null;
       }
     };
-  }, [monaco, theme]);
+    // `theme` is read only for the editor's initial theme; live theme changes
+    // are applied by the dedicated updateOptions effect below, so we keep the
+    // editor alive across theme switches (no dispose/recreate, view state
+    // preserved) instead of rebuilding on every toggle.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [monaco]);
 
   // Update Monaco theme when theme changes
   useEffect(() => {
