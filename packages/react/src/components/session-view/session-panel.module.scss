@@ -174,14 +174,12 @@
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-
-  &:last-child {
-    flex: 1 1 0;
-  }
 }
 
 .acp-session-panel__files-col--opened {
-  flex: 0 0 auto;
+  // Opened-files column grows to fill remaining space so that widening
+  // the outer panel expands the editor, not the file tree.
+  flex: 1 1 0;
   border-right: none;
   background: var(--acp-color-bg-primary);
 }

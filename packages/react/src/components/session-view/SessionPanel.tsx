@@ -68,7 +68,7 @@ function FilesTabBody({ cwd, onNavigate }: FilesTabBodyProps) {
     initialWidth: 240,
     minWidth: 120,
     maxWidth: 480,
-    direction: 'left',
+    direction: 'right',
   });
 
   if (!cwd) {
@@ -99,7 +99,6 @@ function FilesTabBody({ cwd, onNavigate }: FilesTabBodyProps) {
         <>
           <div
             className={`${styles.acpSessionPanelFilesCol} ${styles.acpSessionPanelFilesColOpened}`}
-            style={{ width: innerResize.width }}
           >
             <FileViewer />
           </div>
@@ -110,7 +109,12 @@ function FilesTabBody({ cwd, onNavigate }: FilesTabBodyProps) {
           />
         </>
       )}
-      <div className={styles.acpSessionPanelFilesCol}>{treeContent}</div>
+      <div
+        className={styles.acpSessionPanelFilesCol}
+        style={hasOpenedFiles ? { width: innerResize.width } : { flex: '1 1 0' }}
+      >
+        {treeContent}
+      </div>
     </div>
   );
 }

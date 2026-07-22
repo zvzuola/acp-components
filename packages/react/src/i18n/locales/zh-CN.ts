@@ -1,4 +1,4 @@
-export const zhCN = {
+﻿export const zhCN = {
   // CommandPalette
   'commandPalette.open': '打开命令面板',
   'commandPalette.commands': '命令',
@@ -6,9 +6,9 @@ export const zhCN = {
   'commandPalette.filterCommands': '过滤命令',
   'commandPalette.noMatching': '无匹配命令',
 
- // ChatComposer
+  // ChatComposer
   'composer.placeholder': '输入消息...（Enter 发送，Shift+Enter 换行，/ 触发命令）',
- 'composer.ariaLabel': '消息输入',
+  'composer.ariaLabel': '消息输入',
   'composer.cancelAriaLabel': '取消生成',
   'composer.cancel': '取消',
   'composer.sendAriaLabel': '发送消息',
@@ -16,10 +16,10 @@ export const zhCN = {
 
   'composer.attachFile': '添加文件',
   'composer.attachFileAriaLabel': '添加文件',
- 'composer.removeFileAriaLabel': '移除文件',
+  'composer.removeFileAriaLabel': '移除文件',
   'composer.dropFiles': '拖放文件以添加',
 
- // ChatView
+  // ChatView
   'chat.emptyState': '选择或创建一个会话以开始',
   'chat.title': '对话',
   'chat.scrollToBottom': '滚动到底部',
@@ -32,7 +32,6 @@ export const zhCN = {
   // Workbench
   'workbench.ariaLabel': 'ACP 工作台',
   'workbench.resizeSidebar': '调整侧边栏宽度',
-  'workbench.resizePanel': '调整面板宽度',
 
   // WorkbenchShell
   'workbenchShell.mainAriaLabel': '主视图',
@@ -118,7 +117,7 @@ export const zhCN = {
   // UserMessage
   'userMessage.copy': '复制',
   'userMessage.copied': '已复制',
- 'userMessage.edit': '编辑',
+  'userMessage.edit': '编辑',
 
   // Markdown
   'markdown.copyCode': '复制代码',
@@ -126,7 +125,7 @@ export const zhCN = {
   // AgentMessage
   'agentMessage.copy': '复制',
 
- // StopReason
+  // StopReason
   'stopReason.end_turn': '回复完毕',
   'stopReason.max_tokens': '已达到 Token 上限',
   'stopReason.max_turn_requests': '已达到最大轮次',

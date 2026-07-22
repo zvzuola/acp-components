@@ -69,7 +69,7 @@ export function SessionView({
   onPanelOpenChange,
   panelWidth = 380,
   minPanelWidth = 280,
-  maxPanelWidth = 720,
+  maxPanelWidth = 900,
   onPanelWidthChange,
   showFilesTab = true,
   className,
@@ -109,16 +109,16 @@ export function SessionView({
         sessionId={sessionId}
         onNavigateFile={resolvedNavigateFile}
         headerExtras={
-            <button
-              type="button"
-              className={paneStyles.acpSplitPaneBtn}
-              onClick={() => setOpen(!isOpen)}
-              aria-expanded={isOpen}
-              aria-label={isOpen ? t('sessionView.collapse') : t('sessionView.expand')}
-              title={isOpen ? t('sessionView.collapse') : t('sessionView.expand')}
-            >
-              {isOpen ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />}
-            </button>
+          <button
+            type="button"
+            className={paneStyles.acpSplitPaneBtn}
+            onClick={() => setOpen(!isOpen)}
+            aria-expanded={isOpen}
+            aria-label={isOpen ? t('sessionView.collapse') : t('sessionView.expand')}
+            title={isOpen ? t('sessionView.collapse') : t('sessionView.expand')}
+          >
+            {isOpen ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />}
+          </button>
         }
       />
       {showPanel && (

@@ -22,7 +22,7 @@
     overflow-x: auto;
     overflow-y: hidden;
     flex-shrink: 0;
-    background: var(--acp-color-bg-secondary);
+    background: var(--acp-color-bg-primary);
     border-bottom: 1px solid var(--acp-color-border-subtle);
     scrollbar-width: none;
 
@@ -48,7 +48,7 @@
     max-width: 180px;
     flex-shrink: 0;
     transition: background var(--acp-duration-fast) var(--acp-ease-out),
-                color var(--acp-duration-fast) var(--acp-ease-out);
+      color var(--acp-duration-fast) var(--acp-ease-out);
 
     &:hover {
       background: var(--acp-color-bg-hover);
@@ -80,7 +80,7 @@
     color: var(--acp-color-text-muted);
     cursor: pointer;
     transition: background var(--acp-duration-fast) var(--acp-ease-out),
-                color var(--acp-duration-fast) var(--acp-ease-out);
+      color var(--acp-duration-fast) var(--acp-ease-out);
 
     &:hover {
       background: var(--acp-color-bg-hover);
@@ -98,7 +98,7 @@
     padding: 4px 12px;
     font-size: 11px;
     color: var(--acp-color-text-muted);
-    background: var(--acp-color-bg-secondary);
+    background: var(--acp-color-bg-primary);
     border-bottom: 1px solid var(--acp-color-border-subtle);
     flex-shrink: 0;
     overflow: hidden;
@@ -138,6 +138,14 @@
   &__monaco {
     width: 100%;
     height: 100%;
+
+    // Override the global ::selection so Monaco's native text selection
+    // matches the ACP selection tint instead of falling back to the OS
+    // default (which can render red on some dark system themes).
+    ::selection {
+      background: var(--acp-color-bg-selected);
+      color: var(--acp-color-text-primary);
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -188,5 +196,7 @@
 }
 
 @keyframes fileViewerSpin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }

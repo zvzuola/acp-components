@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { CloseOutlined } from '@ant-design/icons';
 import { useFileViewer } from '../../hooks/useFileViewer';
-import { getMonacoTheme } from '../../utils/monacoTheme';
+import { defineMonacoThemes, getMonacoTheme } from '../../utils/monacoTheme';
 import { useI18n } from '../../i18n';
 import { useSettings } from '../../context/SettingsContext';
 import styles from './file-viewer.module.scss';
@@ -75,6 +75,10 @@ export function FileViewer({ className }: FileViewerProps) {
   // Create Monaco editor instance
   useEffect(() => {
     if (!monaco || !editorContainerRef.current) return;
+
+    // Register custom ACP themes so the editor canvas matches the panel
+    // background before the editor instance is created.
+    defineMonacoThemes(monaco);
 
     const monacoTheme = getMonacoTheme(theme);
 

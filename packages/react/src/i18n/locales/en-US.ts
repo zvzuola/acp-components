@@ -32,7 +32,6 @@ export const enUS = {
   // Workbench
   'workbench.ariaLabel': 'ACP Workbench',
   'workbench.resizeSidebar': 'Resize sidebar',
-  'workbench.resizePanel': 'Resize panel',
 
   // WorkbenchShell
   'workbenchShell.mainAriaLabel': 'Main view',

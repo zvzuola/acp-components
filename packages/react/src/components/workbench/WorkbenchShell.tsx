@@ -62,9 +62,7 @@ export interface WorkbenchShellProps {
   className?: string;
   /** Passthrough to <Workbench> for sidebar/panel sizing. */
   sidebarWidth?: WorkbenchProps['sidebarWidth'];
-  panelWidth?: WorkbenchProps['panelWidth'];
   onSidebarWidthChange?: WorkbenchProps['onSidebarWidthChange'];
-  onPanelWidthChange?: WorkbenchProps['onPanelWidthChange'];
 }
 
 // ---------------------------------------------------------------------------
@@ -75,9 +73,7 @@ export function WorkbenchShell({
   navItems = [],
   className,
   sidebarWidth,
-  panelWidth,
   onSidebarWidthChange,
-  onPanelWidthChange,
 }: WorkbenchShellProps) {
   const { t } = useI18n();
   const storeSessionId = useAcpStore((s) => s.activeSessionId);
@@ -216,9 +212,7 @@ export function WorkbenchShell({
         </div>
       }
       sidebarWidth={sidebarWidth}
-      panelWidth={panelWidth}
       onSidebarWidthChange={onSidebarWidthChange}
-      onPanelWidthChange={onPanelWidthChange}
     />
   );
 }
