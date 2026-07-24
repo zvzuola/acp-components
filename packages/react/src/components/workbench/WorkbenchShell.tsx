@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AppstoreOutlined, PlusOutlined } from '@ant-design/icons';
 import type { SessionId } from '@acp-components/core';
+import { useActions } from '../../context/HotkeysContext';
 import { Workbench } from './Workbench';
 import type { WorkbenchProps } from './Workbench';
 import { Sidebar } from '../sidebar/Sidebar';
@@ -90,11 +91,44 @@ export function WorkbenchShell({
   // Active settings sub-section. Only meaningful while
   // `current === SIDEBAR_VIEW_SETTINGS`; survives leaving/entering settings
   // so returning to a section keeps your place.
-  const [settingsSection, setSettingsSection] = useState<string>(
-    'appearance',
+ const [settingsSection, setSettingsSection] = useState<string>(
+   'appearance',
+ );
+  // --- Global actions: switch between built-in views ---
+  // Registered via `useActions`, the single source of truth for app-level
+  // shortcuts: on desktop hosts with a native menu bar the actions appear
+  // as real menu items (accelerator owned by the OS), while on web they
+  // fall back to a webview keydown listener. Either path routes to the
+  // same handler, so the experience is identical across platforms.
+  const actionBindings = useMemo(
+    () => [
+      {
+        id: 'new-session',
+        shortcut: 'Mod+1',
+        handler: () => setCurrent(SIDEBAR_VIEW_NEW_SESSION),
+        label: t('shortcuts.newSession'),
+        submenu: t('shortcuts.file'),
+      },
+      {
+        id: 'skills',
+        shortcut: 'Mod+2',
+        handler: () => setCurrent(SIDEBAR_VIEW_SKILLS),
+        label: t('shortcuts.skills'),
+        submenu: t('shortcuts.file'),
+      },
+      {
+        id: 'settings',
+        shortcut: 'Mod+,',
+        handler: () => setCurrent(SIDEBAR_VIEW_SETTINGS),
+        label: t('shortcuts.settings'),
+        submenu: t('shortcuts.file'),
+      },
+    ],
+    [t],
   );
+  useActions(actionBindings);
 
-  // Selecting a session in the sidebar's SessionList flips the store's
+ // Selecting a session in the sidebar's SessionList flips the store's
   // activeSessionId. When that happens while the main area is showing a
   // non-session view (Skills, New Session, or Settings), switch back to the
   // session view — clicking a session means "show me this conversation".

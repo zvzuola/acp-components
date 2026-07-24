@@ -240,4 +240,9 @@ export const enUS = {
   'skillView.userScope': 'User Skills',
   'skillView.userScopeAriaLabel': 'User skills',
   'skillView.projectScopeAriaLabel': '{{cwd}} skills',
+  // Shortcuts (menu labels)
+  'shortcuts.newSession': 'New Session',
+  'shortcuts.skills': 'Skills',
+  'shortcuts.settings': 'Settings',
+  'shortcuts.file': 'File',
 };

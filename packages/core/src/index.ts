@@ -25,6 +25,15 @@ export { callExtMethod, sendExtNotification } from './actions/extensions';
 export { loadFileTree, expandDirectory, collapseDirectory, refreshFileTree, refreshNode } from './actions/fileTree';
 export { openFile, closeFile, setActiveFile, clearRevealLine, detectLanguage } from './actions/fileViewer';
 export { clearSkills, setAgentSkills, removeAgentSkills } from './actions/skills';
+export {
+  parseShortcut,
+  matchShortcut,
+  matchesShortcut,
+  formatShortcut,
+  primaryModifier,
+  usesMeta,
+} from './utils/keyboard';
+export type { ShortcutKeyEvent, ParsedShortcut } from './utils/keyboard';
 export type {
   ConnectionStatus,
   Session,

@@ -3,6 +3,7 @@ import type {
   PlatformStorage,
   FileTreeNode,
 } from '@acp-components/react';
+import type { MenuAction } from '@acp-components/react';
 import type { StdioTransportOptions, AcpTransport } from '@acp-components/core';
 import { TauriIpcTransport } from './tauriIpcTransport';
 
@@ -137,6 +138,59 @@ function createTauriStdioTransport(options: StdioTransportOptions): AcpTransport
 }
 
 // ---------------------------------------------------------------------------
+// Custom in-app menu bar - backed by an in-memory action store.
+//
+// The Tauri template ships a frameless window (decorations: false) and renders
+// its own titlebar (see TitleBar.tsx). Instead of building a native OS menu via
+// @tauri-apps/api/menu, `setActions` mirrors the MenuAction[] it receives from
+// HotkeysProvider into a module-level store; the titlebar reads it via
+// getMenuActions() / onMenuActionsChange() and renders the items itself. Clicks
+// route through `triggerMenuAction` -> `dispatchMenuAction` ->
+// `platform.menu.onAction`, the same contract the native menu used, so
+// HotkeysProvider's onAction handler still routes activations to the registered
+// handlers.
+//
+// ALL actions are ALSO registered via the webview `useHotkey` keydown listener,
+// so keyboard shortcuts keep working without a native menu - the webview
+// listener is now the sole shortcut path on desktop, same as web.
+// ---------------------------------------------------------------------------
+
+const menuActionListeners = new Set<(actionId: string) => void>();
+
+// In-memory mirror of the current menu actions. `setActions` (called by
+// HotkeysProvider whenever the action set changes) writes here and notifies
+// subscribers; the titlebar reads the snapshot via getMenuActions() and
+// subscribes via onMenuActionsChange().
+let currentMenuActions: MenuAction[] = [];
+const menuActionsListeners = new Set<() => void>();
+
+function dispatchMenuAction(actionId: string): void {
+  for (const fn of menuActionListeners) fn(actionId);
+}
+
+/** Programmatically trigger a menu action by id (titlebar item clicks). */
+export function triggerMenuAction(actionId: string): void {
+  dispatchMenuAction(actionId);
+}
+
+/** Read the current menu-actions snapshot. */
+export function getMenuActions(): MenuAction[] {
+  return currentMenuActions;
+}
+
+/**
+ * Subscribe to menu-action changes. Fires whenever `setActions` updates the
+ * store (HotkeysProvider re-pushes on action-set changes). Returns an
+ * unsubscribe fn.
+ */
+export function onMenuActionsChange(cb: () => void): () => void {
+  menuActionsListeners.add(cb);
+  return () => {
+    menuActionsListeners.delete(cb);
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Factory
 // ---------------------------------------------------------------------------
 
@@ -229,6 +283,24 @@ export function createTauriPlatform(): Platform {
       // Tauri can spawn an agent child process via its Rust backend — expose it
       // so `{ type: 'stdio' }` agent configs connect through TauriIpcTransport.
       createStdioTransport: createTauriStdioTransport,
+    },
+
+    menu: {
+      // In-app menu bar - actions are mirrored into an in-memory store and
+      // rendered by the custom TitleBar (see TitleBar.tsx). This keeps
+      // `useActions` as the single source of truth: register an action with a
+      // `submenu` field and it appears in the titlebar menu, while keyboard
+      // shortcuts still flow through the webview `useHotkey` listener.
+      onAction: (handler) => {
+        menuActionListeners.add(handler);
+        return () => {
+          menuActionListeners.delete(handler);
+        };
+      },
+      setActions: (actions: MenuAction[]) => {
+        currentMenuActions = actions;
+        for (const fn of menuActionsListeners) fn();
+      },
     },
   };
 }

@@ -36,13 +36,13 @@ self.MonacoEnvironment = {
   },
 };
 
-import { AcpProvider } from '@acp-components/react';
+import { AcpApp } from '@acp-components/react';
 import { WorkbenchShell } from '@acp-components/react';
 import { LoginDialog } from '@acp-components/react';
-import { I18nProvider } from '@acp-components/react';
-import { PlatformProvider } from '@acp-components/react';
 import { useAcpStore } from '@acp-components/react';
 import { createTauriPlatform } from './tauriPlatform';
+import { TitleBar } from './TitleBar';
+import styles from './app.module.scss';
 
 // The agent is configured as a plain-data `{ type: 'stdio' }` transport. The
 // actual spawn capability is supplied by `Platform.process.createStdioTransport`
@@ -61,21 +61,21 @@ function AppInner() {
   // based on the active nav item (Sessions → SessionView, Skills → SkillView).
   return (
     <>
-      <WorkbenchShell sessionId={activeSessionId} />
+      <div className={styles.app}>
+        <TitleBar />
+        <div className={styles.appBody}>
+          <WorkbenchShell sessionId={activeSessionId} className={styles.workbench} />
+        </div>
+      </div>
       <LoginDialog />
     </>
   );
 }
 
-/**
- * Assemble AcpProvider with the platform-derived agent transport. Lives inside
- * PlatformProvider so it can pull `platform` via usePlatform(). The AcpProvider
- * itself does NOT receive a Platform object — agent data layer and native
- * capabilities are kept orthogonal per the design (§3.4).
- */
-function AcpAssembly() {
+function App() {
   return (
-    <AcpProvider
+    <AcpApp
+      platform={createTauriPlatform()}
       agents={[{
         id: 'default',
         name: 'OpenCode',
@@ -88,17 +88,7 @@ function AcpAssembly() {
       theme="dark"
     >
       <AppInner />
-    </AcpProvider>
-  );
-}
-
-function App() {
-  return (
-    <PlatformProvider platform={createTauriPlatform()}>
-      <I18nProvider>
-        <AcpAssembly />
-      </I18nProvider>
-    </PlatformProvider>
+    </AcpApp>
   );
 }
 

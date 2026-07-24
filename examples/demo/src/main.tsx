@@ -36,11 +36,9 @@ self.MonacoEnvironment = {
   },
 };
 
-import { AcpProvider } from '@acp-components/react';
+import { AcpApp } from '@acp-components/react';
 import { WorkbenchShell } from '@acp-components/react';
 import { LoginDialog } from '@acp-components/react';
-import { I18nProvider } from '@acp-components/react';
-import { PlatformProvider } from '@acp-components/react';
 import { useAcpStore } from '@acp-components/react';
 import { createWebPlatform } from './webPlatform';
 
@@ -71,24 +69,20 @@ function AppInner() {
 
 function App() {
   return (
-    <PlatformProvider platform={createWebPlatform()}>
-      <I18nProvider>
-        <AcpProvider
-          agents={[{
-            id: 'opencode',
-            name: 'OpenCode',
-            transport: {
-              type: 'websocket',
-              url: 'ws://127.0.0.1:3100',
-            },
-          }
-          ]}
-          theme="dark"
-        >
-          <AppInner />
-        </AcpProvider>
-      </I18nProvider>
-    </PlatformProvider>
+    <AcpApp
+      platform={createWebPlatform()}
+      agents={[{
+        id: 'opencode',
+        name: 'OpenCode',
+        transport: {
+          type: 'websocket',
+          url: 'ws://127.0.0.1:3100',
+        },
+      }]}
+      theme="dark"
+    >
+      <AppInner />
+    </AcpApp>
   );
 }
 

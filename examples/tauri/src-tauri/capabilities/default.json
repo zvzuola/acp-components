@@ -4,6 +4,10 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-close",
+    "core:window:allow-start-dragging",
     "dialog:allow-open",
     "fs:allow-read-dir",
     "fs:allow-read-text-file",

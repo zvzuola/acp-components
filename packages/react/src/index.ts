@@ -2,6 +2,8 @@ import './styles.css';
 
 export { AcpProvider } from './components/workbench';
 export type { AcpProviderProps } from './components/workbench/AcpProvider';
+export { AcpApp } from './components/AcpApp';
+export type { AcpAppProps } from './components/AcpApp';
 export { Workbench, WorkbenchShell } from './components/workbench';
 export type {
   WorkbenchProps,
@@ -104,6 +106,10 @@ export { loadWorkspaces, saveWorkspaces } from './components/platform/PlatformWo
 export { loadAgents, saveAgents } from './utils/agentStorage';
 export { useResizable } from './hooks/useResizable';
 export type { UseResizableOptions, UseResizableReturn } from './hooks/useResizable';
+export { useHotkey, useHotkeys } from './hooks/useHotkey';
+export type { UseHotkeyOptions, HotkeyBinding } from './hooks/useHotkey';
+export { HotkeysProvider, useHotkeysContext, useActions } from './context/HotkeysContext';
+export type { ActionBinding, HotkeysProviderProps } from './context/HotkeysContext';
 export { AcpContext, useAcpContext } from './context/AcpContext';
 export type { AcpContextValue } from './context/AcpContext';
 export { PlatformContext, usePlatform } from './context/PlatformContext';
@@ -115,6 +121,8 @@ export type {
   PlatformSystem,
   Updater,
   PlatformProviderProps,
+  PlatformMenu,
+  MenuAction,
 } from './context/PlatformContext';
 export { PlatformProvider } from './components/platform';
 export { useSettings } from './context/SettingsContext';
@@ -141,6 +149,15 @@ export type {
   PlatformKind,
   PlatformOS,
 } from '@acp-components/core';
+export {
+  parseShortcut,
+  matchShortcut,
+  matchesShortcut,
+  formatShortcut,
+  primaryModifier,
+  usesMeta,
+} from '@acp-components/core';
+export type { ShortcutKeyEvent, ParsedShortcut } from '@acp-components/core';
 
 // i18n
 export { I18nProvider, useI18n } from './i18n';

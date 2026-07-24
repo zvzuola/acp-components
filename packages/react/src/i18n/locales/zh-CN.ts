@@ -240,4 +240,9 @@
   'skillView.userScope': '用户级',
   'skillView.userScopeAriaLabel': '用户级技能',
   'skillView.projectScopeAriaLabel': '{{cwd}} 的技能',
+  // Shortcuts (menu labels)
+  'shortcuts.newSession': '新建会话',
+  'shortcuts.skills': '技能',
+  'shortcuts.settings': '设置',
+  'shortcuts.file': '文件',
 };

@@ -112,7 +112,66 @@ export interface PlatformProcess {
 }
 
 /**
- * System / lifecycle slice. All members optional — a host that cannot back
+ * Native menu bar integration slice. A desktop host that owns a native menu
+ * bar (Tauri, Electron) implements this so application-level keyboard shortcuts
+ * are driven by the OS menu system instead of (or in addition to) the webview
+ * `keydown` listener. Web hosts omit it entirely - `useActions` falls back to
+ * `useHotkey` for every shortcut.
+ *
+ * The flow: the React layer registers a set of named actions (id + label +
+ * shortcut spec + optional submenu). The host maps these to native menu items
+ * (translating "Mod" to its own cross-platform accelerator, e.g. Tauri's
+ * `CmdOrCtrl+`). When the user clicks a menu item or triggers its accelerator,
+ * the host calls back with the action id, and `useActions` routes it to the
+ * registered handler. On Tauri, the per-item `action` callback (a Tauri
+ * Channel) is the primary dispatch path; the Rust `on_menu_event` handler
+ * emits a `menu-action` event as a secondary fallback.
+ *
+ * ALL actions are also registered via the webview `useHotkey` keydown listener
+ * as a universal fallback. On desktop hosts with a native menu, the OS
+ * intercepts the accelerator before the webview sees the keydown, so only one
+ * path fires. When the native menu is unavailable (web) or not yet built, the
+ * webview listener is the sole dispatch path.
+ */
+export interface PlatformMenu {
+  /**
+   * Register actions as native menu items. Called whenever the action set
+   * changes. Every host that declares `platform.menu` must implement this -
+   * the menu is built dynamically from the React action registry (e.g. via
+   * the Tauri JS menu API), not statically in native code.
+   */
+  setActions(actions: MenuAction[]): void;
+  /**
+   * Subscribe to native menu-item activations (click + accelerator trigger).
+   * The handler receives the action id. Returns an unsubscribe fn.
+   */
+  onAction(handler: (actionId: string) => void): () => void;
+}
+
+/**
+ * A single action in the shared action registry. Actions with a `submenu` are
+ * rendered as native menu items (when `Platform.menu` exists) for display and
+ * discoverability. ALL actions are dispatched via the webview `useHotkey`
+ * listener regardless of `submenu` or platform; on desktop the OS intercepts
+ * the menu accelerator before the webview, so only one path fires.
+ */
+export interface MenuAction {
+  /** Stable unique id, e.g. 'new-session', 'open-settings'. */
+  id: string;
+  /** Display label (already i18n-resolved by the caller). */
+  label: string;
+  /** Shortcut spec in the shared format, e.g. 'Mod+N'. */
+  shortcut: string;
+  /** Submenu path, e.g. 'File'. When set, this action is a menu item. */
+  submenu?: string;
+  /** Insert a separator before this item in the menu. */
+  separatorBefore?: boolean;
+  /** Whether the menu item is enabled (clickable). Default true. */
+  enabled?: boolean;
+}
+
+/**
+ * System / lifecycle slice. All members optional - a host that cannot back
  * them (e.g. a browser) omits the whole slice or the relevant methods.
  *
  * `getLocale` centralizes locale detection so the UI never reaches for
@@ -189,6 +248,8 @@ export interface Platform {
    * guard with `?.`.
    */
   process?: PlatformProcess;
+  /** Native menu bar integration. Optional - web hosts omit it. */
+  menu?: PlatformMenu;
 }
 
 export const PlatformContext = createContext<Platform | null>(null);
