@@ -181,7 +181,19 @@ export const enUS = {
   'settingsView.langEnglish': 'English',
   'settingsView.langChinese': '中文',
 
-  // AgentsView (the Agents management section inside SettingsView)
+  // KeyboardShortcutsView (the keyboard shortcuts section inside SettingsView)
+  'settingsView.sectionShortcuts': 'Keyboard Shortcuts',
+  'settingsView.shortcutsSearch': 'Search shortcuts',
+  'settingsView.shortcutsSearchAriaLabel': 'Search shortcuts',
+  'settingsView.shortcutsRecording': 'Press a key combination…',
+  'settingsView.shortcutsRecordingHint': 'Esc to cancel',
+  'settingsView.shortcutsConflict': 'Conflicts with "{{name}}"',
+  'settingsView.shortcutsReset': 'Reset to default',
+  'settingsView.shortcutsResetAriaLabel': 'Reset shortcut to default',
+  'settingsView.shortcutsResetAll': 'Reset all to defaults',
+  'settingsView.shortcutsEmpty': 'No matching shortcuts',
+  'settingsView.shortcutsUncategorized': 'Other',
+
   'agentsView.title': 'Agents',
   'agentsView.empty': 'No agents configured',
   'agentsView.name': 'Name',

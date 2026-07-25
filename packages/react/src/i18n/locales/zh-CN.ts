@@ -181,6 +181,19 @@
   'settingsView.langEnglish': 'English',
   'settingsView.langChinese': '中文',
 
+  // KeyboardShortcutsView（SettingsView 内的快捷键管理分节）
+  'settingsView.sectionShortcuts': '快捷键',
+  'settingsView.shortcutsSearch': '搜索快捷键',
+  'settingsView.shortcutsSearchAriaLabel': '搜索快捷键',
+  'settingsView.shortcutsRecording': '按下快捷键组合…',
+  'settingsView.shortcutsRecordingHint': '按 Esc 取消',
+  'settingsView.shortcutsConflict': '与「{{name}}」冲突',
+  'settingsView.shortcutsReset': '恢复默认',
+  'settingsView.shortcutsResetAriaLabel': '恢复默认快捷键',
+  'settingsView.shortcutsResetAll': '恢复全部默认',
+  'settingsView.shortcutsEmpty': '没有匹配的快捷键',
+  'settingsView.shortcutsUncategorized': '其他',
+
   // AgentsView（SettingsView 内的智能体管理分节）
   'agentsView.title': '智能体',
   'agentsView.empty': '暂无智能体',

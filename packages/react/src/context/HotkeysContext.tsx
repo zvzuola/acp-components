@@ -48,13 +48,56 @@ interface HotkeysContextValue {
   format: (spec: string) => string;
   /** Programmatically trigger a registered action by id. Returns false if not found or disabled. */
   dispatch: (actionId: string) => boolean;
+  /** All user shortcut overrides (actionId -> spec), persisted. */
+  overrides: Readonly<Record<string, string>>;
+  /** Resolved spec for an action: override ?? defaultSpec. */
+  getShortcut: (actionId: string, defaultSpec: string) => string;
+  /** Set / replace a user override. An empty spec clears it. */
+  setShortcut: (actionId: string, spec: string) => void;
+  /** Remove a single override, reverting to the registered default. */
+  resetShortcut: (actionId: string) => void;
+  /** Remove every override. */
+  resetAllShortcuts: () => void;
 }
 
 const HotkeysContext = createContext<HotkeysContextValue>({
   actions: [],
   format: (s) => s,
   dispatch: () => false,
+  overrides: {},
+  getShortcut: (_id, spec) => spec,
+  setShortcut: () => { },
+  resetShortcut: () => { },
+  resetAllShortcuts: () => { },
 });
+
+// ---------------------------------------------------------------------------
+// User shortcut overrides (persisted).
+//
+// Maps actionId -> user-customized spec. Only entries that differ from the
+// registered default are stored, so shipping a new default in a later version
+// automatically supersedes a stale override. Loaded from
+// platform.storage('settings') at provider mount (sync when the host offers
+// getItemSync, else async), written back on every change.
+// ---------------------------------------------------------------------------
+
+const OVERRIDES_STORAGE_KEY = 'acp-shortcut-overrides';
+
+/** Parse a persisted overrides blob, dropping non-string / empty entries. */
+function parseOverrides(raw: string | null | undefined): Record<string, string> {
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(parsed)) {
+      if (typeof v === 'string' && v.length > 0) out[k] = v;
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
 
 export function useHotkeysContext(): HotkeysContextValue {
   return useContext(HotkeysContext);
@@ -112,10 +155,107 @@ export interface HotkeysProviderProps {
  * Provides the action registry and native-menu integration. Mount once near
  * the top of the tree (inside `PlatformProvider`). When `platform.menu` is
  * present, it registers menu actions and subscribes to menu-activation events.
- */
+*/
 export function HotkeysProvider({ children }: HotkeysProviderProps) {
   const platform = usePlatform();
   const [actions, setActions] = useState<ActionBinding[]>(() => snapshotActions());
+
+  // --- User shortcut overrides (persisted to platform.storage('settings')) ---
+  // Only entries that differ from the registered default are stored. The
+  // initial state prefers a sync read (when the host offers getItemSync) so
+  // the first render already reflects saved overrides; hosts without it (web
+  // localStorage) get an async load below.
+  const [overrides, setOverrides] = useState<Record<string, string>>(() => {
+    try {
+      const store = platform.storage('settings');
+      if (typeof store.getItemSync === 'function') {
+        return parseOverrides(store.getItemSync(OVERRIDES_STORAGE_KEY));
+      }
+    } catch {
+      // ignore storage failures - operate with no overrides
+    }
+    return {};
+  });
+
+  // Async load for hosts without getItemSync (the web/localStorage path).
+  useEffect(() => {
+    const store = (() => {
+      try {
+        return platform.storage('settings');
+      } catch {
+        return null;
+      }
+    })();
+    if (!store) return;
+    if (typeof store.getItemSync === 'function') return;
+    if (typeof store.getItem !== 'function') return;
+    let cancelled = false;
+    store
+      .getItem(OVERRIDES_STORAGE_KEY)
+      .then((raw) => {
+        if (cancelled) return;
+        const next = parseOverrides(raw);
+        if (Object.keys(next).length > 0) setOverrides(next);
+      })
+      .catch(() => { });
+    return () => {
+      cancelled = true;
+    };
+  }, [platform]);
+
+  const persistOverrides = useCallback(
+    (next: Record<string, string>) => {
+      try {
+        const store = platform.storage('settings');
+        if (typeof store.setItem === 'function') {
+          store.setItem(OVERRIDES_STORAGE_KEY, JSON.stringify(next)).catch(() => { });
+        }
+      } catch {
+        // ignore storage failures - in-memory overrides still work this session
+      }
+    },
+    [platform],
+  );
+
+  const setShortcut = useCallback(
+    (actionId: string, spec: string) => {
+      const trimmed = spec.trim();
+      setOverrides((prev) => {
+        const next = { ...prev };
+        if (trimmed) next[actionId] = trimmed;
+        else delete next[actionId];
+        persistOverrides(next);
+        return next;
+      });
+    },
+    [persistOverrides],
+  );
+
+  const resetShortcut = useCallback(
+    (actionId: string) => {
+      setOverrides((prev) => {
+        if (!(actionId in prev)) return prev;
+        const next = { ...prev };
+        delete next[actionId];
+        persistOverrides(next);
+        return next;
+      });
+    },
+    [persistOverrides],
+  );
+
+  const resetAllShortcuts = useCallback(() => {
+    setOverrides((prev) => {
+      if (Object.keys(prev).length === 0) return prev;
+      persistOverrides({});
+      return {};
+    });
+  }, [persistOverrides]);
+
+  const getShortcut = useCallback(
+    (actionId: string, defaultSpec: string) => overrides[actionId] ?? defaultSpec,
+    [overrides],
+  );
 
   // Subscribe to registry changes so the `actions` snapshot stays current.
   useEffect(() => {
@@ -130,16 +270,21 @@ export function HotkeysProvider({ children }: HotkeysProviderProps) {
     };
   }, []);
 
- // --- Native menu integration ---
+  // --- Native menu integration ---
+  // Apply overrides when building menu items so the native menu accelerator
+  // matches the user's customized binding (defaults live in the registry).
   const menuActions = useMemo(
-    () => actions.filter((a) => a.submenu && a.label),
-    [actions],
+    () =>
+      actions
+        .filter((a) => a.submenu && a.label)
+        .map((a) => ({ ...a, shortcut: overrides[a.id] ?? a.shortcut })),
+    [actions, overrides],
   );
- // Register menu items with the host. Re-register whenever the menu action
+  // Register menu items with the host. Re-register whenever the menu action
   // set changes.
- useEffect(() => {
+  useEffect(() => {
     if (!platform.menu || menuActions.length === 0) return;
-   const menuItems: MenuAction[] = menuActions.map((a) => ({
+    const menuItems: MenuAction[] = menuActions.map((a) => ({
       id: a.id,
       label: a.label!,
       shortcut: a.shortcut,
@@ -164,7 +309,7 @@ export function HotkeysProvider({ children }: HotkeysProviderProps) {
       handlersRef.current.get(actionId)?.();
     });
     return off;
- }, [platform.menu]);
+  }, [platform.menu]);
 
   // Programmatically trigger a registered action by id. Respects `enabled`.
   const dispatch = useCallback((actionId: string) => {
@@ -180,8 +325,17 @@ export function HotkeysProvider({ children }: HotkeysProviderProps) {
   );
 
   const value = useMemo<HotkeysContextValue>(
-    () => ({ actions, format, dispatch }),
-    [actions, format, dispatch],
+    () => ({
+      actions,
+      format,
+      dispatch,
+      overrides,
+      getShortcut,
+      setShortcut,
+      resetShortcut,
+      resetAllShortcuts,
+    }),
+    [actions, format, dispatch, overrides, getShortcut, setShortcut, resetShortcut, resetAllShortcuts],
   );
 
   return (
@@ -205,10 +359,23 @@ export function HotkeysProvider({ children }: HotkeysProviderProps) {
  * Pass a stable (memoized) array to avoid re-registering on every render.
  */
 export function useActions(bindings: ActionBinding[]): void {
+  const { overrides } = useHotkeysContext();
+
   // Register into the shared action registry (for menu + discovery).
+  // The registry stores the DEFAULT spec; overrides are applied at the two
+  // consumption points (the webview listener below + the native menu in the
+  // provider) so defaults stay pristine for the shortcuts panel's reset.
+  // Depend on a serialized content key (not array identity): `useActions`
+  // now subscribes to context for overrides, so it re-renders when the
+  // provider's action snapshot updates; an inline `bindings` array would
+  // otherwise change identity every render and re-register forever.
+  const registryKey = bindings
+    .map((b) => `${b.id}::${b.shortcut}::${b.label ?? ''}::${b.submenu ?? ''}`)
+    .join('||');
   useEffect(() => {
     return registerActions(bindings);
-  }, [bindings]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [registryKey]);
 
   // ALL actions are dispatched via the webview keydown listener. On desktop
   // hosts with a native menu, the OS intercepts the accelerator before the
@@ -217,14 +384,14 @@ export function useActions(bindings: ActionBinding[]): void {
   // dispatch path — a reliable fallback.
   const hotkeyBindings: HotkeyBinding[] = useMemo(() => {
     return bindings.map((b) => ({
-      spec: b.shortcut,
+      spec: overrides[b.id] ?? b.shortcut,
       handler: b.handler,
       enabled: b.enabled,
       allowInInput: b.allowInInput,
       preventDefault: b.preventDefault,
       priority: b.priority,
     }));
-  }, [bindings]);
+  }, [bindings, overrides]);
 
   useHotkeys(hotkeyBindings);
 }

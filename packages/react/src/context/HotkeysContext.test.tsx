@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
 import {
   HotkeysProvider,
@@ -268,6 +268,163 @@ describe('useActions native menu integration', () => {
 
     // The webview keydown listener should fire even though the action has a
     // submenu and platform.menu exists — this is the fallback path.
+    fireKey('s', { metaKey: true });
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// User shortcut overrides: setShortcut / resetShortcut / resetAllShortcuts.
+//
+// The webview keydown listener resolves `override ?? default` live, so a
+// rebound shortcut fires on the NEW combo and the old one stops firing.
+// Storage is exercised through a synchronous in-memory store.
+// ---------------------------------------------------------------------------
+
+/** A synchronous in-memory settings store for override persistence tests. */
+function memStore() {
+  const data = new Map<string, string>();
+  return {
+    getItemSync: vi.fn((key: string) => data.get(key) ?? null),
+    getItem: vi.fn((key: string) => Promise.resolve(data.get(key) ?? null)),
+    setItem: vi.fn((key: string, value: string) => {
+      data.set(key, value);
+      return Promise.resolve();
+    }),
+  };
+}
+
+function platformWithStore(store: ReturnType<typeof memStore>): Platform {
+  return { ...macPlatform, storage: (() => store) as any };
+}
+
+describe('shortcut overrides', () => {
+  beforeEach(() => {
+    __resetActionRegistry();
+    __resetHotkeyRegistry();
+  });
+  afterEach(() => {
+    __resetActionRegistry();
+    __resetHotkeyRegistry();
+  });
+
+  it('fires the new combo after setShortcut and stops firing the old one', async () => {
+    const store = memStore();
+    const platform = platformWithStore(store);
+    const handler = vi.fn();
+    const bindings: ActionBinding[] = [
+      { id: 'save', shortcut: 'Mod+S', handler },
+    ];
+    const { result } = renderHook(
+      () => {
+        useActions(bindings);
+        return useHotkeysContext();
+      },
+      { wrapper: withProvider(platform) },
+    );
+
+    // Default: Mod+S fires, Mod+G does not.
+    fireKey('s', { metaKey: true });
+    expect(handler).toHaveBeenCalledTimes(1);
+    fireKey('g', { metaKey: true });
+    expect(handler).toHaveBeenCalledTimes(1);
+
+    // Rebind to Mod+G.
+    act(() => result.current.setShortcut('save', 'Mod+G'));
+
+    // New combo fires; old combo no longer does.
+    fireKey('g', { metaKey: true });
+    expect(handler).toHaveBeenCalledTimes(2);
+    fireKey('s', { metaKey: true });
+    expect(handler).toHaveBeenCalledTimes(2);
+
+    // Override persisted to storage.
+    expect(store.setItem).toHaveBeenCalledWith(
+      'acp-shortcut-overrides',
+      JSON.stringify({ save: 'Mod+G' }),
+    );
+  });
+
+  it('resetShortcut reverts to the default combo', async () => {
+    const store = memStore();
+    const platform = platformWithStore(store);
+    const handler = vi.fn();
+    const bindings: ActionBinding[] = [
+      { id: 'save', shortcut: 'Mod+S', handler },
+    ];
+    const { result } = renderHook(
+      () => {
+        useActions(bindings);
+        return useHotkeysContext();
+      },
+      { wrapper: withProvider(platform) },
+    );
+
+    act(() => result.current.setShortcut('save', 'Mod+G'));
+    fireKey('s', { metaKey: true });
+    expect(handler).not.toHaveBeenCalled();
+    fireKey('g', { metaKey: true });
+    expect(handler).toHaveBeenCalledTimes(1);
+
+    act(() => result.current.resetShortcut('save'));
+    // Default restored: Mod+S fires again, Mod+G does not.
+    fireKey('s', { metaKey: true });
+    expect(handler).toHaveBeenCalledTimes(2);
+    fireKey('g', { metaKey: true });
+    expect(handler).toHaveBeenCalledTimes(2);
+  });
+
+  it('resetAllShortcuts clears every override', async () => {
+    const store = memStore();
+    const platform = platformWithStore(store);
+    const h1 = vi.fn();
+    const h2 = vi.fn();
+    const { result } = renderHook(
+      () => {
+        useActions([
+          { id: 'a', shortcut: 'Mod+A', handler: h1 },
+          { id: 'b', shortcut: 'Mod+B', handler: h2 },
+        ]);
+        return useHotkeysContext();
+      },
+      { wrapper: withProvider(platform) },
+    );
+
+    act(() => {
+      result.current.setShortcut('a', 'Mod+X');
+      result.current.setShortcut('b', 'Mod+Y');
+    });
+
+    act(() => result.current.resetAllShortcuts());
+
+    // Defaults active again.
+    fireKey('a', { metaKey: true });
+    expect(h1).toHaveBeenCalledTimes(1);
+    fireKey('b', { metaKey: true });
+    expect(h2).toHaveBeenCalledTimes(1);
+    fireKey('x', { metaKey: true });
+    expect(h1).toHaveBeenCalledTimes(1);
+    fireKey('y', { metaKey: true });
+    expect(h2).toHaveBeenCalledTimes(1);
+  });
+
+  it('loads persisted overrides from storage on mount', async () => {
+    const store = memStore();
+    store.getItemSync.mockReturnValue(
+      JSON.stringify({ save: 'Mod+G' }),
+    );
+    const platform = platformWithStore(store);
+    const handler = vi.fn();
+    const bindings: ActionBinding[] = [
+      { id: 'save', shortcut: 'Mod+S', handler },
+    ];
+    renderHook(() => useActions(bindings), {
+      wrapper: withProvider(platform),
+    });
+
+    // Overridden combo fires; default does not.
+    fireKey('g', { metaKey: true });
+    expect(handler).toHaveBeenCalledTimes(1);
     fireKey('s', { metaKey: true });
     expect(handler).toHaveBeenCalledTimes(1);
   });

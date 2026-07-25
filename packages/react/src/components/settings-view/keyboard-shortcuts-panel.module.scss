@@ -1,0 +1,221 @@
+// =============================================================================
+// KeyboardShortcutsPanel - shortcut list + capture rows.
+// Token-only; matches the SettingsView visual language (see AppearancePanel).
+// =============================================================================
+
+// Shared scrollable items list - defined once, @use'd here.
+@use './items';
+
+.acp-settings-view__shortcuts-toolbar {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  padding: 0 6px 8px;
+}
+
+.acp-settings-view__shortcuts-search {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--acp-color-border-subtle);
+  border-radius: var(--acp-radius-sm);
+  background: var(--acp-color-bg-tertiary);
+  color: var(--acp-color-text-secondary);
+  font-family: var(--acp-font-sans);
+  font-size: 12px;
+
+  &:focus-within {
+    border-color: var(--acp-color-accent);
+    color: var(--acp-color-text-primary);
+  }
+}
+
+.acp-settings-view__shortcuts-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--acp-color-text-primary);
+  font-family: var(--acp-font-sans);
+  font-size: 12px;
+
+  &::placeholder {
+    color: var(--acp-color-text-muted);
+  }
+}
+
+.acp-settings-view__shortcuts-group-title {
+  flex: 0 0 auto;
+  padding: 10px 8px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--acp-color-text-muted);
+  user-select: none;
+}
+
+.acp-settings-view__shortcuts-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 8px 6px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--acp-radius-sm);
+  background: transparent;
+  color: var(--acp-color-text-primary);
+  font-family: var(--acp-font-sans);
+  font-size: 12px;
+  text-align: left;
+  transition:
+    background var(--acp-duration-fast) var(--acp-ease-out),
+    border-color var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover {
+    background: var(--acp-color-bg-hover);
+  }
+}
+
+.acp-settings-view__shortcuts-row-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--acp-color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Shortcut display chip / capture trigger.
+.acp-settings-view__shortcuts-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--acp-color-border-subtle);
+  border-radius: var(--acp-radius-xs);
+  background: var(--acp-color-bg-tertiary);
+  color: var(--acp-color-text-secondary);
+  font-family: var(--acp-font-mono);
+  font-size: 11px;
+  line-height: 1;
+  user-select: none;
+  cursor: pointer;
+  transition:
+    background var(--acp-duration-fast) var(--acp-ease-out),
+    border-color var(--acp-duration-fast) var(--acp-ease-out),
+    color var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover {
+    background: var(--acp-color-bg-hover);
+    border-color: var(--acp-color-accent);
+    color: var(--acp-color-text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--acp-color-accent);
+    outline-offset: 1px;
+  }
+}
+
+.acp-settings-view__shortcuts-kbd--recording {
+  border-color: var(--acp-color-accent);
+  color: var(--acp-color-accent);
+  background: transparent;
+}
+
+.acp-settings-view__shortcuts-recording-hint {
+  font-size: 11px;
+  color: var(--acp-color-text-muted);
+  user-select: none;
+}
+
+.acp-settings-view__shortcuts-conflict {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--acp-color-text-warning, var(--acp-color-text-secondary));
+  user-select: none;
+}
+
+.acp-settings-view__shortcuts-reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: var(--acp-radius-xs);
+  background: transparent;
+  color: var(--acp-color-text-muted);
+  cursor: pointer;
+  transition:
+    background var(--acp-duration-fast) var(--acp-ease-out),
+    color var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover {
+    background: var(--acp-color-bg-hover);
+    color: var(--acp-color-text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--acp-color-accent);
+    outline-offset: 1px;
+  }
+}
+
+.acp-settings-view__shortcuts-footer {
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  padding: 8px 6px 4px;
+}
+
+.acp-settings-view__shortcuts-reset-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--acp-color-border-subtle);
+  border-radius: var(--acp-radius-sm);
+  background: transparent;
+  color: var(--acp-color-text-secondary);
+  font-family: var(--acp-font-sans);
+  font-size: 11px;
+  cursor: pointer;
+  transition:
+    background var(--acp-duration-fast) var(--acp-ease-out),
+    color var(--acp-duration-fast) var(--acp-ease-out);
+
+  &:hover {
+    background: var(--acp-color-bg-hover);
+    color: var(--acp-color-text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--acp-color-accent);
+    outline-offset: 1px;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.acp-settings-view__shortcuts-empty {
+  padding: 16px 8px;
+  font-size: 12px;
+  color: var(--acp-color-text-muted);
+  text-align: center;
+  user-select: none;
+}

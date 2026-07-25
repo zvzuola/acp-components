@@ -1,8 +1,9 @@
 import React from 'react';
-import { BgColorsOutlined, RobotOutlined } from '@ant-design/icons';
+import { BgColorsOutlined, KeyOutlined, RobotOutlined } from '@ant-design/icons';
 import { useI18n } from '../../i18n';
 import { AppearancePanel } from './AppearancePanel';
 import { AgentsPanel } from './AgentsPanel';
+import { KeyboardShortcutsPanel } from './KeyboardShortcutsPanel';
 import styles from './settings-view.module.scss';
 
 // ---------------------------------------------------------------------------
@@ -36,6 +37,7 @@ export interface SettingsSectionDef {
 export const SETTINGS_SECTIONS: SettingsSectionDef[] = [
   { id: 'appearance', labelKey: 'settingsView.sectionAppearance', icon: <BgColorsOutlined /> },
   { id: 'agents', labelKey: 'settingsView.sectionAgents', icon: <RobotOutlined /> },
+  { id: 'shortcuts', labelKey: 'settingsView.sectionShortcuts', icon: <KeyOutlined /> },
 ];
 
 /** The active section when entering the settings view. */
@@ -44,6 +46,8 @@ export const SETTINGS_SECTION_APPEARANCE = 'appearance';
 /** The Agents management section id. WorkbenchShell jumps here from the
  * sidebar's Agents nav item. */
 export const SETTINGS_SECTION_AGENTS = 'agents';
+/** The Keyboard Shortcuts management section id. */
+export const SETTINGS_SECTION_SHORTCUTS = 'shortcuts';
 
 // ---------------------------------------------------------------------------
 // SettingsView
@@ -66,6 +70,8 @@ export function SettingsView({ activeSection = SETTINGS_SECTION_APPEARANCE, clas
     switch (activeSection) {
       case SETTINGS_SECTION_AGENTS:
         return <AgentsPanel />;
+      case SETTINGS_SECTION_SHORTCUTS:
+        return <KeyboardShortcutsPanel />;
       default:
         return <AppearancePanel />;
     }
