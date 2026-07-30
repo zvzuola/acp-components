@@ -2,6 +2,12 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig({
+  resolve: {
+    // Keep React tests independent of the gitignored core build output.
+    alias: {
+      '@acp-components/core': resolve(__dirname, '../../packages/core/src/index.ts'),
+    },
+  },
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
