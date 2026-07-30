@@ -406,18 +406,17 @@ pnpm lint
 
 ### Web Demo
 
-The default mode uses an in-browser mock ACP agent, so it needs no API key, local agent, or bridge server:
+Local development uses the WebSocket-to-stdio bridge as its built-in `Local Agent`. Start the bridge and demo together:
 
 ```bash
-pnpm dev
+pnpm dev:all
 ```
 
-Open `http://localhost:5173`. The mock follows the real ACP protocol path and demonstrates streaming, plans, a tool call, permission handling, usage, files, and a diff.
+Alternatively, run `pnpm dev:server` and `pnpm dev` in separate terminals. Open `http://localhost:5173`; development mode automatically connects `Local Agent` at `ws://127.0.0.1:3100` and enables the bridge-backed Files panel.
 
-To connect a real ACP agent, start the WebSocket-to-stdio bridge first:
+Choose which local ACP agent the bridge spawns with the existing scripts:
 
 ```bash
-# Terminal 1
 pnpm dev:server
 
 # Or use Codex agent instead of opencode
@@ -426,11 +425,11 @@ pnpm dev:server-codex
 # Or use the Claude agent
 pnpm dev:server-claude
 
-# Terminal 2
-pnpm dev
 ```
 
-Then open `http://localhost:5173/?transport=websocket`. Override the endpoint with `?transport=websocket&ws=ws://host:port`.
+You can also open **Settings > Agents** and add other WebSocket or HTTP agents. User-added agents are persisted in browser storage.
+
+The GitHub Pages build has no built-in agent and intentionally omits `Platform.fs`. Users may add a reachable WebSocket or HTTP agent, but the online page does not expose any bridge host's file system; the Files panel and client-side file navigation are hidden automatically.
 
 ### Tauri Desktop
 

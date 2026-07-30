@@ -4,6 +4,7 @@ import type { SessionId } from '@acp-components/core';
 import { useAcpStore } from '../../hooks/useAcpStore';
 import { useFileViewer } from '../../hooks/useFileViewer';
 import { useI18n } from '../../i18n';
+import { usePlatform } from '../../context/PlatformContext';
 import { SessionPanes } from './SessionPanes';
 import { SessionPanel } from './SessionPanel';
 import type { SessionViewTab, SessionViewTabId } from './SessionPanel';
@@ -76,8 +77,12 @@ export function SessionView({
   onNavigateFile,
 }: SessionViewProps) {
   const { t } = useI18n();
+  const platform = usePlatform();
   const { openFile: navigateFile } = useFileViewer();
-  const resolvedNavigateFile = onNavigateFile ?? navigateFile;
+  const canNavigateFiles = !!(onNavigateFile || platform.fs || platform.openExternalEditor);
+  const resolvedNavigateFile = canNavigateFiles ? onNavigateFile ?? navigateFile : undefined;
+  const resolvedShowFilesTab = showFilesTab && !!platform.fs;
+  const hasPanelTabs = resolvedShowFilesTab || (tabs?.length ?? 0) > 0;
 
   // Panel expansion (controlled + default)
   const [internalOpen, setInternalOpen] = useState(true);
@@ -93,7 +98,7 @@ export function SessionView({
   // Derive the cwd of the workspace holding the active session
   const cwd = useActiveCwd(sessionId);
 
-  const showPanel = isOpen;
+  const showPanel = isOpen && hasPanelTabs;
 
   const rootCls = [styles.acpSessionView, className || '']
     .filter(Boolean)
@@ -108,7 +113,7 @@ export function SessionView({
       <SessionPanes
         sessionId={sessionId}
         onNavigateFile={resolvedNavigateFile}
-        headerExtras={
+        headerExtras={hasPanelTabs ? (
           <button
             type="button"
             className={paneStyles.acpSplitPaneBtn}
@@ -119,7 +124,7 @@ export function SessionView({
           >
             {isOpen ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />}
           </button>
-        }
+        ) : undefined}
       />
       {showPanel && (
         <SessionPanel
@@ -127,7 +132,7 @@ export function SessionView({
           tabs={tabs}
           activeTabId={activeTabId}
           onActiveTabChange={onActiveTabChange}
-          showFilesTab={showFilesTab}
+          showFilesTab={resolvedShowFilesTab}
           panelWidth={panelWidth}
           minPanelWidth={minPanelWidth}
           maxPanelWidth={maxPanelWidth}

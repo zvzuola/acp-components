@@ -7,22 +7,10 @@ import type {
 } from '@acp-components/react';
 
 // ---------------------------------------------------------------------------
-// Web Platform — backs the demo app's native-capability surface.
+// Web Platform - browser capabilities shared by local dev and GitHub Pages.
 //
-// The bridge server (examples/server) exposes file-system endpoints the demo
-// proxies via Vite (/api/* → 127.0.0.1:3100):
-//   GET /api/readdir?path=...   → FileTreeNode[]
-//   GET /api/readfile?path=...  → { content }
-//   GET /api/watch?cwd=...      → SSE stream of file change events
-//
-// Capabilities the browser cannot back natively fall back to browser APIs:
-//   - directory picker  → window.prompt (user confirms keeping this)
-//   - workspace cache   → storage('workspaces') (localStorage-backed)
-//   - updater / restart / exportLogs → unsupported (omitted)
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// Server-backed file system
+// Local dev can opt into server-backed fs through Vite's /api proxy. Production
+// builds omit the slice, so GitHub Pages exposes no file-system capability.
 // ---------------------------------------------------------------------------
 
 async function serverReadDirectory(path: string): Promise<FileTreeNode[]> {
@@ -45,17 +33,12 @@ async function serverReadFileContent(path: string): Promise<string> {
 }
 
 function createServerFileWatcher(callbacks: FileTreeWatchCallbacks): FileTreeWatcher {
-  // One SSE EventSource per watched cwd — the server opens a chokidar watcher
-  // per /api/watch?cwd=... request and tears it down when the stream closes.
-  const controllers = new Map<string, AbortController>();
+  const eventSources = new Map<string, EventSource>();
 
   const subscribe = (cwd: string) => {
-    if (controllers.has(cwd)) return; // already watching
-    const ctrl = new AbortController();
-    controllers.set(cwd, ctrl);
-
-    const url = `/api/watch?cwd=${encodeURIComponent(cwd)}`;
-    const es = new EventSource(url);
+    if (eventSources.has(cwd)) return;
+    const es = new EventSource(`/api/watch?cwd=${encodeURIComponent(cwd)}`);
+    eventSources.set(cwd, es);
 
     es.onmessage = (event) => {
       try {
@@ -66,31 +49,24 @@ function createServerFileWatcher(callbacks: FileTreeWatchCallbacks): FileTreeWat
           callbacks.onWorkspaceChanged(data.cwd);
         }
       } catch {
-        // ignore malformed SSE events
+        // Ignore malformed server events.
       }
     };
 
     es.onerror = () => {
-      // EventSource auto-reconnects; on hard failure the browser logs it
       es.close();
-      controllers.delete(cwd);
+      eventSources.delete(cwd);
     };
-
-    // Aborting (via unsubscribe/dispose) closes the EventSource, which ends the
-    // SSE stream and lets the server clean up its chokidar watcher.
-    ctrl.signal.addEventListener('abort', () => es.close());
   };
 
   const unsubscribe = (cwd: string) => {
-    const ctrl = controllers.get(cwd);
-    if (!ctrl) return;
-    ctrl.abort();
-    controllers.delete(cwd);
+    eventSources.get(cwd)?.close();
+    eventSources.delete(cwd);
   };
 
   const dispose = () => {
-    for (const ctrl of controllers.values()) ctrl.abort();
-    controllers.clear();
+    for (const es of eventSources.values()) es.close();
+    eventSources.clear();
   };
 
   return { subscribe, unsubscribe, dispose };
@@ -154,26 +130,33 @@ function createLocalStorageStorage(name: string): PlatformStorage {
 // Factory
 // ---------------------------------------------------------------------------
 
-export function createWebPlatform(): Platform {
+export interface WebPlatformOptions {
+  /** Enable the local bridge's read-only file-system API. */
+  enableFs?: boolean;
+}
+
+export function createWebPlatform({ enableFs = false }: WebPlatformOptions = {}): Platform {
   return {
     platform: 'web',
     os: undefined,
 
-    fs: {
-      readDirectory: serverReadDirectory,
-      readFileContent: serverReadFileContent,
-      // Read-only web demo — no writeFileContent.
-      watchFileTree: (callbacks: FileTreeWatchCallbacks) => createServerFileWatcher(callbacks),
-    },
+    ...(enableFs
+      ? {
+          fs: {
+            readDirectory: serverReadDirectory,
+            readFileContent: serverReadFileContent,
+            watchFileTree: (callbacks: FileTreeWatchCallbacks) => createServerFileWatcher(callbacks),
+          },
+        }
+      : {}),
 
     dialogs: {
       openLink: (url: string) => {
         window.open(url, '_blank', 'noopener,noreferrer');
       },
       openFilePicker: async (opts?: { directory?: boolean; title?: string }) => {
-        // Browsers have no native file/directory picker; fall back to a text
-        // prompt. (The `directory` flag is accepted for interface conformance
-        // but a prompt cannot distinguish — the demo only picks directories.)
+        // The selected path belongs to the local/remote agent host. The browser
+        // uses text input because it cannot provide an absolute host path.
         void opts;
         const path = window.prompt('Enter project directory path:', '');
         return path?.trim() || null;

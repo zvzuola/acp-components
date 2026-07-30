@@ -132,6 +132,16 @@
       outline-offset: 1px;
     }
 
+    &--static {
+      cursor: default;
+
+      &:hover {
+        background: var(--acp-color-bg-tertiary);
+        color: var(--acp-color-text-secondary);
+        border-color: var(--acp-color-border-subtle);
+      }
+    }
+
     &-icon {
       font-size: 11px;
       flex-shrink: 0;

@@ -408,18 +408,17 @@ pnpm lint
 
 ### Web 演示
 
-默认模式使用浏览器内置的 mock ACP Agent，无需 API Key、本地 Agent 或桥接服务：
+本地开发使用 WebSocket-to-stdio bridge 提供内置的 `Local Agent`。可以同时启动 bridge 和 Demo：
 
 ```bash
-pnpm dev
+pnpm dev:all
 ```
 
-打开 `http://localhost:5173`。Mock 会通过真实 ACP 协议链路演示流式消息、计划、工具调用、权限确认、用量、文件和 Diff。
+也可以在两个终端分别运行 `pnpm dev:server` 和 `pnpm dev`。打开 `http://localhost:5173` 后，开发模式会自动连接 `ws://127.0.0.1:3100` 的 `Local Agent`，并启用由 bridge 提供的 Files 面板。
 
-如需连接真实 ACP Agent，请先启动 WebSocket 到 stdio 的桥接服务：
+可以通过现有脚本选择 bridge 启动的本地 ACP Agent：
 
 ```bash
-# 终端 1
 pnpm dev:server
 
 # 或使用 Codex agent 替代 opencode
@@ -428,11 +427,11 @@ pnpm dev:server-codex
 # 或使用 Claude agent
 pnpm dev:server-claude
 
-# 终端 2
-pnpm dev
 ```
 
-然后打开 `http://localhost:5173/?transport=websocket`。可通过 `?transport=websocket&ws=ws://host:port` 指定其他地址。
+也可以在 Demo 的 **设置 > 智能体** 中添加其他 WebSocket 或 HTTP 智能体。用户添加的智能体会持久化到浏览器存储。
+
+GitHub Pages 构建不包含内置智能体，并且有意不提供 `Platform.fs`。用户仍可添加网络可达的 WebSocket 或 HTTP 智能体，但在线页面不会暴露任何 bridge 主机的文件系统；Files 面板和客户端文件跳转会自动隐藏。
 
 ### Tauri 桌面应用
 

@@ -36,20 +36,20 @@ self.MonacoEnvironment = {
   },
 };
 
-import { acpStore } from '@acp-components/core';
+import type { AgentConfig } from '@acp-components/core';
 import { AcpApp, LoginDialog, WorkbenchShell, useAcpStore } from '@acp-components/react';
 import { createWebPlatform } from './webPlatform';
-import { DEMO_CWD, createMockPlatform } from './mockPlatform';
-import { MockAcpTransport } from './mockAgent';
 
-// In web environments, stdio transport is unavailable (can't spawn child processes).
-// Use WebSocket transport connected to the acp-server backend, which bridges
-// the agent's stdio to WebSocket.
-//
-//   cd examples/server && pnpm dev
-//
-// For local Electron/Tauri/desktop where stdio works, switch back to:
-//   transport: { type: 'stdio', command: 'opencode', args: ['acp'] }
+const isLocalDev = import.meta.env.DEV;
+const LOCAL_AGENT_URL = 'ws://127.0.0.1:3100';
+
+const builtinAgents: AgentConfig[] = isLocalDev
+  ? [{
+      id: 'local-agent',
+      name: 'Local Agent',
+      transport: { type: 'websocket', url: LOCAL_AGENT_URL },
+    }]
+  : [];
 
 function AppInner() {
   const activeSessionId = useAcpStore((s) => s.activeSessionId);
@@ -68,24 +68,10 @@ function AppInner() {
 }
 
 function App() {
-  const params = new URLSearchParams(window.location.search);
-  const useWebSocket = params.get('transport') === 'websocket';
-  const websocketUrl = params.get('ws') ?? 'ws://127.0.0.1:3100';
-
-  if (!useWebSocket) {
-    acpStore.getState().addWorkspace(DEMO_CWD);
-  }
-
   return (
     <AcpApp
-      platform={useWebSocket ? createWebPlatform() : createMockPlatform()}
-      agents={[{
-        id: useWebSocket ? 'opencode' : 'demo',
-        name: useWebSocket ? 'OpenCode' : 'ACP Demo Agent',
-        transport: useWebSocket
-          ? { type: 'websocket', url: websocketUrl }
-          : { type: 'custom', transport: new MockAcpTransport() },
-      }]}
+      platform={createWebPlatform({ enableFs: isLocalDev })}
+      agents={builtinAgents}
       theme="dark"
     >
       <AppInner />

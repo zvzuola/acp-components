@@ -52,6 +52,27 @@ function LocationChip({ loc, onNavigate }: { loc: ToolCallLocation; onNavigate?:
     onNavigate?.(loc.path, loc.line);
   };
 
+  const content = (
+    <>
+      <span className={styles.acpToolCallLocationIcon}><FileTextOutlined /></span>
+      <span className={styles.acpToolCallLocationPath}>
+        {basename}
+        {loc.line != null && <span className={styles.acpToolCallLocationLine}>:{loc.line}</span>}
+      </span>
+    </>
+  );
+
+  if (!onNavigate) {
+    return (
+      <span
+        className={`${styles.acpToolCallLocation} ${styles.acpToolCallLocationStatic}`}
+        title={`${loc.path}${loc.line != null ? `:${loc.line}` : ''}`}
+      >
+        {content}
+      </span>
+    );
+  }
+
   return (
     <span
       className={styles.acpToolCallLocation}
@@ -67,11 +88,7 @@ function LocationChip({ loc, onNavigate }: { loc: ToolCallLocation; onNavigate?:
         }
       }}
     >
-      <span className={styles.acpToolCallLocationIcon}><FileTextOutlined /></span>
-      <span className={styles.acpToolCallLocationPath}>
-        {basename}
-        {loc.line != null && <span className={styles.acpToolCallLocationLine}>:{loc.line}</span>}
-      </span>
+      {content}
     </span>
   );
 }
