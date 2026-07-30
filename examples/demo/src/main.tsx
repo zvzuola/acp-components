@@ -36,11 +36,11 @@ self.MonacoEnvironment = {
   },
 };
 
-import { AcpApp } from '@acp-components/react';
-import { WorkbenchShell } from '@acp-components/react';
-import { LoginDialog } from '@acp-components/react';
-import { useAcpStore } from '@acp-components/react';
+import { acpStore } from '@acp-components/core';
+import { AcpApp, LoginDialog, WorkbenchShell, useAcpStore } from '@acp-components/react';
 import { createWebPlatform } from './webPlatform';
+import { DEMO_CWD, createMockPlatform } from './mockPlatform';
+import { MockAcpTransport } from './mockAgent';
 
 // In web environments, stdio transport is unavailable (can't spawn child processes).
 // Use WebSocket transport connected to the acp-server backend, which bridges
@@ -68,16 +68,23 @@ function AppInner() {
 }
 
 function App() {
+  const params = new URLSearchParams(window.location.search);
+  const useWebSocket = params.get('transport') === 'websocket';
+  const websocketUrl = params.get('ws') ?? 'ws://127.0.0.1:3100';
+
+  if (!useWebSocket) {
+    acpStore.getState().addWorkspace(DEMO_CWD);
+  }
+
   return (
     <AcpApp
-      platform={createWebPlatform()}
+      platform={useWebSocket ? createWebPlatform() : createMockPlatform()}
       agents={[{
-        id: 'opencode',
-        name: 'OpenCode',
-        transport: {
-          type: 'websocket',
-          url: 'ws://127.0.0.1:3100',
-        },
+        id: useWebSocket ? 'opencode' : 'demo',
+        name: useWebSocket ? 'OpenCode' : 'ACP Demo Agent',
+        transport: useWebSocket
+          ? { type: 'websocket', url: websocketUrl }
+          : { type: 'custom', transport: new MockAcpTransport() },
       }]}
       theme="dark"
     >

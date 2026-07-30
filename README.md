@@ -1,11 +1,30 @@
 # acp-components
 
-A universal frontend component library for building AI Agent interfaces based on the [Agent Client Protocol (ACP)](https://github.com/agentclientprotocol/agent-client-protocol). Designed with a **data-layer / UI-layer separation** architecture:
+Production-ready React components and a framework-agnostic core for building [Agent Client Protocol (ACP)](https://agentclientprotocol.com/) clients.
 
-- **`@acp-components/core`** — Framework-agnostic TypeScript module: transport communication, state management, business logic
-- **`@acp-components/react`** — React component library: UI rendering and user interaction
+[![CI](https://github.com/zvzuola/acp-components/actions/workflows/ci.yml/badge.svg)](https://github.com/zvzuola/acp-components/actions/workflows/ci.yml)
+[![npm core](https://img.shields.io/npm/v/@acp-components/core?label=core)](https://www.npmjs.com/package/@acp-components/core)
+[![npm react](https://img.shields.io/npm/v/@acp-components/react?label=react)](https://www.npmjs.com/package/@acp-components/react)
+[![license](https://img.shields.io/github/license/zvzuola/acp-components)](LICENSE)
 
-You can use the data layer alone to build UI component libraries with Vue, Svelte, or any other frontend framework.
+**[Try the live demo](https://zvzuola.github.io/acp-components/)** · **[Quick start](#quick-start)** · **[Architecture](docs/ARCHITECTURE.md)** · **[中文](README_zh.md)**
+
+![ACP workbench with multiple agent sessions](assets/screenshot-web.png)
+
+Build a complete agent workbench instead of assembling another chat box. The library includes multi-agent and multi-session orchestration, streaming, tool calls, permissions, plans, file browsing, diffs, skills, settings, and desktop-ready transports.
+
+- **Complete workbench** — Start with `WorkbenchShell`, then replace or extend individual views as your product grows.
+- **Real ACP lifecycle** — Handle sessions, streaming updates, tool calls, permissions, authentication, and usage through one typed data layer.
+- **Host and framework independent** — Use the React UI on the web or in Tauri, or use `@acp-components/core` with Vue, Svelte, Solid, or vanilla TypeScript.
+
+Run the interactive browser demo without an agent or backend:
+
+```bash
+pnpm install
+pnpm dev
+```
+
+Open `http://localhost:5173`, enter a prompt, and approve the demo tool call. To connect a real agent through the WebSocket bridge, see [Web Demo](#web-demo).
 
 ## Features
 
@@ -29,12 +48,6 @@ You can use the data layer alone to build UI component libraries with Vue, Svelt
 - **Desktop Ready** — Includes Tauri and stdio transport examples for native desktop applications
 
 ## Screenshots
-
-Supports session splitting to display multiple sessions
-
-### Web Demo
-
-![ACP Web Demo](assets/screenshot-web.png)
 
 ### Tauri Desktop
 
@@ -393,8 +406,18 @@ pnpm lint
 
 ### Web Demo
 
+The default mode uses an in-browser mock ACP agent, so it needs no API key, local agent, or bridge server:
+
 ```bash
-# Terminal 1 — Start the bridge server (WebSocket ↔ stdio proxy)
+pnpm dev
+```
+
+Open `http://localhost:5173`. The mock follows the real ACP protocol path and demonstrates streaming, plans, a tool call, permission handling, usage, files, and a diff.
+
+To connect a real ACP agent, start the WebSocket-to-stdio bridge first:
+
+```bash
+# Terminal 1
 pnpm dev:server
 
 # Or use Codex agent instead of opencode
@@ -403,11 +426,11 @@ pnpm dev:server-codex
 # Or use the Claude agent
 pnpm dev:server-claude
 
-# Terminal 2 — Start the Vite dev server
+# Terminal 2
 pnpm dev
 ```
 
-The demo will be available at `http://localhost:5173`.
+Then open `http://localhost:5173/?transport=websocket`. Override the endpoint with `?transport=websocket&ws=ws://host:port`.
 
 ### Tauri Desktop
 
@@ -530,4 +553,4 @@ Inject your own nav items + main-area views into `WorkbenchShell`, and your own 
 
 ## License
 
-MIT
+[MIT](LICENSE)

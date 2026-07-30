@@ -1,0 +1,61 @@
+name: Bug report
+description: Report a reproducible problem in acp-components
+title: '[bug] '
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to report a bug. Please remove sensitive data from logs and examples.
+  - type: dropdown
+    id: package
+    attributes:
+      label: Affected package or example
+      options:
+        - '@acp-components/core'
+        - '@acp-components/react'
+        - Web demo
+        - Tauri example
+        - Server bridge
+        - Documentation
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      placeholder: 0.1.0, commit SHA, or main
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Link a minimal repository or list the exact steps and relevant agent/transport configuration.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser or OS, Node.js, React, ACP agent, and transport.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched for existing issues and removed secrets or private data.
+          required: true

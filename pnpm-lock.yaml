@@ -32,6 +32,9 @@ importers:
       '@acp-components/react':
         specifier: workspace:*
         version: link:../../packages/react
+      '@agentclientprotocol/sdk':
+        specifier: ^1.2.1
+        version: 1.2.1(zod@4.4.3)
       monaco-editor:
         specifier: ^0.52.0
         version: 0.52.2

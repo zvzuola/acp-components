@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Agent Client Protocol documentation
+    url: https://agentclientprotocol.com/
+    about: Check the protocol documentation for ACP behavior and compatibility questions.
+  - name: Security vulnerability
+    url: https://github.com/zvzuola/acp-components/security/advisories/new
+    about: Report security issues privately instead of opening a public issue.

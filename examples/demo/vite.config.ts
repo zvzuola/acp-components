@@ -3,6 +3,7 @@ import { resolve } from 'path';
 
 export default defineConfig({
   root: '.',
+  base: process.env.GITHUB_ACTIONS ? '/acp-components/' : '/',
   resolve: {
     alias: {
       '@acp-components/core': resolve(__dirname, '../../packages/core/src/index.ts'),

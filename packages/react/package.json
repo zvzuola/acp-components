@@ -7,8 +7,12 @@
     "acp",
     "react",
     "chat-ui",
+    "ai-chat",
     "agent",
+    "agent-ui",
+    "agent-workbench",
     "ai",
+    "tool-calling",
     "components"
   ],
   "license": "MIT",

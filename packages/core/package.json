@@ -6,7 +6,10 @@
     "agent-client-protocol",
     "acp",
     "agent",
+    "agent-sdk",
     "ai",
+    "ai-agent",
+    "tool-calling",
     "zustand",
     "core"
   ],

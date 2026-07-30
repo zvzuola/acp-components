@@ -2,12 +2,31 @@
 
 [English](README.md)
 
-基于 [Agent Client Protocol (ACP)](https://github.com/agentclientprotocol/agent-client-protocol) 协议的通用前端组件库，用于快速搭建 AI Agent 交互界面。项目采用**数据层与 UI 层分离**的架构设计：
+用于构建 [Agent Client Protocol (ACP)](https://agentclientprotocol.com/) 客户端的生产级 React 组件库与框架无关核心。
 
-- **`@acp-components/core`** — 框架无关的纯 TypeScript 模块：传输通信、状态管理、业务逻辑
-- **`@acp-components/react`** — React 组件库：界面渲染与用户交互
+[![CI](https://github.com/zvzuola/acp-components/actions/workflows/ci.yml/badge.svg)](https://github.com/zvzuola/acp-components/actions/workflows/ci.yml)
+[![npm core](https://img.shields.io/npm/v/@acp-components/core?label=core)](https://www.npmjs.com/package/@acp-components/core)
+[![npm react](https://img.shields.io/npm/v/@acp-components/react?label=react)](https://www.npmjs.com/package/@acp-components/react)
+[![license](https://img.shields.io/github/license/zvzuola/acp-components)](LICENSE)
 
-开发者可以只使用数据层，配合 Vue、Svelte 等其他前端框架搭建自己的 UI 组件库。
+**[在线体验](https://zvzuola.github.io/acp-components/)** · **[快速开始](#快速开始)** · **[架构设计](docs/ARCHITECTURE.md)** · **[English](README.md)**
+
+![支持多 Agent 与多会话的 ACP 工作台](assets/screenshot-web.png)
+
+它提供的是一套完整的 Agent 工作台，而不只是聊天框：多 Agent、多会话、流式消息、工具调用、权限确认、计划、文件浏览、Diff、Skills、设置和桌面端传输均已内置。
+
+- **完整工作台** — 从 `WorkbenchShell` 开始使用，并可随着产品演进替换或扩展任意视图。
+- **真实 ACP 生命周期** — 通过同一个类型安全的数据层处理会话、流式更新、工具调用、权限、认证和用量。
+- **宿主与框架解耦** — React UI 可运行于 Web 和 Tauri；`@acp-components/core` 也可配合 Vue、Svelte、Solid 或原生 TypeScript 使用。
+
+无需 Agent 或后端即可运行交互 Demo：
+
+```bash
+pnpm install
+pnpm dev
+```
+
+打开 `http://localhost:5173`，输入提示词并确认 Demo 工具调用。连接真实 Agent 的方式见[Web 演示](#web-演示)。
 
 ## 特性
 
@@ -31,12 +50,6 @@
 - **桌面端就绪** — 包含 Tauri 和 stdio 传输示例，可直接用于原生桌面应用开发
 
 ## 效果截图
-
-支持会话分割，展示多会话
-
-### Web 演示
-
-![ACP Web Demo](assets/screenshot-web.png)
 
 ### Tauri 桌面应用
 
@@ -395,8 +408,18 @@ pnpm lint
 
 ### Web 演示
 
+默认模式使用浏览器内置的 mock ACP Agent，无需 API Key、本地 Agent 或桥接服务：
+
 ```bash
-# 终端 1 — 启动桥接服务（WebSocket ↔ stdio 代理）
+pnpm dev
+```
+
+打开 `http://localhost:5173`。Mock 会通过真实 ACP 协议链路演示流式消息、计划、工具调用、权限确认、用量、文件和 Diff。
+
+如需连接真实 ACP Agent，请先启动 WebSocket 到 stdio 的桥接服务：
+
+```bash
+# 终端 1
 pnpm dev:server
 
 # 或使用 Codex agent 替代 opencode
@@ -405,11 +428,11 @@ pnpm dev:server-codex
 # 或使用 Claude agent
 pnpm dev:server-claude
 
-# 终端 2 — 启动 Vite 开发服务器
+# 终端 2
 pnpm dev
 ```
 
-演示地址：`http://localhost:5173`
+然后打开 `http://localhost:5173/?transport=websocket`。可通过 `?transport=websocket&ws=ws://host:port` 指定其他地址。
 
 ### Tauri 桌面应用
 
@@ -532,4 +555,4 @@ workspaces.forEach(ws => console.log(ws.cwd, ws.sessions.size));
 
 ## License
 
-MIT
+[MIT](LICENSE)
