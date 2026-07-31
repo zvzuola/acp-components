@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RobotOutlined } from '@ant-design/icons';
 import { sendPrompt, setSessionConfigOption } from '@acp-components/core';
 import type { ContentBlock, PromptCapabilities, SessionId, SessionConfigOption, SessionConfigSelectOptions, SessionConfigSelectGroup } from '@acp-components/core';
@@ -104,6 +104,7 @@ export function NewSessionView({ className, onSubmitted, onAddAgent }: NewSessio
   const [agentId, setAgentId] = useState<string | null>(defaultAgentId);
   const [composerValue, setComposerValue] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
 
   // Keep defaults in sync if the host hasn't connected agents / added
   // workspaces yet on first render.
@@ -152,15 +153,17 @@ export function NewSessionView({ className, onSubmitted, onAddAgent }: NewSessio
   // Workspace change: the dropdown also carries a "pick a folder…" entry that
   // opens the native directory picker instead of selecting an existing one.
   // The picker may be absent on a minimal host — fall back to the first option.
-  const pickFolder = useCallback(async () => {
-    if (!openFilePicker) return;
+  const pickFolder = useCallback(async (): Promise<string | null> => {
+    if (!openFilePicker) return null;
     try {
       const dir = await openFilePicker({ directory: true });
-      if (!dir) return;
+      if (!dir) return null;
       addWorkspace(dir);
       setCwd(dir);
+      return dir;
     } catch (err) {
       console.error('Failed to pick folder:', err);
+      return null;
     }
   }, [openFilePicker, addWorkspace]);
 
@@ -181,12 +184,21 @@ export function NewSessionView({ className, onSubmitted, onAddAgent }: NewSessio
   // useSessions/usePrompt do internally).
   const handleSend = useCallback(
     async (blocks: ContentBlock[]) => {
-      const activeCwd = cwd ?? defaultCwd ?? '';
       const activeAgentId = agentId ?? defaultAgentId;
-      if (!activeAgentId) return;
-      setComposerValue('');
+      if (!activeAgentId || submittingRef.current) return;
+
+      submittingRef.current = true;
       setSubmitting(true);
       try {
+        let activeCwd: string | null = cwd ?? defaultCwd;
+        if (!activeCwd) {
+          activeCwd = await pickFolder();
+        }
+        // A session must always belong to a workspace. Cancelling the picker
+        // leaves the draft untouched so the user can try again later.
+        if (!activeCwd) return;
+
+        setComposerValue('');
         const id = await createSession(activeAgentId, activeCwd);
         setActiveSession(id);
         const client = getClient(activeAgentId);
@@ -210,10 +222,11 @@ export function NewSessionView({ className, onSubmitted, onAddAgent }: NewSessio
       } catch (err) {
         console.error('Failed to start new session:', err);
       } finally {
+        submittingRef.current = false;
         setSubmitting(false);
       }
     },
-    [cwd, agentId, defaultCwd, defaultAgentId, createSession, setActiveSession, getClient, onSubmitted, modelOption, modelValue, modeOption, modeValue],
+    [cwd, agentId, defaultCwd, defaultAgentId, pickFolder, createSession, setActiveSession, getClient, onSubmitted, modelOption, modelValue, modeOption, modeValue],
   );
 
   const rootCls = [styles.acpNewSessionView, className || '']
