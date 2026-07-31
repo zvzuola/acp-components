@@ -9,7 +9,12 @@ import type { SidebarNavItem, SidebarViewId } from '../sidebar/Sidebar';
 import { SessionView } from '../session-view/SessionView';
 import { SkillView } from '../skill-view/SkillView';
 import { NewSessionView } from '../new-session-view';
-import { SettingsView, SettingsSidebar } from '../settings-view';
+import {
+  SettingsView,
+  SettingsSidebar,
+  SETTINGS_SECTION_AGENTS,
+  SETTINGS_SECTION_APPEARANCE,
+} from '../settings-view';
 import { useAcpStore } from '../../hooks/useAcpStore';
 import { useI18n } from '../../i18n';
 import styles from './workbench-shell.module.scss';
@@ -92,7 +97,7 @@ export function WorkbenchShell({
   // `current === SIDEBAR_VIEW_SETTINGS`; survives leaving/entering settings
   // so returning to a section keeps your place.
  const [settingsSection, setSettingsSection] = useState<string>(
-   'appearance',
+   SETTINGS_SECTION_APPEARANCE,
  );
   // --- Global actions: switch between built-in views ---
   // Registered via `useActions`, the single source of truth for app-level
@@ -191,6 +196,10 @@ export function WorkbenchShell({
       return (
         <NewSessionView
           onSubmitted={() => setCurrent(SIDEBAR_VIEW_SESSIONS)}
+          onAddAgent={() => {
+            setSettingsSection(SETTINGS_SECTION_AGENTS);
+            setCurrent(SIDEBAR_VIEW_SETTINGS);
+          }}
         />
       );
     }

@@ -19,14 +19,14 @@
 - **真实 ACP 生命周期** — 通过同一个类型安全的数据层处理会话、流式更新、工具调用、权限、认证和用量。
 - **宿主与框架解耦** — React UI 可运行于 Web 和 Tauri；`@acp-components/core` 也可配合 Vue、Svelte、Solid 或原生 TypeScript 使用。
 
-无需 Agent 或后端即可运行交互 Demo：
+使用默认的本地 ACP Agent 运行交互 Demo：
 
 ```bash
 pnpm install
-pnpm dev
+pnpm dev:all
 ```
 
-打开 `http://localhost:5173`，输入提示词并确认 Demo 工具调用。连接真实 Agent 的方式见[Web 演示](#web-演示)。
+打开 `http://localhost:5173`。该命令会同时启动 WebSocket bridge 和 Vite Demo；使用 Codex、Claude 或其他 ACP Agent 的方式见[Web 演示](#web-演示)。
 
 ## 特性
 

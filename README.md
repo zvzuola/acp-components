@@ -17,14 +17,14 @@ Build a complete agent workbench instead of assembling another chat box. The lib
 - **Real ACP lifecycle** — Handle sessions, streaming updates, tool calls, permissions, authentication, and usage through one typed data layer.
 - **Host and framework independent** — Use the React UI on the web or in Tauri, or use `@acp-components/core` with Vue, Svelte, Solid, or vanilla TypeScript.
 
-Run the interactive browser demo without an agent or backend:
+Run the interactive browser demo with the default local ACP agent:
 
 ```bash
 pnpm install
-pnpm dev
+pnpm dev:all
 ```
 
-Open `http://localhost:5173`, enter a prompt, and approve the demo tool call. To connect a real agent through the WebSocket bridge, see [Web Demo](#web-demo).
+Open `http://localhost:5173`. This starts both the WebSocket bridge and the Vite demo; see [Web Demo](#web-demo) to use Codex, Claude, or another ACP agent.
 
 ## Features
 

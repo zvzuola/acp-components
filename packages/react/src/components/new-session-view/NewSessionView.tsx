@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { RobotOutlined } from '@ant-design/icons';
 import { sendPrompt, setSessionConfigOption } from '@acp-components/core';
 import type { ContentBlock, PromptCapabilities, SessionId, SessionConfigOption, SessionConfigSelectOptions, SessionConfigSelectGroup } from '@acp-components/core';
 import { useAcpContext } from '../../context/AcpContext';
@@ -22,6 +23,8 @@ export interface NewSessionViewProps {
   className?: string;
   /** Called after a session is created and the first prompt is sent. */
   onSubmitted?: (sessionId: SessionId) => void;
+  /** Opens the host's agent-management surface from the empty state. */
+  onAddAgent?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -74,7 +77,7 @@ function findSelectByCategory(
 // NewSessionView — Codex-style landing: centered hero + primary composer
 // ---------------------------------------------------------------------------
 
-export function NewSessionView({ className, onSubmitted }: NewSessionViewProps) {
+export function NewSessionView({ className, onSubmitted, onAddAgent }: NewSessionViewProps) {
   const { t } = useI18n();
   const { getClient } = useAcpContext();
   const { dialogs } = usePlatform();
@@ -227,7 +230,17 @@ export function NewSessionView({ className, onSubmitted }: NewSessionViewProps) 
 
         {!hasAgent ? (
           <div className={styles.acpNewSessionViewEmpty}>
-            {t('newSession.noAgents')}
+            <p>{t('newSession.noAgents')}</p>
+            {onAddAgent && (
+              <button
+                type="button"
+                className={styles.acpNewSessionViewAddAgent}
+                onClick={onAddAgent}
+              >
+                <RobotOutlined aria-hidden="true" />
+                <span>{t('newSession.addAgent')}</span>
+              </button>
+            )}
           </div>
         ) : (
           <ChatComposer
