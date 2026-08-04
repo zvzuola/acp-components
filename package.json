@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "pnpm --filter @acp-components/demo dev",
     "dev:server": "pnpm --filter @acp-components/server dev",
-    "dev:server-codex": "cross-env ACP_AGENT=npx ACP_AGENT_ARGS=@zed-industries/codex-acp@latest pnpm --filter @acp-components/server dev",
+    "dev:server-codex": "cross-env ACP_AGENT=npx ACP_AGENT_ARGS=@agentclientprotocol/codex-acp@latest pnpm --filter @acp-components/server dev",
     "dev:server-claude": "cross-env ACP_AGENT=npx ACP_AGENT_ARGS=@agentclientprotocol/claude-agent-acp@latest pnpm --filter @acp-components/server dev",
     "dev:server-bitfun": "cross-env ACP_AGENT=C:\\Users\\zw\\work\\BitFun\\target\\debug\\bitfun-cli.exe ACP_AGENT_ARGS=acp pnpm --filter @acp-components/server dev",
     "dev:all": "pnpm run dev:server & pnpm run dev",
